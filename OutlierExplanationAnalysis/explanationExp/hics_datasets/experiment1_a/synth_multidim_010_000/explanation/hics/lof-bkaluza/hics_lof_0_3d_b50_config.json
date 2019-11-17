@@ -1,0 +1,40 @@
+{
+  "result" : {
+    "classificationTime" : 8573,
+    "trainingTime" : 0,
+    "finalAlgorithmConfig" : {
+      "parameters" : {
+        "candidateCutoff" : 400,
+        "alpha" : 0.5,
+        "dmax" : 3,
+        "topk" : 50
+      }
+    },
+    "algorithmOutputFilePath" : "hics_lof_0_3d_b50_config.csv",
+    "maxMemory" : 2155295048
+  },
+  "config" : {
+    "classifier" : {
+      "id" : "lof-bkaluza",
+      "parameters" : {
+        "knn" : 15,
+        "trainSize" : 100
+      }
+    },
+    "dataset" : {
+      "uri" : "csv://alexp/data/explanation/hics_datasets/synth_multidim_010_000.csv",
+      "id" : "alexp/data/explanation/hics_datasets/synth_multidim_010_000.csv",
+      "metricColumns" : [ "var_0000", "var_0001", "var_0002", "var_0003", "var_0004", "var_0005", "var_0006", "var_0007", "var_0008", "var_0009" ],
+      "labelColumn" : "is_anomaly"
+    },
+    "explainer" : {
+      "id" : "hics",
+      "parameters" : {
+        "candidateCutoff" : 400,
+        "alpha" : 0.5,
+        "dmax" : 3,
+        "topk" : 50
+      }
+    }
+  }
+}

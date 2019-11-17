@@ -1,0 +1,43 @@
+{
+  "result" : {
+    "classificationTime" : 165165,
+    "updateTime" : 0,
+    "trainingTime" : 0,
+    "finalAlgorithmConfig" : {
+      "parameters" : {
+        "beamWidth" : 100,
+        "topk" : 100,
+        "dmax" : 4,
+        "beamFixed" : true,
+        "classifierRunRepeat" : 1
+      }
+    },
+    "algorithmOutputFilePath" : "beam_lof_0_4d_b50_config.csv",
+    "maxMemory" : 577157888
+  },
+  "config" : {
+    "classifier" : {
+      "id" : "lof-bkaluza",
+      "parameters" : {
+        "knn" : 15,
+        "trainSize" : 100
+      }
+    },
+    "dataset" : {
+      "uri" : "csv://alexp/data/explanation/refout_datasets/breast_lof_031_010.csv",
+      "id" : "alexp/data/explanation/refout_datasets/breast_lof_031_010.csv",
+      "metricColumns" : [ "var_0000", "var_0001", "var_0002", "var_0003", "var_0004", "var_0005", "var_0006", "var_0007", "var_0008", "var_0009", "var_0010", "var_0011", "var_0012", "var_0013", "var_0014", "var_0015", "var_0016", "var_0017", "var_0018", "var_0019", "var_0020", "var_0021", "var_0022", "var_0023", "var_0024", "var_0025", "var_0026", "var_0027", "var_0028", "var_0029", "var_0030" ],
+      "labelColumn" : "is_anomaly"
+    },
+    "explainer" : {
+      "id" : "beam",
+      "parameters" : {
+        "beamWidth" : 100,
+        "topk" : 100,
+        "dmax" : 4,
+        "beamFixed" : true,
+        "classifierRunRepeat" : 1
+      }
+    }
+  }
+}

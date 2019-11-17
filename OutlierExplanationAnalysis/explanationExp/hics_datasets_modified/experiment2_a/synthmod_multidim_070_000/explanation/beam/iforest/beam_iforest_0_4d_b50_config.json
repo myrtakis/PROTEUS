@@ -1,0 +1,44 @@
+{
+  "result" : {
+    "classificationTime" : 234355273,
+    "updateTime" : 0,
+    "trainingTime" : 0,
+    "finalAlgorithmConfig" : {
+      "parameters" : {
+        "beamWidth" : 100,
+        "topk" : 100,
+        "dmax" : 4,
+        "beamFixed" : true,
+        "classifierRunRepeat" : 10
+      }
+    },
+    "algorithmOutputFilePath" : "beam_iforest_0_4d_b50_config.csv",
+    "maxMemory" : 4125926416
+  },
+  "config" : {
+    "classifier" : {
+      "id" : "iforest",
+      "parameters" : {
+        "treesCount" : 100,
+        "subsampleSize" : 256,
+        "trainSize" : 4000
+      }
+    },
+    "dataset" : {
+      "uri" : "csv://alexp/data/explanation/hics_datasets_mod/synthmod_multidim_070_000.csv",
+      "id" : "alexp/data/explanation/hics_datasets_mod/synthmod_multidim_070_000.csv",
+      "metricColumns" : [ "var_0000", "var_0001", "var_0002", "var_0003", "var_0004", "var_0005", "var_0006", "var_0007", "var_0008", "var_0009", "var_0010", "var_0011", "var_0012", "var_0013", "var_0014", "var_0015", "var_0016", "var_0017", "var_0018", "var_0019", "var_0020", "var_0021", "var_0022", "var_0023", "var_0024", "var_0025", "var_0026", "var_0027", "var_0028", "var_0029", "var_0030", "var_0031", "var_0032", "var_0033", "var_0034", "var_0035", "var_0036", "var_0037", "var_0038", "var_0039", "var_0040", "var_0041", "var_0042", "var_0043", "var_0044", "var_0045", "var_0046", "var_0047", "var_0048", "var_0049", "var_0050", "var_0051", "var_0052", "var_0053", "var_0054", "var_0055", "var_0056", "var_0057", "var_0058", "var_0059", "var_0060", "var_0061", "var_0062", "var_0063", "var_0064", "var_0065", "var_0066", "var_0067", "var_0068", "var_0069" ],
+      "labelColumn" : "is_anomaly"
+    },
+    "explainer" : {
+      "id" : "beam",
+      "parameters" : {
+        "beamWidth" : 100,
+        "topk" : 100,
+        "dmax" : 4,
+        "beamFixed" : true,
+        "classifierRunRepeat" : 10
+      }
+    }
+  }
+}
