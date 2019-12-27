@@ -5,10 +5,15 @@ import pandas as pd
 
 sesLib = importr('MXM')
 
-if __name__ == '__main__':
-    df = pd.read_csv('datasets/breast_lof_031_010.csv')
+
+def run_ses(var_sel_conf, train_data, max_k, alpha):
     pandas2ri.activate()
-    rdf = ro.conversion.py2rpy(df.iloc[0:100, :])
-    sesObject = sesLib.SES('is_anomaly', rdf, max_k=5, threshold=0.5)
+    rdf = ro.conversion.py2rpy(train_data)
+    sesObject = sesLib.SES('is_anomaly', rdf, max_k=max_k, threshold=alpha)
     selectedVars = sesObject.slots['selectedVars']
     print(selectedVars)
+
+
+VAR_SELECTION_MAP = {
+    "ses": run_ses
+}
