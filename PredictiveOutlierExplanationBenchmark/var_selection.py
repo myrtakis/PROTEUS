@@ -2,6 +2,7 @@ from rpy2.robjects.packages import importr
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
 import numpy as np
+from sklearn.linear_model import Lasso
 
 
 sesLib = importr('MXM')
@@ -10,7 +11,8 @@ sesLib = importr('MXM')
 def run_var_selection(var_sel_id, params, X_train, Y_train):
     var_selection_map = {
         "none": run_none,
-        "ses": run_ses
+        "ses": run_ses,
+        "lasso": run_lasso
     }
     return var_selection_map[var_sel_id](X_train, Y_train, params)
 
@@ -28,3 +30,6 @@ def run_ses(X_train, Y_train, params):
     return selectedVars - 1     # Reduce ids by 1 as R starts counting from 1
 
 
+def run_lasso(X_train, Y_train, params):
+    lasso = Lasso(alpha=params['alpha']).fit(X_train, Y_train)
+    return np.where(lasso.coef_ != 0)[0]

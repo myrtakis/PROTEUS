@@ -11,11 +11,11 @@ import itertools
 
 
 def run_benchmark(config_path):
-    rep = 25
+    rep = 2
     with open(config_path) as json_file:
         conf = json.load(json_file)
         for attr, dataset_conf in conf['datasets'].items():
-            sss = StratifiedShuffleSplit(n_splits=rep, test_size=0.3, random_state=0)
+            sss = StratifiedShuffleSplit(n_splits=rep, test_size=0.3)
             X, Y = get_X_Y(dataset_conf)
             runs_dict = {}
             counter = 0
@@ -40,15 +40,15 @@ def run_cv(X, Y, metrics_conf, var_selection_conf, classifier_conf):
         X_train, X_test = X.iloc[train_index, :], X.iloc[test_index, :]
         Y_train, Y_test = Y.iloc[train_index], Y.iloc[test_index]
         conf_counter = 0
-        fold_counter = 0
         for var_sel_conf_tuple in var_selection_kv:
             sel_vars = run_var_selection(var_sel_conf_tuple['alg_id'], var_sel_conf_tuple['params'], X_train, Y_train)
             for classifier_conf_tuple in classifiers_kv:
-                print('\rFold =', (fold_counter % k) + 1, var_sel_conf_tuple, classifier_conf_tuple, end="")
-                fold_counter += 1
-                model = train_classifier(classifier_conf_tuple['alg_id'], classifier_conf_tuple['params'],
-                                         sel_vars, X_train, Y_train)
-                predictions_array = test_classifier(classifier_conf_tuple['alg_id'], model, sel_vars, X_test)
+                print('\r', var_sel_conf_tuple, classifier_conf_tuple, end="")
+                predictions_array = None
+                if len(sel_vars) > 0:
+                    model = train_classifier(classifier_conf_tuple['alg_id'], classifier_conf_tuple['params'],
+                                             sel_vars, X_train, Y_train)
+                    predictions_array = test_classifier(classifier_conf_tuple['alg_id'], model, sel_vars, X_test)
                 metrics_values = calculate_metrics_values(predictions_array, metrics_conf, Y_test)
                 conf_performances = update_conf_performance(conf_performances, conf_counter, metrics_values,
                                                             var_sel_conf_tuple, classifier_conf_tuple)
@@ -96,6 +96,12 @@ def build_key_value_params(params_keys, params_combs, alg_id):
 
 def calculate_metrics_values(predictions_array, metrics_conf, Y_test):
     metric_values = None
+
+    if predictions_array is None:
+        for k in metrics_conf:
+            metric_values[k] = 0
+        return metric_values
+
     for p in predictions_array:
         tmp_metric_values = run_metrics(metrics_conf, Y_test, p)
         if metric_values is None:
