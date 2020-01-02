@@ -8,11 +8,12 @@ from classifiers import train_classifier
 from classifiers import test_classifier
 from metrics import run_metrics
 import itertools
+import time
 
 
-def run_benchmark(config_path):
-    rep = 2
-    with open(config_path) as json_file:
+def run_benchmark(args):
+    rep = 10
+    with open(args.config) as json_file:
         conf = json.load(json_file)
         for attr, dataset_conf in conf['datasets'].items():
             sss = StratifiedShuffleSplit(n_splits=rep, test_size=0.3)
@@ -20,6 +21,7 @@ def run_benchmark(config_path):
             runs_dict = {}
             counter = 0
             for train_index, test_index in sss.split(X, Y):
+                start_time = time.time()
                 print('\nRep = ', counter)
                 X_train, X_test = X.iloc[train_index, :], X.iloc[test_index, :]
                 Y_train, Y_test = Y.iloc[train_index], Y.iloc[test_index]
@@ -27,7 +29,10 @@ def run_benchmark(config_path):
                 best_models_tested = test_best_trained_models(X_test, Y_test, best_models_trained, conf['metrics'])
                 runs_dict[counter] = best_models_tested
                 counter += 1
-            with open('results.json', 'w', encoding='utf-8') as f:
+                elapsed_time = time.time() - start_time
+                print('\n%0.4f' % elapsed_time, 'sec')
+
+            with open(args.save_output, 'w', encoding='utf-8') as f:
                 f.write(json.dumps(runs_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
 
 
@@ -98,6 +103,7 @@ def calculate_metrics_values(predictions_array, metrics_conf, Y_test):
     metric_values = None
 
     if predictions_array is None:
+        metric_values = {}
         for k in metrics_conf:
             metric_values[k] = 0
         return metric_values
