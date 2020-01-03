@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
+from sklearn.neighbors import LocalOutlierFactor
 
 
 def train_classifier(classifier_id, params, sel_variables, X_train, Y_train):
@@ -38,6 +39,10 @@ def train_iforest(params, X_train, Y_train):
     return clfs
 
 
+def train_lof(params, X_train, Y_train):
+    return [LocalOutlierFactor(n_neighbors=params['n_neighbors'], novelty=True, contamination='auto')]
+
+
 def train_random_forest(params, X_train, Y_train):
     return [RandomForestClassifier(n_estimators=params['n_estimators'], min_samples_leaf=params['min_samples_leaf'],
                                    criterion=params['criterion']).fit(X_train, Y_train)]
@@ -63,3 +68,7 @@ def test_random_forest(model, X_test):
 
 def test_svm(model, X_test):
     return [model[0].predict(X_test)]
+
+
+def test_lof(model, X_test):
+    return [np.array(model.score_samples(X_test)) * -1]
