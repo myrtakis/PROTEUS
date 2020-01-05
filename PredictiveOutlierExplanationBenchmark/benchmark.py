@@ -209,4 +209,5 @@ def test_best_trained_models(X_test, Y_test, best_models_trained, metrics_conf):
         best_models_test_performances[mkey] = {'metrics': metrics_values,
                                                'var_sel': best_models_trained[mkey]['var_sel'],
                                                'classifier': best_models_trained[mkey]['classifier']}
+    print(best_models_test_performances)
     return best_models_test_performances
