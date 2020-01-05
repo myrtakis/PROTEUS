@@ -14,39 +14,10 @@
   "variable_selection": {
     "none": {
       "params": {}
-    },
-
-    "ses": {
-      "params": {
-        "max_k": [2, 3, 4, 5],
-        "alpha": [0.05, 0.1, 0.2]
-       }
-    },
-
-    "lasso": {
-      "params":{
-        "alpha": [0.001, 0.01, 0.1]
-      }
     }
   },
 
   "classifiers": {
-    "rf": {
-      "params": {
-        "n_estimators": [100, 300, 500],
-        "min_samples_leaf": [1, 2, 3],
-        "criterion": ["entropy"]
-      }
-    },
-
-    "iforest": {
-      "params": {
-        "n_estimators": [100, 300, 500],
-        "max_samples": [64, 128, 256]
-      }
-    },
-
-    "classifiers": {
     "svm": {
       "params": {
         "kernel": ["linear", "poly", "rbf"],
@@ -59,13 +30,5 @@
         {"prime_param":{"kernel": "rbf"}, "combs": {"degree": "NA"}}
       ]
     }
-  },
-
-    "lof": {
-      "params": {
-        "n_neighbors": [10, 15, 20]
-      }
-    }
   }
-
 }

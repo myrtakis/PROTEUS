@@ -12,7 +12,7 @@ import time
 
 
 def run_benchmark(args):
-    rep = 10
+    rep = 1
     with open(args.config) as json_file:
         conf = json.load(json_file)
         for attr, dataset_conf in conf['datasets'].items():
@@ -37,7 +37,8 @@ def run_benchmark(args):
 
 
 def run_cv(X, Y, metrics_conf, var_selection_conf, classifier_conf):
-    k = 5
+    k = 2
+    fold_c = 0
     skf = StratifiedKFold(n_splits=k, random_state=None, shuffle=True)
     var_selection_kv, classifiers_kv = generate_param_combs(var_selection_conf, classifier_conf)
     conf_performances = []
@@ -45,20 +46,24 @@ def run_cv(X, Y, metrics_conf, var_selection_conf, classifier_conf):
         X_train, X_test = X.iloc[train_index, :], X.iloc[test_index, :]
         Y_train, Y_test = Y.iloc[train_index], Y.iloc[test_index]
         conf_counter = 0
+        fold_c += 1
         for var_sel_conf_tuple in var_selection_kv:
             sel_vars = run_var_selection(var_sel_conf_tuple['alg_id'], var_sel_conf_tuple['params'], X_train, Y_train)
             for classifier_conf_tuple in classifiers_kv:
-                print('\r', var_sel_conf_tuple, classifier_conf_tuple, end="")
+                #print('\r', var_sel_conf_tuple, classifier_conf_tuple, end="")
                 predictions_array = None
                 if len(sel_vars) > 0:
                     model = train_classifier(classifier_conf_tuple['alg_id'], classifier_conf_tuple['params'],
                                              sel_vars, X_train, Y_train)
                     predictions_array = test_classifier(classifier_conf_tuple['alg_id'], model, sel_vars, X_test)
                 metrics_values = calculate_metrics_values(predictions_array, metrics_conf, Y_test)
+                print('K=', fold_c, classifier_conf_tuple)
+                print('\t', metrics_values)
                 conf_performances = update_conf_performance(conf_performances, conf_counter, metrics_values,
                                                             var_sel_conf_tuple, classifier_conf_tuple)
                 conf_counter += 1
     best_models = select_best_models(compute_avg_performances(conf_performances, k))
+    print()
     return train_best_models(X, Y, best_models)
 
 
@@ -82,12 +87,40 @@ def generate_param_combs(var_selection_conf, classifier_conf):
         classifier_params_keys = list(classifier_conf[classifier_id]['params'].keys())
         classifier_params_vals = classifier_conf[classifier_id]['params'].values()
         params_combs = list(itertools.product(*classifier_params_vals))
-        classifiers_conf_combs.extend(build_key_value_params(classifier_params_keys, params_combs, classifier_id))
-
+        omit_combs = None
+        if 'omit_combinations' in classifier_conf[classifier_id]:
+            omit_combs = classifier_conf[classifier_id]['omit_combinations']
+        classifiers_conf_combs.extend(build_key_value_params(classifier_params_keys, params_combs,
+                                                             classifier_id, omit_combs))
     return var_sel_conf_combs, classifiers_conf_combs
 
 
-def build_key_value_params(params_keys, params_combs, alg_id):
+def omit_configuration(params, omit_combs):
+    omit = True
+    na = 'na'
+    if omit_combs is None:
+        return not omit
+
+    omitted_combs = {}
+
+    for item in omit_combs:
+        for pparam, v1 in item['prime_param'].items():
+            if str(params[pparam]).lower() != str(v1).lower():
+                continue
+            omitted_combs = item['combs']
+            for oparam in item['combs']:
+                if str(params[oparam]).lower() != na:
+                    return omit
+
+    for param, val in params.items():
+        if str(val).lower() == na and param not in omitted_combs:
+            return omit
+
+    return not omit
+
+
+
+def build_key_value_params(params_keys, params_combs, alg_id, omit_combs=None):
     params_kv = []
     for t in params_combs:
         kv = {}
@@ -95,7 +128,8 @@ def build_key_value_params(params_keys, params_combs, alg_id):
         for v in t:
             kv[params_keys[counter]] = v
             counter += 1
-        params_kv.append({'alg_id': alg_id, 'params': kv})
+        if not omit_configuration(kv, omit_combs):
+            params_kv.append({'alg_id': alg_id, 'params': kv})
     return params_kv
 
 

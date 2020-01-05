@@ -6,6 +6,9 @@ from sklearn.svm import SVC
 from sklearn.neighbors import LocalOutlierFactor
 
 
+na = 'na'
+
+
 def train_classifier(classifier_id, params, sel_variables, X_train, Y_train):
     train_classifiers_map = {
         'iforest': train_iforest,
@@ -49,7 +52,11 @@ def train_random_forest(params, X_train, Y_train):
 
 
 def train_svm(params, X_train, Y_train):
-    return [SVC(gamma=params['gamma'], kernel=params['kernel']).fit(X_train, Y_train)]
+    if str(params['gamma']).lower() == na:
+        params['gamma'] = 'auto'
+    if str(params['degree']).lower() == na:
+        params['degree'] = 0
+    return [SVC(gamma=params['gamma'], kernel=params['kernel'], C=params['C'], degree=params['degree']).fit(X_train, Y_train)]
 
 
 # TEST MODELS #
