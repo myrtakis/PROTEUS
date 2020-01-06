@@ -1,4 +1,10 @@
 {
+  "settings": {
+    "repetitions": 1,
+    "test_size": 0.2,
+    "k": 5
+  },
+
   "datasets": {
     "d1": {
       "dataset_path": "datasets/breast_lof_031_010.csv",

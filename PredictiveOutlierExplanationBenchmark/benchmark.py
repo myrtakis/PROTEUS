@@ -12,20 +12,21 @@ import time
 
 
 def run_benchmark(args):
-    rep = 1
     with open(args.config) as json_file:
         conf = json.load(json_file)
+        settings = conf['settings']
         for attr, dataset_conf in conf['datasets'].items():
-            sss = StratifiedShuffleSplit(n_splits=rep, test_size=0.3)
+            sss = StratifiedShuffleSplit(n_splits=settings['repetitions'], test_size=settings['test_size'])
             X, Y = get_X_Y(dataset_conf)
             runs_dict = {}
-            counter = 0
+            counter = 1
             for train_index, test_index in sss.split(X, Y):
                 start_time = time.time()
                 print('\nRep = ', counter)
                 X_train, X_test = X.iloc[train_index, :], X.iloc[test_index, :]
                 Y_train, Y_test = Y.iloc[train_index], Y.iloc[test_index]
-                best_models_trained = run_cv(X_train, Y_train, conf['metrics'], conf['variable_selection'], conf['classifiers'])
+                best_models_trained = run_cv(X_train, Y_train, conf['metrics'], conf['variable_selection'],
+                                             conf['classifiers'], settings['k'])
                 best_models_tested = test_best_trained_models(X_test, Y_test, best_models_trained, conf['metrics'])
                 runs_dict[counter] = best_models_tested
                 counter += 1
@@ -36,9 +37,7 @@ def run_benchmark(args):
                 f.write(json.dumps(runs_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
 
 
-def run_cv(X, Y, metrics_conf, var_selection_conf, classifier_conf):
-    k = 2
-    fold_c = 0
+def run_cv(X, Y, metrics_conf, var_selection_conf, classifier_conf, k):
     skf = StratifiedKFold(n_splits=k, random_state=None, shuffle=True)
     var_selection_kv, classifiers_kv = generate_param_combs(var_selection_conf, classifier_conf)
     conf_performances = []
@@ -46,24 +45,20 @@ def run_cv(X, Y, metrics_conf, var_selection_conf, classifier_conf):
         X_train, X_test = X.iloc[train_index, :], X.iloc[test_index, :]
         Y_train, Y_test = Y.iloc[train_index], Y.iloc[test_index]
         conf_counter = 0
-        fold_c += 1
         for var_sel_conf_tuple in var_selection_kv:
             sel_vars = run_var_selection(var_sel_conf_tuple['alg_id'], var_sel_conf_tuple['params'], X_train, Y_train)
             for classifier_conf_tuple in classifiers_kv:
-                #print('\r', var_sel_conf_tuple, classifier_conf_tuple, end="")
+                print('\r', var_sel_conf_tuple, classifier_conf_tuple, end="")
                 predictions_array = None
                 if len(sel_vars) > 0:
                     model = train_classifier(classifier_conf_tuple['alg_id'], classifier_conf_tuple['params'],
                                              sel_vars, X_train, Y_train)
                     predictions_array = test_classifier(classifier_conf_tuple['alg_id'], model, sel_vars, X_test)
                 metrics_values = calculate_metrics_values(predictions_array, metrics_conf, Y_test)
-                print('K=', fold_c, classifier_conf_tuple)
-                print('\t', metrics_values)
                 conf_performances = update_conf_performance(conf_performances, conf_counter, metrics_values,
                                                             var_sel_conf_tuple, classifier_conf_tuple)
                 conf_counter += 1
     best_models = select_best_models(compute_avg_performances(conf_performances, k))
-    print()
     return train_best_models(X, Y, best_models)
 
 
@@ -119,7 +114,6 @@ def omit_configuration(params, omit_combs):
     return not omit
 
 
-
 def build_key_value_params(params_keys, params_combs, alg_id, omit_combs=None):
     params_kv = []
     for t in params_combs:
@@ -173,41 +167,55 @@ def compute_avg_performances(conf_performances, k):
 
 
 def select_best_models(conf_performances):
-    best_models_perfomance = {}
+    best_models_perfomances = {}
     for e in conf_performances:
-        key = e['var_sel']['alg_id'] + '_' + e['classifier']['alg_id']
-        if key not in best_models_perfomance:
-            best_models_perfomance[key] = {'metrics': e['metrics'], 'var_sel': e['var_sel'],
-                                           'classifier': e['classifier']}
-        for m in e['metrics']:
-            best_performance = max(e['metrics'][m], best_models_perfomance[key]['metrics'][m])
-            best_models_perfomance[key]['metrics'][m] = best_performance
-    return best_models_perfomance
+        conf_key = e['var_sel']['alg_id'] + '_' + e['classifier']['alg_id']
+        for metric_key in e['metrics']:
+            if metric_key not in best_models_perfomances:
+                best_models_perfomances[metric_key] = {}
+            if conf_key not in best_models_perfomances[metric_key]:
+                best_models_perfomances[metric_key][conf_key] = {'performance': e['metrics'][metric_key],
+                                                                 'var_sel': e['var_sel'], 'classifier': e['classifier']}
+            if best_models_perfomances[metric_key][conf_key]['performance'] < e['metrics'][metric_key]:
+                best_models_perfomances[metric_key][conf_key] = {'performance': e['metrics'][metric_key],
+                                                                 'var_sel': e['var_sel'],
+                                                                 'classifier': e['classifier']}
+    return best_models_perfomances
 
 
 def train_best_models(X_train, Y_train, best_models):
     best_models_trained = {}
-    for mkey in best_models.keys():
-        sel_features = run_var_selection(best_models[mkey]['var_sel']['alg_id'],
-                                         best_models[mkey]['var_sel']['params'], X_train, Y_train)
-        model = train_classifier(best_models[mkey]['classifier']['alg_id'],
-                                 best_models[mkey]['classifier']['params'],
-                                 sel_features, X_train, Y_train)
-        best_models_trained[mkey] = {'model': model, 'sel_features': sel_features,
-                                     'var_sel': best_models[mkey]['var_sel'],
-                                     'classifier': best_models[mkey]['classifier']}
+    for metric_key in best_models.keys():
+        for conf_key in best_models[metric_key].keys():
+            sel_features = run_var_selection(best_models[metric_key][conf_key]['var_sel']['alg_id'],
+                                             best_models[metric_key][conf_key]['var_sel']['params'], X_train, Y_train)
+            model = train_classifier(best_models[metric_key][conf_key]['classifier']['alg_id'],
+                                     best_models[metric_key][conf_key]['classifier']['params'],
+                                     sel_features, X_train, Y_train)
+            if metric_key not in best_models_trained:
+                best_models_trained[metric_key] = {}
+            best_models_trained[metric_key][conf_key] = {'model': model, 'sel_features': sel_features,
+                                                         'var_sel': best_models[metric_key][conf_key]['var_sel'],
+                                                         'classifier': best_models[metric_key][conf_key]['classifier']}
     return best_models_trained
 
 
 def test_best_trained_models(X_test, Y_test, best_models_trained, metrics_conf):
     best_models_test_performances = {}
-    for mkey in best_models_trained:
-        sel_features = best_models_trained[mkey]['sel_features']
-        predictions_array = test_classifier(best_models_trained[mkey]['classifier']['alg_id'],
-                                            best_models_trained[mkey]['model'], sel_features, X_test)
-        metrics_values = calculate_metrics_values(predictions_array, metrics_conf, Y_test)
-        best_models_test_performances[mkey] = {'metrics': metrics_values,
-                                               'var_sel': best_models_trained[mkey]['var_sel'],
-                                               'classifier': best_models_trained[mkey]['classifier']}
-    print(best_models_test_performances)
+    for metric_key in best_models_trained.keys():
+        for conf_key in best_models_trained[metric_key].keys():
+            sel_features = best_models_trained[metric_key][conf_key]['sel_features']
+            predictions_array = test_classifier(best_models_trained[metric_key][conf_key]['classifier']['alg_id'],
+                                                best_models_trained[metric_key][conf_key]['model'], sel_features, X_test)
+            metrics_values = calculate_metrics_values(predictions_array, metrics_conf, Y_test)
+            if metric_key not in best_models_test_performances:
+                best_models_test_performances[metric_key] = {}
+            if 'none' in conf_key:
+                sel_features = 'all'
+            else:
+                sel_features = str(sel_features)
+            best_models_test_performances[metric_key][conf_key] = {'performance': metrics_values[metric_key],
+                                                                   'var_sel': best_models_trained[metric_key][conf_key]['var_sel'],
+                                                                   'classifier': best_models_trained[metric_key][conf_key]['classifier'],
+                                                                   'sel_features': sel_features}
     return best_models_test_performances
