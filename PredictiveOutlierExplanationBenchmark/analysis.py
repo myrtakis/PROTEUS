@@ -32,14 +32,14 @@ def draw_barplot(args):
 def calculate_metrics_avg(results_json):
     metrics_avg = {}
     reps = len(results_json.keys())
-    for rep_id, conf in results_json.items():
-        for conf_id, val in conf.items():
-            for metric_key in val['metrics']:
+    for rep_id, res in results_json.items():
+        for metric_key, val in res.items():
+            for conf_id in val:
                 if metric_key not in metrics_avg:
                     metrics_avg[metric_key] = {}
                 if conf_id not in metrics_avg[metric_key]:
                     metrics_avg[metric_key][conf_id] = 0
-                metrics_avg[metric_key][conf_id] += val['metrics'][metric_key]
+                metrics_avg[metric_key][conf_id] += val[conf_id]['performance']
     # Take the average
     for metric_id, conf in metrics_avg.items():
         for conf_id, mval in conf.items():
