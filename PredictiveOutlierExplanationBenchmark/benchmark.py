@@ -38,6 +38,7 @@ def run_benchmark(args):
 
 
 def run_cv(X, Y, metrics_conf, var_selection_conf, classifier_conf, k):
+    k = min(k, get_rarest_class_count(Y))
     skf = StratifiedKFold(n_splits=k, random_state=None, shuffle=True)
     var_selection_kv, classifiers_kv = generate_param_combs(var_selection_conf, classifier_conf)
     conf_performances = []
@@ -67,6 +68,16 @@ def get_X_Y(dataset_conf):
     Y = df[dataset_conf['target']]
     X = df.drop(columns=dataset_conf['target'])
     return X, Y
+
+
+def get_rarest_class_count(Y):
+    Y_list = Y.to_list()
+    rarest_class_count = None
+    for c in set(Y_list):
+        c_occur = Y_list.count(c)
+        if rarest_class_count is None or c_occur < rarest_class_count:
+            rarest_class_count = c_occur
+    return rarest_class_count
 
 
 def generate_param_combs(var_selection_conf, classifier_conf):
