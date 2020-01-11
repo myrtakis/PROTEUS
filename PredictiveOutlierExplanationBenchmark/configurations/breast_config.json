@@ -7,7 +7,7 @@
 
   "datasets": {
     "d1": {
-      "dataset_path": "datasets/breast_lof_031_010.csv",
+      "dataset_path": "datasets/real/lof_based/breast_lof.csv",
       "target": "is_anomaly"
     }
   },
