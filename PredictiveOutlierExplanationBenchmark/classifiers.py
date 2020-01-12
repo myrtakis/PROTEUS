@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import LocalOutlierFactor
 
 
@@ -15,7 +16,8 @@ def train_classifier(classifier_id, params, sel_variables, X_train, Y_train):
         'iforest': train_iforest,
         'rf': train_random_forest,
         'svm': train_svm,
-        'lof': train_lof
+        'lof': train_lof,
+        'knn': train_knn
     }
     X_train_mod = X_train.iloc[:, sel_variables]
     return train_classifiers_map[classifier_id](params, X_train_mod, Y_train)
@@ -26,7 +28,8 @@ def test_classifier(classifier_id, model, sel_variables, X_test):
         'iforest': test_iforest,
         'rf': test_random_forest,
         'svm': test_svm,
-        'lof': test_lof
+        'lof': test_lof,
+        'knn': test_knn
     }
     X_test_mod = X_test.iloc[:, sel_variables]
     return test_classifiers_map[classifier_id](model, X_test_mod)
@@ -53,6 +56,10 @@ def train_lof(params, X_train, Y_train):
 def train_random_forest(params, X_train, Y_train):
     return [RandomForestClassifier(n_estimators=params['n_estimators'], min_samples_leaf=params['min_samples_leaf'],
                                    criterion=params['criterion']).fit(X_train, Y_train)]
+
+
+def train_knn(params, X_train, Y_train):
+    return [KNeighborsClassifier(n_neighbors=params['n_neighbors']).fit(X_train, Y_train)]
 
 
 def train_svm(params, X_train, Y_train):
@@ -83,3 +90,7 @@ def test_svm(model, X_test):
 
 def test_lof(model, X_test):
     return [np.array(model[0].score_samples(X_test)) * -1]
+
+
+def test_knn(model, X_test):
+    return [model[0].predict(X_test)]

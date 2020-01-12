@@ -9,6 +9,8 @@ from classifiers import test_classifier
 from metrics import run_metrics
 import itertools
 import time
+import os
+from pathlib import Path
 
 
 def run_benchmark(args):
@@ -19,22 +21,29 @@ def run_benchmark(args):
             sss = StratifiedShuffleSplit(n_splits=settings['repetitions'], test_size=settings['test_size'])
             X, Y = get_X_Y(dataset_conf)
             runs_dict = {}
+            runs_logs = {}
             counter = 1
             for train_index, test_index in sss.split(X, Y):
                 start_time = time.time()
                 print('\nRep = ', counter)
                 X_train, X_test = X.iloc[train_index, :], X.iloc[test_index, :]
                 Y_train, Y_test = Y.iloc[train_index], Y.iloc[test_index]
-                best_models_trained = run_cv(X_train, Y_train, conf['metrics'], conf['variable_selection'],
-                                             conf['classifiers'], settings['k'])
-                best_models_tested = test_best_trained_models(X_test, Y_test, best_models_trained, conf['metrics'])
+                best_models_trained, logs = run_cv(X_train, Y_train, conf['metrics'], conf['variable_selection'],
+                                                   conf['classifiers'], settings['k'])
+                best_models_tested, logs = test_best_trained_models(X_test, Y_test, best_models_trained,
+                                                                    conf['metrics'], logs)
                 runs_dict[counter] = best_models_tested
+                runs_logs[counter] = logs
                 counter += 1
                 elapsed_time = time.time() - start_time
                 print('\n%0.4f' % elapsed_time, 'sec')
+                logs_output_file = os.path.splitext(args.save_output)[0] + '_log.json'
 
+            create_dir_if_not_exists(args.save_output)
             with open(args.save_output, 'w', encoding='utf-8') as f:
                 f.write(json.dumps(runs_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
+            with open(logs_output_file, 'w', encoding='utf-8') as f:
+                f.write(json.dumps(runs_logs, indent=4, separators=(',', ': '), ensure_ascii=False))
 
 
 def run_cv(X, Y, metrics_conf, var_selection_conf, classifier_conf, k):
@@ -196,22 +205,31 @@ def select_best_models(conf_performances):
 
 def train_best_models(X_train, Y_train, best_models):
     best_models_trained = {}
+    logs = {}
     for metric_key in best_models.keys():
         for conf_key in best_models[metric_key].keys():
+            var_sel_start_time = time.time()
             sel_features = run_var_selection(best_models[metric_key][conf_key]['var_sel']['alg_id'],
                                              best_models[metric_key][conf_key]['var_sel']['params'], X_train, Y_train)
+            var_sel_elapsed = time.time() - var_sel_start_time
+            train_model_start_time = time.time()
             model = train_classifier(best_models[metric_key][conf_key]['classifier']['alg_id'],
                                      best_models[metric_key][conf_key]['classifier']['params'],
                                      sel_features, X_train, Y_train)
+            train_model_elapsed_time = time.time() - train_model_start_time
             if metric_key not in best_models_trained:
                 best_models_trained[metric_key] = {}
             best_models_trained[metric_key][conf_key] = {'model': model, 'sel_features': sel_features,
                                                          'var_sel': best_models[metric_key][conf_key]['var_sel'],
                                                          'classifier': best_models[metric_key][conf_key]['classifier']}
-    return best_models_trained
+            if metric_key not in logs:
+                logs[metric_key] = {}
+            if conf_key not in logs[metric_key]:
+                logs[metric_key][conf_key] = {'var_sel_elapsed_time': var_sel_elapsed, 'train_model_elapsed_time': train_model_elapsed_time}
+    return best_models_trained, logs
 
 
-def test_best_trained_models(X_test, Y_test, best_models_trained, metrics_conf):
+def test_best_trained_models(X_test, Y_test, best_models_trained, metrics_conf, logs):
     best_models_test_performances = {}
     for metric_key in best_models_trained.keys():
         for conf_key in best_models_trained[metric_key].keys():
@@ -229,4 +247,14 @@ def test_best_trained_models(X_test, Y_test, best_models_trained, metrics_conf):
                                                                    'var_sel': best_models_trained[metric_key][conf_key]['var_sel'],
                                                                    'classifier': best_models_trained[metric_key][conf_key]['classifier'],
                                                                    'sel_features': sel_features}
-    return best_models_test_performances
+            logs[metric_key][conf_key]['tested_indexes'] = list(X_test.index)
+            logs[metric_key][conf_key]['true_labels'] = Y_test.tolist()
+            logs[metric_key][conf_key]['predictions'] = predictions_array[0].tolist()
+    return best_models_test_performances, logs
+
+
+def create_dir_if_not_exists(save_dir):
+    path = Path(save_dir)
+    parent = path.parent
+    if not os.path.exists(parent):
+        os.makedirs(parent)

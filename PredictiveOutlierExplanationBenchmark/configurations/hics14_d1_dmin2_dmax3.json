@@ -1,13 +1,13 @@
 {
-  "settings": {
-    "repetitions": 1,
+   "settings": {
+    "repetitions": 10,
     "test_size": 0.2,
     "k": 5
   },
 
   "datasets": {
     "d1": {
-      "dataset_path": "datasets/breast_lof_031_010.csv",
+      "dataset_path": "datasets/real/lof_based/breast_lof.csv",
       "target": "is_anomaly"
     }
   },
@@ -21,16 +21,30 @@
     "none": {
       "params": {}
     },
+
     "ses": {
       "params": {
         "max_k": [2, 3, 4, 5],
         "alpha": [0.05, 0.1, 0.2]
        }
+    },
+
+    "lasso": {
+      "params":{
+        "alpha": [0.001, 0.01, 0.1]
+      }
     }
   },
 
-  "classifiers": {
-    "svm": {
+   "classifiers": {
+    "rf": {
+      "params": {
+        "n_estimators": [100, 300, 500],
+        "min_samples_leaf": [1, 2, 3],
+        "criterion": ["entropy"]
+      }
+    },
+     "svm": {
       "params": {
         "kernel": ["linear", "poly", "rbf"],
         "gamma": ["NA", 1, 2, 5],
@@ -42,5 +56,6 @@
         {"prime_param":{"kernel": "rbf"}, "combs": {"degree": "NA"}}
       ]
     }
-  }
+   }
+
 }
