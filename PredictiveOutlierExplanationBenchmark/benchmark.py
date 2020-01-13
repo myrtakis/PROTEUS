@@ -74,6 +74,8 @@ def run_cv(X, Y, metrics_conf, var_selection_conf, classifier_conf, k):
 
 def get_X_Y(dataset_conf):
     df = pd.read_csv(dataset_conf['dataset_path'])
+    if 'subspaces' in df.columns:
+        df = df.drop(columns='subspaces')
     Y = df[dataset_conf['target']]
     X = df.drop(columns=dataset_conf['target'])
     return X, Y
