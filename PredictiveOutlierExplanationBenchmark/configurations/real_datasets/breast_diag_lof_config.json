@@ -45,13 +45,6 @@
       }
     },
 
-    "iforest": {
-      "params": {
-        "n_estimators": [100, 300, 500],
-        "max_samples": [64, 128, 256]
-      }
-    },
-
     "svm": {
       "params": {
         "kernel": ["linear", "poly", "rbf"],
@@ -65,9 +58,9 @@
       ]
     },
 
-    "lof": {
+    "knn": {
       "params": {
-        "n_neighbors": [10, 15, 20]
+        "n_neighbors": [5, 10, 15, 25]
       }
     }
   }
