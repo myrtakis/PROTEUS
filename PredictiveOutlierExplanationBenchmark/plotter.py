@@ -10,30 +10,34 @@ markers = ['s', 'o', 'd', 'v', '^', '<', '>', 'x', '+']
 
 
 def draw_barplot(args):
-    with open(args.results) as json_file:
-        results_json = json.load(json_file)
-        metrics_avg = calculate_metrics_avg(results_json)
-    bar_width = 0.25
-    for metric_id, conf in metrics_avg.items():
-        counter = 1
-        pos_ticks = []
-        for conf_id, mval in conf.items():
-            pos = bar_width * counter
-            pos_ticks.append(pos)
-            plt.bar([pos], [mval], width=bar_width, edgecolor='black')
-            counter += 1
-        plt.title(args.dataset)
-        plt.ylabel(metric_id)
-        plt.ylim((0,1))
-        plt.xticks(ticks=np.array(pos_ticks), labels=list(conf.keys()), rotation=40, ha='right')
-        output = os.path.join(args.savedir, metric_id + '.png')
-        if not os.path.exists(args.savedir):
-            os.makedirs(args.savedir)
-        plt.savefig(output, dpi=300, bbox_inches='tight', pad_inches=0.3)
-        plt.clf()
+    for f in get_results_files(args.results):
+        with open(f) as json_file:
+            results_json = json.load(json_file)
+            metrics_avg = calculate_metrics_avg(results_json)
+        bar_width = 0.25
+        for metric_id, conf in metrics_avg.items():
+            counter = 1
+            pos_ticks = []
+            for conf_id, mval in conf.items():
+                pos = bar_width * counter
+                pos_ticks.append(pos)
+                plt.bar([pos], [mval], width=bar_width, edgecolor='black')
+                counter += 1
+            plt.title(args.dataset)
+            plt.ylabel(metric_id)
+            plt.ylim((0, 1))
+            plt.xticks(ticks=np.array(pos_ticks), labels=list(conf.keys()), rotation=40, ha='right')
+            datasetname = os.path.splitext(os.path.basename(f))[0]
+            output = os.path.join(args.savedir, datasetname + '_' + metric_id + '.png')
+            print('Saved in', output)
+            if not os.path.exists(args.savedir):
+                os.makedirs(args.savedir)
+            plt.savefig(output, dpi=300, bbox_inches='tight', pad_inches=0.3)
+            plt.clf()
 
 
 def plot_dim_experiment(args):
+    assert os.path.isdir(args.dimexp)
     metrics_dim_results_dict = get_results_as_dict(get_results_files(args.dimexp))
     for metric, algos_dict in metrics_dim_results_dict.items():
         beautiful_x_ticks = None
@@ -84,7 +88,8 @@ def get_log_files(dir_path):
 
 def get_results_files(dir_path):
     fileslist = []
-    assert os.path.isdir(dir_path)
+    if not os.path.isdir(dir_path):
+        return [dir_path]
     allfiles = os.listdir(dir_path)
     for f in allfiles:
         if f.endswith('.json') and 'log' not in f:
@@ -118,7 +123,7 @@ def get_results_as_dict(results_files):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="""Plot benchmark results.""")
-    parser.add_argument('-r', '--results', help='The results file (json file).', default=None)
+    parser.add_argument('-r', '--results', help='The results file (json file) or the dir with json files.', default=None)
     parser.add_argument('-dimexp', help='-dimexp dir')
     parser.add_argument('-sdir', '--savedir', help='The directory of the created plots.', required=True)
     parser.add_argument('-dataset', help='The dataset of the results.')
