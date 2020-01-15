@@ -22,6 +22,7 @@ def run_benchmark(args):
             X, Y = get_X_Y(dataset_conf)
             runs_dict = {}
             runs_logs = {}
+            tmp_runs_logs = {}
             counter = 1
             for train_index, test_index in sss.split(X, Y):
                 start_time = time.time()
@@ -33,11 +34,14 @@ def run_benchmark(args):
                 best_models_tested, logs = test_best_trained_models(X_test, Y_test, best_models_trained,
                                                                     conf['metrics'], logs)
                 runs_dict[counter] = best_models_tested
-                runs_logs[counter] = logs
+                tmp_runs_logs[counter] = logs
                 counter += 1
                 elapsed_time = time.time() - start_time
                 print('\n%0.4f' % elapsed_time, 'sec')
-                logs_output_file = os.path.splitext(args.save_output)[0] + '_log.json'
+
+            runs_logs['repetitions'] = tmp_runs_logs
+            runs_logs['config'] = args.config
+            logs_output_file = os.path.splitext(args.save_output)[0] + '_log.json'
 
             create_dir_if_not_exists(args.save_output)
             with open(args.save_output, 'w', encoding='utf-8') as f:
