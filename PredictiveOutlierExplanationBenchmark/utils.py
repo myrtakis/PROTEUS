@@ -1,6 +1,9 @@
 import json
 import os
 import collections
+import pandas as pd
+from itertools import chain
+
 
 
 def calculate_metrics_avg(results_json):
@@ -66,18 +69,69 @@ def find_result_file(result_files, log_file):
     assert False
 
 
-def get_dataset_path(datasets_json):
+def get_dataset_path_from_json(datasets_json):
     assert len(datasets_json) == 1
     for id, obj in datasets_json.items():
         return obj['dataset_path']
 
 
-def feature_count_df(dir_path):
-    result_files = get_results_files(dir_path, exclude='log')
+def subspace_to_list(subspacestr, min_dim=None, max_dim=None):
+    subspacestr_arr = subspacestr.replace('[', '').replace(']', '').split(';')
+    valid_subspaces = {}
+    for s in subspacestr_arr:
+        s = s.strip()
+        if s is None:
+            continue
+        ssplit = s.split()
+        subspace_dim = len(list(map(int, ssplit)))
+        min_dim = subspace_dim if min_dim is None else min_dim
+        max_dim = subspace_dim if max_dim is None else max_dim
+        if min_dim <= subspace_dim <= max_dim:
+            valid_subspaces[s] = subspace_dim
+    return valid_subspaces
+
+
+def sort_datasets_dim(datasets):
+    dim_dict = {}
+    for d in datasets:
+        dim = pd.read_csv(d).shape[1]
+        dim_dict[dim] = d
+    return dict(collections.OrderedDict(sorted(dim_dict.items()))).values()
+
+
+def get_dataset_paths(dir_path):
     log_files = get_results_files(dir_path, contains='log')
+    dataset_paths = []
     for f in log_files:
         with open(f) as log_json_file:
             log = json.load(log_json_file)
             with open(log['config']) as conf_json_file:
                 conf = json.load(conf_json_file)
-                print(get_dataset_path(conf['datasets']))
+                dataset_paths.append(get_dataset_path_from_json(conf['datasets']))
+    return sort_datasets_dim(dataset_paths)
+
+
+def get_outlier_samples_of_min_dim(dataset_path):
+    df = pd.read_csv(dataset_path)
+    outliers = df[df['is_anomaly'] == 1]
+    return outliers.drop(columns=['is_anomaly', 'subspaces'])
+
+
+def get_relevant_features(df):
+    rel_features = set()
+    outliers = df[df['is_anomaly'] == 1]
+
+    subspaces = outliers['subspaces']
+    for sstr in subspaces:
+        subspace_as_list = list(chain.from_iterable([x.split() for x in subspace_to_list(sstr).keys()]))
+        rel_features = rel_features.union(list(map(int, subspace_as_list)))
+    print(rel_features)
+
+
+def feature_count_df(dir_path):
+    result_files = get_results_files(dir_path, exclude='log')
+    dataset_paths = list(get_dataset_paths(dir_path))
+    outlier_samples_min_dim = get_outlier_samples_of_min_dim(dataset_paths[0])
+    for d in get_dataset_paths(dir_path):
+        print(d)
+        get_relevant_features(pd.read_csv(d))

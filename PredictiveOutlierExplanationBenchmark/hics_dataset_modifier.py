@@ -3,6 +3,8 @@ import argparse
 import os
 import numpy as np
 import collections
+from utils import subspace_to_list
+from utils import sort_datasets_dim
 
 subspace_column = 'subspaces'
 is_anomaly_column = 'is_anomaly'
@@ -55,20 +57,6 @@ def get_subspaces_and_indexes(df, outlier_indexes, min_dim, max_dim):
     return subspace_map
 
 
-def subspace_to_list(subspacestr, min_dim, max_dim):
-    subspacestr_arr = subspacestr.replace('[', '').replace(']', '').split(';')
-    valid_subspaces = {}
-    for s in subspacestr_arr:
-        s = s.strip()
-        if s is None:
-            continue
-        ssplit = s.split()
-        subspace_dim = len(list(map(int, ssplit)))
-        if min_dim <= subspace_dim <= max_dim:
-            valid_subspaces[s] = subspace_dim
-    return valid_subspaces
-
-
 def get_files(dir_path):
     fileslist = []
     if not os.path.isdir(dir_path):
@@ -78,14 +66,6 @@ def get_files(dir_path):
         if f.endswith('.csv'):
             fileslist.append(os.path.join(dir_path, f))
     return fileslist
-
-
-def sort_datasets_dim(datasets):
-    dim_dict = {}
-    for d in datasets:
-        dim = pd.read_csv(d).shape[1]
-        dim_dict[dim] = d
-    return dict(collections.OrderedDict(sorted(dim_dict.items()))).values()
 
 
 if __name__ == '__main__':
