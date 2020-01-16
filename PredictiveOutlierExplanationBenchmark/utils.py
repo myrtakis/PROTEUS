@@ -63,8 +63,10 @@ def get_results_as_dict(results_files):
 
 
 def find_result_file(result_files, log_file):
+    log_file_base = os.path.splitext(os.path.basename(log_file))[0]
     for f in result_files:
-        if log_file.startswith(f):
+        result_file_base = os.path.splitext(os.path.basename(f))[0]
+        if log_file_base.startswith(result_file_base):
             return f
     assert False
 
@@ -101,14 +103,18 @@ def sort_datasets_dim(datasets):
 
 def get_dataset_paths(dir_path):
     log_files = get_results_files(dir_path, contains='log')
-    dataset_paths = []
+    log_dataset_paths = {}
     for f in log_files:
         with open(f) as log_json_file:
             log = json.load(log_json_file)
             with open(log['config']) as conf_json_file:
                 conf = json.load(conf_json_file)
-                dataset_paths.append(get_dataset_path_from_json(conf['datasets']))
-    return sort_datasets_dim(dataset_paths)
+                log_dataset_paths[f] = get_dataset_path_from_json(conf['datasets'])
+    log_dataset_paths_dim_sorted = {}
+    for log, dataset in log_dataset_paths.items():
+        dim = pd.read_csv(dataset).shape[1]
+        log_dataset_paths_dim_sorted[dim] = {log: dataset}
+    return dict(collections.OrderedDict(sorted(log_dataset_paths_dim_sorted.items()))).values()
 
 
 def get_outlier_samples_of_min_dim(dataset_path):
@@ -119,19 +125,30 @@ def get_outlier_samples_of_min_dim(dataset_path):
 
 def get_relevant_features(df):
     rel_features = set()
-    outliers = df[df['is_anomaly'] == 1]
-
-    subspaces = outliers['subspaces']
+    subspaces = df[df['is_anomaly'] == 1]['subspaces']
     for sstr in subspaces:
         subspace_as_list = list(chain.from_iterable([x.split() for x in subspace_to_list(sstr).keys()]))
         rel_features = rel_features.union(list(map(int, subspace_as_list)))
-    print(rel_features)
+    return rel_features
+
+
+def calc_feature_count(rfile, rel_features):
+    metric = 'roc_auc'
+    with open(rfile) as json_file:
+        results = json.load(json_file)
+        for rep, val in results.items():
+            for alg, info in val[metric].items():
+                if 'none' not in alg:
+                    print(alg, subspace_to_list(info['sel_features']).keys())
 
 
 def feature_count_df(dir_path):
-    result_files = get_results_files(dir_path, exclude='log')
+    result_files = get_results_files(dir_path, exclude='log', ending='json')
     dataset_paths = list(get_dataset_paths(dir_path))
-    outlier_samples_min_dim = get_outlier_samples_of_min_dim(dataset_paths[0])
-    for d in get_dataset_paths(dir_path):
-        print(d)
-        get_relevant_features(pd.read_csv(d))
+    #outlier_samples_min_dim = get_outlier_samples_of_min_dim(dataset_paths[0])
+    for v in get_dataset_paths(dir_path):
+        for log, dataset in v.items():
+            rel_features = get_relevant_features(pd.read_csv(dataset))
+            rfile = find_result_file(result_files, log)
+            calc_feature_count(rfile, rel_features)
+       # get_relevant_features(pd.read_csv(d))

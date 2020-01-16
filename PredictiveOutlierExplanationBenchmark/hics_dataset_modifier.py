@@ -71,7 +71,7 @@ def get_files(dir_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-ddir', '--datasets_dir', required=True)
-    parser.add_argument('-mfile', '--main_file', required=True)
+    parser.add_argument('-mfile', '--main_file')
     parser.add_argument('-g', '--groups', help='How many subspace groups per dimensionality', required=True, type=int)
     parser.add_argument('-maxdim', '--maximum_dimensionality', required=True, type=int)
     parser.add_argument('-mindim', '--minimum_dimensionality', required=True, type=int)
