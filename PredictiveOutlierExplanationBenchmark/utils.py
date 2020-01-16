@@ -59,5 +59,25 @@ def get_results_as_dict(results_files):
     return metric_dim_results_dict
 
 
+def find_result_file(result_files, log_file):
+    for f in result_files:
+        if log_file.startswith(f):
+            return f
+    assert False
+
+
+def get_dataset_path(datasets_json):
+    assert len(datasets_json) == 1
+    for id, obj in datasets_json.items():
+        return obj['dataset_path']
+
+
 def feature_count_df(dir_path):
-    print(get_results_files(dir_path, contains='log'))
+    result_files = get_results_files(dir_path, exclude='log')
+    log_files = get_results_files(dir_path, contains='log')
+    for f in log_files:
+        with open(f) as log_json_file:
+            log = json.load(log_json_file)
+            with open(log['config']) as conf_json_file:
+                conf = json.load(conf_json_file)
+                print(get_dataset_path(conf['datasets']))

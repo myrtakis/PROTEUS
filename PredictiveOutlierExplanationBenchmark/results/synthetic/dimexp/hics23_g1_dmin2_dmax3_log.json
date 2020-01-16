@@ -1,4 +1,6 @@
 {
+"config": "configurations/synthetic/hics23_g1_dmin2_dmax3_config.json",
+"repetitions":{
     "1": {
         "roc_auc": {
             "none_rf": {
@@ -107699,4 +107701,5 @@
             }
         }
     }
+}
 }
