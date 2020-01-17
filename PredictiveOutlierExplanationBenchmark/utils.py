@@ -5,7 +5,6 @@ import pandas as pd
 from itertools import chain
 
 
-
 def calculate_metrics_avg(results_json):
     metrics_avg = {}
     reps = len(results_json.keys())
@@ -124,22 +123,61 @@ def get_outlier_samples_of_min_dim(dataset_path):
 
 
 def get_relevant_features(df):
-    rel_features = set()
+    rel_subspaces_str = set()
+    rel_features_groups = {}
     subspaces = df[df['is_anomaly'] == 1]['subspaces']
     for sstr in subspaces:
-        subspace_as_list = list(chain.from_iterable([x.split() for x in subspace_to_list(sstr).keys()]))
-        rel_features = rel_features.union(list(map(int, subspace_as_list)))
-    return rel_features
+        for s in subspace_to_list(sstr).keys():
+            rel_subspaces_str.add(s)
+    group_counter = 0
+    for s in rel_subspaces_str:
+        rel_features_groups[group_counter] = list(map(int, s.split()))
+        group_counter += 1
+    return rel_features_groups
+
+
+def feature_is_rel(feature, rel_features):
+    for rel_sub in rel_features.values():
+        if feature in rel_sub:
+            return True
+    return False
+
+
+def init_alg_feature_dict(alg, alg_feature_dict, rel_features):
+    assert alg not in alg_feature_dict
+    alg_feature_dict[alg] = {}
+    for rel_sub in rel_features.values():
+        for f in rel_sub:
+            assert f not in alg_feature_dict[alg]
+            alg_feature_dict[alg][f] = 0
+    return alg_feature_dict
 
 
 def calc_feature_count(rfile, rel_features):
     metric = 'roc_auc'
+    alg_feature_dict = {}
     with open(rfile) as json_file:
         results = json.load(json_file)
+        reps = len(results.keys())
         for rep, val in results.items():
             for alg, info in val[metric].items():
-                if 'none' not in alg:
-                    print(alg, subspace_to_list(info['sel_features']).keys())
+                if 'none' in alg:
+                    continue
+                sel_features = list(chain.from_iterable([x.split() for x in subspace_to_list(info['sel_features']).keys()]))
+                sel_features = list(map(int, sel_features))
+                if alg not in alg_feature_dict:
+                    alg_feature_dict = init_alg_feature_dict(alg, alg_feature_dict, rel_features)
+                for feature in sel_features:
+                    if not feature_is_rel(feature, rel_features):
+                        continue
+                    alg_feature_dict[alg][feature] += 1
+                    assert alg_feature_dict[alg][feature] <= reps
+
+
+def match_features(base_df, curr_df, base_feature_dict, curr_feature_dict, rel_features):
+    # find matches for samples in base and curr df
+    # update base feature dict from curr feature dict
+    return None
 
 
 def feature_count_df(dir_path):
@@ -148,6 +186,7 @@ def feature_count_df(dir_path):
     #outlier_samples_min_dim = get_outlier_samples_of_min_dim(dataset_paths[0])
     for v in get_dataset_paths(dir_path):
         for log, dataset in v.items():
+            print('\n', dataset)
             rel_features = get_relevant_features(pd.read_csv(dataset))
             rfile = find_result_file(result_files, log)
             calc_feature_count(rfile, rel_features)
