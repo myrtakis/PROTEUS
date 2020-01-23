@@ -68,13 +68,24 @@ def get_files(dir_path):
     return fileslist
 
 
+def create_dim_exp_from_dataset(args):
+    df = pd.read_csv(args.main_file)
+    outlier_indexes = np.where(df[is_anomaly_column] == 1)[0]
+    sub_map = get_subspaces_and_indexes(df, outlier_indexes, args.minimum_dimensionality, args.maximum_dimensionality)
+    print(sub_map)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-ddir', '--datasets_dir', required=True)
+    parser.add_argument('-ddir', '--datasets_dir', default=None)
     parser.add_argument('-mfile', '--main_file')
     parser.add_argument('-g', '--groups', help='How many subspace groups per dimensionality', required=True, type=int)
     parser.add_argument('-maxdim', '--maximum_dimensionality', required=True, type=int)
     parser.add_argument('-mindim', '--minimum_dimensionality', required=True, type=int)
+    parser.add_argument('-subdata', '--sub_datasets_num', type=int)
     parser.add_argument('-s', '--save_dir', required=True)
     args = parser.parse_args()
-    modify_datasets(args)
+    if args.datasets_dir is not None:
+        modify_datasets(args)
+    else:
+        create_dim_exp_from_dataset(args)
