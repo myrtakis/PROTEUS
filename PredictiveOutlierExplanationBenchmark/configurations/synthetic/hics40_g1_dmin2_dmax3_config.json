@@ -7,7 +7,7 @@
 
   "datasets": {
     "d1": {
-      "dataset_path": "datasets/synthetic/hics/dimexp/synthmod_multidim_039_000_g1_dmin2_dmax3.csv",
+      "dataset_path": "datasets/synthetic/hics/dimexp/hics_40_g1_dmin2_dmax3.csv",
       "target": "is_anomaly"
     }
   },
@@ -31,9 +31,10 @@
 
     "lasso": {
       "params":{
-        "alpha": [0.001, 0.01, 0.1]
+        "alpha": [0.001, 0.0015, 0.002]
       }
     }
+  }
   },
 
   "classifiers": {
