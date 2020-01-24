@@ -116,12 +116,6 @@ def get_dataset_paths(dir_path):
     return dict(collections.OrderedDict(sorted(log_dataset_paths_dim_sorted.items()))).values()
 
 
-def get_outlier_samples_of_min_dim(dataset_path):
-    df = pd.read_csv(dataset_path)
-    outliers = df[df['is_anomaly'] == 1]
-    return outliers.drop(columns=['is_anomaly', 'subspaces'])
-
-
 def get_relevant_features(df):
     rel_subspaces_str = set()
     rel_features_groups = {}
@@ -172,22 +166,34 @@ def calc_feature_count(rfile, rel_features):
                         continue
                     alg_feature_dict[alg][feature] += 1
                     assert alg_feature_dict[alg][feature] <= reps
+    return alg_feature_dict
 
 
-def match_features(base_df, curr_df, base_feature_dict, curr_feature_dict, rel_features):
-    # find matches for samples in base and curr df
-    # update base feature dict from curr feature dict
-    return None
+def construct_alg_features_dataframes(alg_dim_feature_dict):
+    alg_dim_df = {}
+    for alg, dim_dict in alg_dim_feature_dict.items():
+        fcount_df = pd.DataFrame(columns=list(dim_dict.keys()))
+        for dim, fcount in dim_dict.items():
+            fcount = dict(collections.OrderedDict(sorted(fcount.items())))
+            for rel_f, rel_f_count in fcount.items():
+                fcount_df.loc[rel_f, dim] = rel_f_count
+        alg_dim_df[alg] = fcount_df
+        break
+    return alg_dim_df
 
 
 def feature_count_df(dir_path):
     result_files = get_results_files(dir_path, exclude='log', ending='json')
-    dataset_paths = list(get_dataset_paths(dir_path))
-    #outlier_samples_min_dim = get_outlier_samples_of_min_dim(dataset_paths[0])
+    alg_dim_feature_dict = {}
     for v in get_dataset_paths(dir_path):
         for log, dataset in v.items():
-            print('\n', dataset)
-            rel_features = get_relevant_features(pd.read_csv(dataset))
+            df = pd.read_csv(dataset)
+            rel_features = get_relevant_features(df)
             rfile = find_result_file(result_files, log)
-            calc_feature_count(rfile, rel_features)
-       # get_relevant_features(pd.read_csv(d))
+            dim = df.shape[1]-2
+            for alg, fcount in calc_feature_count(rfile, rel_features).items():
+                if alg not in alg_dim_feature_dict:
+                    alg_dim_feature_dict[alg] = {}
+                alg_dim_feature_dict[alg][dim] = fcount
+    return construct_alg_features_dataframes(alg_dim_feature_dict)
+
