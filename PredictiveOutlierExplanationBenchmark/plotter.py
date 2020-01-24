@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import json
 import numpy as np
 import os
+import seaborn as sns
 from utils import *
 
 
@@ -61,12 +62,16 @@ def plot_dim_experiment(args):
 
 
 def plot_features(args):
-    feature_count_df(args.plot_features)
-    # flights = sns.load_dataset("flights")
-    # flights = flights.pivot("month", "year", "passengers")
-    # plt.figure(figsize=(10,5))
-    # sns.heatmap(flights)
-    # plt.show()
+    alg_dim_fcount_df = feature_count_df(args.plot_features)
+    plt.figure(figsize=(10,5))
+    for alg, fcount_df in alg_dim_fcount_df.items():
+        sns.heatmap(fcount_df, annot=True, fmt='d', cbar_kws={'label': 'Frequency'})
+        plt.xlabel('Dataset Dimensionality')
+        plt.ylabel('Relevant Features')
+        plt.title(alg)
+        plt.tight_layout()
+        plt.show()
+        plt.clf()
 
 
 if __name__ == '__main__':

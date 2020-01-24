@@ -95821,5 +95821,5 @@
             }
         }
     },
-    "config": "configurations/synthetic/hics80_g1_dmin2_dmax3_config.json"
+    "config": "configurations/synthetic/dimexp/g1dmin2dmax3/ocluster5/hics80_g1_dmin2_dmax3_oc5_config.json"
 }
