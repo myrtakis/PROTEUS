@@ -18,6 +18,7 @@ def run_benchmark(args):
         conf = json.load(json_file)
         settings = conf['settings']
         for attr, dataset_conf in conf['datasets'].items():
+            print('Dataset', dataset_conf['dataset_path'])
             sss = StratifiedShuffleSplit(n_splits=settings['repetitions'], test_size=settings['test_size'])
             X, Y = get_X_Y(dataset_conf)
             runs_dict = {}
