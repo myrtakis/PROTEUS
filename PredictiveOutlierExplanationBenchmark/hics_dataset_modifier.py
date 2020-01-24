@@ -103,6 +103,7 @@ def create_dim_exp_from_dataset(args):
             features_to_add = numeric_features - base_df.shape[1]
         col_names.extend(list(df.iloc[:, features_pool[0:features_to_add]].columns))
         base_df = pd.concat([base_df, df.iloc[:, features_pool[0:features_to_add]]], ignore_index=True, axis=1)
+        num_of_features = base_df.shape[1]
         base_df.columns = col_names
         features_pool = np.delete(features_pool, list(range(features_to_add)))
         dataset_name = 'hics_' + str(base_df.shape[1]) + '_g' + str(args.groups) \
@@ -114,7 +115,26 @@ def create_dim_exp_from_dataset(args):
         tmpdf = base_df.copy()
         tmpdf[is_anomaly_column] = target
         tmpdf[subspace_column] = subspaces
+        tmpdf = add_points_to_outlier_cluster(tmpdf, args.outlier_cluster)
         tmpdf.to_csv(output_file, index=False)
+
+
+def add_points_to_outlier_cluster(df, ocluster_size):
+    if ocluster_size is None or ocluster_size <= 0:
+        return df
+    mu, sigma = 0, 0.05
+    outlier_inds = np.where(df[is_anomaly_column] == 1)[0]
+    numerical_features = df.drop(columns=[is_anomaly_column, subspace_column])
+    for i in range(ocluster_size - len(outlier_inds)):
+        outlier_index = outlier_inds[np.random.randint(low=0, high=len(outlier_inds))]
+        outlier_values = numerical_features.iloc[outlier_index, :].values
+        noise = np.random.normal(mu, sigma, [1, numerical_features.shape[1]])
+        neighbor = list(outlier_values + noise)
+        neighbor = list(neighbor[0])
+        neighbor.extend([df.iloc[outlier_index, :][is_anomaly_column],
+                        df.iloc[outlier_index, :][subspace_column]])
+        df = df.append(pd.Series(neighbor, index=df.columns), ignore_index=True)
+    return df
 
 
 def get_base_df_target_subspaces(df, subspaces_to_keep, outliers_to_remove):
@@ -155,6 +175,7 @@ if __name__ == '__main__':
     parser.add_argument('-maxdim', '--maximum_dimensionality', required=True, type=int)
     parser.add_argument('-mindim', '--minimum_dimensionality', required=True, type=int)
     parser.add_argument('-subdata', '--sub_datasets_num', type=int)
+    parser.add_argument('-ocluster', '--outlier_cluster', type=int, default=None)
     parser.add_argument('-s', '--save_dir', required=True)
     args = parser.parse_args()
     if args.datasets_dir is not None:

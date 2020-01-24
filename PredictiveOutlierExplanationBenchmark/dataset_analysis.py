@@ -9,6 +9,9 @@ from scipy.io import arff
 from pathlib import Path
 
 
+is_anomaly_column = 'is_anomaly'
+
+
 def arff_to_csv(arff_dataset_path):
     data = arff.loadarff(arff_dataset_path)
     df = pd.DataFrame(data[0])
@@ -53,6 +56,37 @@ def tsne_visualizer(dataset_path, savedir):
         plt.clf()
 
 
+def plot_2d_subspace(path_to_df, dims_str):
+    df = pd.read_csv(path_to_df)
+    dims = list(map(int, dims_str.strip().replace('[', '').replace(']', '').split(',')))
+    x = df[df.columns[dims[0]]]
+    y = df[df.columns[dims[1]]]
+
+    n = list(range(df.shape[0]))
+
+    ind = np.where(df[is_anomaly_column] == 1)[0]
+    text_ind = ind
+
+    colors = np.array(['dimgray'] * df.shape[0], dtype=object)
+
+    colors[ind] = 'red'
+
+    fig, ax = plt.subplots()
+    for i in range(len(x)):
+        z_order = 2 if i in ind else 0
+        color = colors[i]
+        ax.scatter(x[i], y[i], c=color, zorder=z_order)
+
+    for i, label in enumerate(n):
+        if i in text_ind:
+            ax.annotate(label, xy=(x[i], y[i]), c='dodgerblue', zorder=2)
+    #plt.title(os.path.splitext(os.path.basename(dataset_path))[0])
+    plt.xlabel('Feature ' + str(dims[0]))
+    plt.ylabel('Feature ' + str(dims[1]))
+    plt.show()
+    #plt.savefig('visualizations/breast'+str(dims[0])+str(dims[1])+'.png', dpi=300)
+
+
 def get_files(dir_path):
     fileslist = []
     if not os.path.isdir(dir_path):
@@ -82,10 +116,14 @@ if __name__ == '__main__':
     parser.add_argument('-viz', '--visualise', help='Dataset or Dataset folder to visualize.', default=None)
     parser.add_argument('-sv', '--saveviz', help='Directory to save the image.', default=None)
     parser.add_argument('-diff', '--differences', default=None, help='-datadiff d1,d2,d3', type=str)
+    parser.add_argument('-sub', '--subspace', default=None, help='e.g. [2,3]')
     args = parser.parse_args()
     if args.arfftocsv is not None:
         arff_to_csv(args.arfftocsv)
-    if args.visualise is not None:
+    elif args.subspace is not None:
+        plot_2d_subspace(args.visualise, args.subspace)
+    elif args.visualise is not None:
         tsne_visualizer(args.visualise, args.saveviz)
-    if args.differences is not None:
+    elif args.differences is not None:
         outlier_differences(args.differences)
+

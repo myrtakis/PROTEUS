@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/PredictiveOutlierExplanationBenchmark/hics_dataset_modifier.py" />
-    <option name="PARAMETERS" value="-mfile ../OutlierExplanationAnalysis/datasets/hics_datasets/synthmod_multidim_100_002.csv -g 1 -subdata 5 -mindim 2 -maxdim 3  -s datasets/synthetic/hics/dimexp" />
+    <option name="PARAMETERS" value="-mfile ../OutlierExplanationAnalysis/datasets/hics_datasets/synthmod_multidim_100_002.csv -g 1 -subdata 5 -mindim 2 -maxdim 3 -ocluster 15 -s datasets/synthetic/hics/dimexp" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
