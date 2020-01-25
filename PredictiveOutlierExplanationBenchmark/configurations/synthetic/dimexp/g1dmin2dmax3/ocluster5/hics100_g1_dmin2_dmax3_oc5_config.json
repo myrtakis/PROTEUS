@@ -13,8 +13,8 @@
   },
 
   "metrics": [
-    "roc_auc",
-    "avep"
+    "roc_auc"
+    
   ],
 
   "variable_selection": {
