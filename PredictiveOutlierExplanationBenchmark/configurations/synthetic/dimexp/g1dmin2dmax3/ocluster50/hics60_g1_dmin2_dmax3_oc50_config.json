@@ -59,7 +59,7 @@
 
     "knn": {
       "params": {
-        "n_neighbors": [5, 10, 15, 25]
+        "n_neighbors": [5, 10, 15]
       }
     }
   }
