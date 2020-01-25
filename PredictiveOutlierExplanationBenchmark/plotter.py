@@ -63,14 +63,18 @@ def plot_dim_experiment(args):
 
 def plot_features(args):
     alg_dim_fcount_df = feature_count_df(args.plot_features)
-    plt.figure(figsize=(10,5))
     for alg, fcount_df in alg_dim_fcount_df.items():
         sns.heatmap(fcount_df, annot=True, fmt='d', cbar_kws={'label': 'Frequency'})
         plt.xlabel('Dataset Dimensionality')
         plt.ylabel('Relevant Features')
         plt.title(alg)
         plt.tight_layout()
-        plt.show()
+        title = alg + '_' + ('' if args.title is None else args.title)
+        plt.title(title)
+        if not os.path.exists(args.savedir):
+            os.makedirs(args.savedir)
+        outputdir = os.path.join(args.savedir, title + '.png')
+        plt.savefig(outputdir, dpi=300)
         plt.clf()
 
 
@@ -81,6 +85,7 @@ if __name__ == '__main__':
     parser.add_argument('-sdir', '--savedir', help='The directory of the created plots.', required=True)
     parser.add_argument('-dataset', help='The dataset of the results.')
     parser.add_argument('-f', '--plot_features', default=None)
+    parser.add_argument('-t', '--title', default=None)
     args = parser.parse_args()
     if args.results is not None:
         draw_barplot(args)

@@ -178,7 +178,6 @@ def construct_alg_features_dataframes(alg_dim_feature_dict):
             for rel_f, rel_f_count in fcount.items():
                 fcount_df.loc[rel_f, dim] = rel_f_count
         alg_dim_df[alg] = fcount_df
-        break
     return alg_dim_df
 
 
