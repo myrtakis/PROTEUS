@@ -1,0 +1,1602 @@
+{
+    "1": {
+        "roc_auc": {
+            "none_rf": {
+                "performance": 0.7,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 300,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_svm": {
+                "performance": 1.0,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 3
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_knn": {
+                "performance": 0.49709302325581395,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "all"
+            },
+            "ses_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.05
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 3,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  4  8  9 14 17 20 25 52 62 70 77 81 99]"
+            },
+            "ses_svm": {
+                "performance": 1.0,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.1
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "rbf",
+                        "gamma": 2,
+                        "C": 5,
+                        "degree": 0
+                    }
+                },
+                "sel_features": "[ 0  3  4  8  9 14 17 20 25 52 62 69 70 77 81 99]"
+            },
+            "ses_knn": {
+                "performance": 0.49127906976744184,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 3,
+                        "alpha": 0.1
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  4  8  9 14 17 20 25 52 62 70 77 81 99]"
+            },
+            "lasso_rf": {
+                "performance": 0.7,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 500,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  5  6  7  8  9 14 16 17 18 19 20 25 26 28 32 40 41 43 44 50\n 52 53 54 59 62 64 69 70 71 73 77 78 80 81 88 89 90 92 96 99]"
+            },
+            "lasso_svm": {
+                "performance": 1.0,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.001
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 2
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 12 13 14 16 17 18 19 20 22 25 26 28 32 40\n 41 42 43 44 45 47 50 52 53 54 55 56 57 59 62 64 68 69 70 71 72 73 76 77\n 78 80 81 83 86 88 89 90 92 93 94 96 98 99]"
+            },
+            "lasso_knn": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  5  6  7  8  9 14 16 17 18 19 20 25 26 28 32 40 41 43 44 50\n 52 53 54 59 62 64 69 70 71 73 77 78 80 81 88 89 90 92 96 99]"
+            }
+        }
+    },
+    "2": {
+        "roc_auc": {
+            "none_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_svm": {
+                "performance": 0.9,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 3
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_knn": {
+                "performance": 0.5,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 10
+                    }
+                },
+                "sel_features": "all"
+            },
+            "ses_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 3,
+                        "alpha": 0.05
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 300,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  4  6  8  9 14 25 70 81]"
+            },
+            "ses_svm": {
+                "performance": 0.9,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.1
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "rbf",
+                        "gamma": 5,
+                        "C": 5,
+                        "degree": 0
+                    }
+                },
+                "sel_features": "[ 0  3  4  6  8  9 14 25 39 43 44 64 70 77 81 89 92 99]"
+            },
+            "ses_knn": {
+                "performance": 0.797093023255814,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.2
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  3  4  6  7  8  9 14 16 17 25 39 40 43 44 50 64 70 71 77 81 89 92 99]"
+            },
+            "lasso_rf": {
+                "performance": 0.5,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 300,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  5  6  7  8  9 12 14 16 17 19 25 26 27 28 30 32 39 40 43 44\n 45 50 52 54 60 62 64 69 70 71 72 74 77 78 81 83 88 89 90 92 99]"
+            },
+            "lasso_svm": {
+                "performance": 0.9,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.001
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 3
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  5  6  7  8  9 12 13 14 16 17 19 20 23 25 26 27 28 29 30 32\n 39 40 41 43 44 45 46 47 50 52 53 54 55 56 59 60 62 63 64 66 69 70 71 72\n 73 74 77 78 81 83 84 85 88 89 90 92 94 99]"
+            },
+            "lasso_knn": {
+                "performance": 0.6941860465116279,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  5  6  7  8  9 12 14 16 17 19 25 26 27 28 30 32 39 40 43 44\n 45 50 52 54 60 62 64 69 70 71 72 74 77 78 81 83 88 89 90 92 99]"
+            }
+        }
+    },
+    "3": {
+        "roc_auc": {
+            "none_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 300,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_svm": {
+                "performance": 0.8,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 3
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_knn": {
+                "performance": 0.5,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 10
+                    }
+                },
+                "sel_features": "all"
+            },
+            "ses_rf": {
+                "performance": 0.5,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.05
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 3,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  4  6  8  9 64 70 77 92 99]"
+            },
+            "ses_svm": {
+                "performance": 0.8,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.1
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "rbf",
+                        "gamma": 5,
+                        "C": 5,
+                        "degree": 0
+                    }
+                },
+                "sel_features": "[ 0  3  4  6  7  8  9 14 25 28 64 70 77 92 99]"
+            },
+            "ses_knn": {
+                "performance": 0.49709302325581395,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.05
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  4  6  8  9 64 70 77 92 99]"
+            },
+            "lasso_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  5  6  7  8  9 14 16 19 25 26 27 28 30 32 40 43 44 48 50 54\n 62 64 69 70 71 72 73 77 78 81 83 88 89 90 92 94 98 99]"
+            },
+            "lasso_svm": {
+                "performance": 0.8,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.001
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 3
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  5  6  7  8  9 10 11 12 13 14 16 19 20 21 25 26 27 28 30 32\n 33 35 36 38 40 41 43 44 45 46 48 50 51 52 54 62 63 64 65 66 69 70 71 72\n 73 75 77 78 81 82 83 88 89 90 92 93 94 98 99]"
+            },
+            "lasso_knn": {
+                "performance": 0.7,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.001
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  5  6  7  8  9 10 11 12 13 14 16 19 20 21 25 26 27 28 30 32\n 33 35 36 38 40 41 43 44 45 46 48 50 51 52 54 62 63 64 65 66 69 70 71 72\n 73 75 77 78 81 82 83 88 89 90 92 93 94 98 99]"
+            }
+        }
+    },
+    "4": {
+        "roc_auc": {
+            "none_rf": {
+                "performance": 0.7,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_svm": {
+                "performance": 1.0,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 2
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_knn": {
+                "performance": 0.49709302325581395,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "all"
+            },
+            "ses_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 4,
+                        "alpha": 0.2
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 2,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  3  4  8  9 14 25 70 77 81 92 99]"
+            },
+            "ses_svm": {
+                "performance": 1.0,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.1
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "rbf",
+                        "gamma": 2,
+                        "C": 5,
+                        "degree": 0
+                    }
+                },
+                "sel_features": "[ 0  3  4  8  9 14 25 44 52 70 77 81 92 99]"
+            },
+            "ses_knn": {
+                "performance": 0.8,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 3,
+                        "alpha": 0.2
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  3  4  6  8  9 14 19 25 44 52 70 77 81 92 99]"
+            },
+            "lasso_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 500,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  5  6  7  8  9 14 16 17 19 20 25 26 28 30 32 38 41 43 44 45\n 49 50 52 53 54 55 60 62 64 69 70 71 72 77 78 81 88 89 90 92 99]"
+            },
+            "lasso_svm": {
+                "performance": 1.0,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.001
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 3
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 12 13 14 15 16 17 18 19 20 22 23 25 26 27\n 28 30 31 32 35 36 38 40 41 42 43 44 45 48 49 50 51 52 53 54 55 56 57 59\n 60 62 63 64 66 69 70 71 72 73 76 77 78 81 84 85 88 89 90 92 93 98 99]"
+            },
+            "lasso_knn": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  5  6  7  8  9 14 16 17 19 20 25 26 28 30 32 38 41 43 44 45\n 49 50 52 53 54 55 60 62 64 69 70 71 72 77 78 81 88 89 90 92 99]"
+            }
+        }
+    },
+    "5": {
+        "roc_auc": {
+            "none_rf": {
+                "performance": 0.8,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_svm": {
+                "performance": 1.0,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 3
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_knn": {
+                "performance": 0.49127906976744184,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "all"
+            },
+            "ses_rf": {
+                "performance": 0.7,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.2
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  6  8  9 14 17 20 25 28 41 44 52 62 69 70 72 73 77 81 89 99]"
+            },
+            "ses_svm": {
+                "performance": 0.997093023255814,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.2
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 3
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  6  8  9 14 17 20 25 28 41 44 52 62 69 70 72 73 77 81 89 99]"
+            },
+            "ses_knn": {
+                "performance": 0.5970930232558139,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.1
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  3  4  8  9 14 17 20 25 52 62 70 77 81 99]"
+            },
+            "lasso_rf": {
+                "performance": 0.8,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.001
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 11 13 14 16 17 18 19 20 22 25 26 28 30 32\n 35 37 38 40 41 43 44 45 47 48 50 51 52 53 55 56 59 60 62 63 64 68 69 70\n 71 72 73 75 77 78 80 81 82 83 84 85 86 87 88 89 90 92 94 95 98 99]"
+            },
+            "lasso_svm": {
+                "performance": 0.9941860465116279,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.001
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "linear",
+                        "gamma": "auto",
+                        "C": 1,
+                        "degree": 0
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 11 13 14 16 17 18 19 20 22 25 26 28 30 32\n 35 37 38 40 41 43 44 45 47 48 50 51 52 53 55 56 59 60 62 63 64 68 69 70\n 71 72 73 75 77 78 80 81 82 83 84 85 86 87 88 89 90 92 94 95 98 99]"
+            },
+            "lasso_knn": {
+                "performance": 0.49709302325581395,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 13 14 16 17 19 20 25 26 28 32 35 41 43 44\n 45 50 52 55 62 64 68 69 70 71 72 73 75 77 78 81 85 88 89 92 99]"
+            }
+        }
+    },
+    "6": {
+        "roc_auc": {
+            "none_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 500,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_svm": {
+                "performance": 1.0,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 2
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_knn": {
+                "performance": 0.5,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "all"
+            },
+            "ses_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 5,
+                        "alpha": 0.1
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 500,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  3  4  6  8  9 25 70 81 99]"
+            },
+            "ses_svm": {
+                "performance": 0.997093023255814,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 3,
+                        "alpha": 0.05
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 2,
+                        "C": 5,
+                        "degree": 3
+                    }
+                },
+                "sel_features": "[ 0  3  8  9 25 62 70 77 81 99]"
+            },
+            "ses_knn": {
+                "performance": 0.5,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 3,
+                        "alpha": 0.05
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  3  8  9 25 62 70 77 81 99]"
+            },
+            "lasso_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 300,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  5  6  7  8  9 13 14 16 17 19 20 25 26 27 28 30 32 41 44 45\n 47 50 52 53 54 59 62 64 69 70 71 72 73 77 78 81 88 89 92 99]"
+            },
+            "lasso_svm": {
+                "performance": 0.9883720930232558,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.001
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "linear",
+                        "gamma": "auto",
+                        "C": 5,
+                        "degree": 0
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 12 13 14 15 16 17 18 19 20 25 26 27 28 30\n 32 35 38 41 42 43 44 45 47 49 50 51 52 53 54 55 56 57 59 62 63 64 65 68\n 69 70 71 72 73 77 78 80 81 82 84 85 88 89 90 92 94 96 98 99]"
+            },
+            "lasso_knn": {
+                "performance": 0.5,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  5  6  7  8  9 13 14 16 17 19 20 25 26 27 28 30 32 41 44 45\n 47 50 52 53 54 59 62 64 69 70 71 72 73 77 78 81 88 89 92 99]"
+            }
+        }
+    },
+    "7": {
+        "roc_auc": {
+            "none_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_svm": {
+                "performance": 0.9,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 3
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_knn": {
+                "performance": 0.49709302325581395,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "all"
+            },
+            "ses_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.1
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 500,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  2  4  6  8  9 14 17 25 28 32 62 70 72 77 81 99]"
+            },
+            "ses_svm": {
+                "performance": 0.9,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.05
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "rbf",
+                        "gamma": 5,
+                        "C": 5,
+                        "degree": 0
+                    }
+                },
+                "sel_features": "[ 0  4  8  9 14 17 25 32 62 70 77 81]"
+            },
+            "ses_knn": {
+                "performance": 0.4941860465116279,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 5,
+                        "alpha": 0.1
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  8  9 13 14 17 70 77 92]"
+            },
+            "lasso_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 12 13 14 16 17 19 20 25 26 28 30 32 39 40\n 41 43 44 45 50 52 59 62 64 68 69 70 71 72 73 77 78 81 82 83 88 89 92 94\n 99]"
+            },
+            "lasso_svm": {
+                "performance": 0.797093023255814,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.001
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "linear",
+                        "gamma": "auto",
+                        "C": 1,
+                        "degree": 0
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 12 13 14 15 16 17 18 19 20 25 26 27 28 30\n 32 35 39 40 41 43 44 45 46 47 48 49 50 51 52 53 54 56 59 62 63 64 68 69\n 70 71 72 73 75 77 78 80 81 82 83 87 88 89 90 92 94 96 99]"
+            },
+            "lasso_knn": {
+                "performance": 0.5,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 12 13 14 16 17 19 20 25 26 28 30 32 39 40\n 41 43 44 45 50 52 59 62 64 68 69 70 71 72 73 77 78 81 82 83 88 89 92 94\n 99]"
+            }
+        }
+    },
+    "8": {
+        "roc_auc": {
+            "none_rf": {
+                "performance": 0.7,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_svm": {
+                "performance": 0.9,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 3
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_knn": {
+                "performance": 0.5,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 10
+                    }
+                },
+                "sel_features": "all"
+            },
+            "ses_rf": {
+                "performance": 0.7,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 4,
+                        "alpha": 0.05
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 2,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  3  8 14 17 25 70 77 81]"
+            },
+            "ses_svm": {
+                "performance": 0.9,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.05
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "rbf",
+                        "gamma": 2,
+                        "C": 5,
+                        "degree": 0
+                    }
+                },
+                "sel_features": "[ 0  3  6  8  9 14 17 25 28 70 77 81 92]"
+            },
+            "ses_knn": {
+                "performance": 0.7941860465116279,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 4,
+                        "alpha": 0.2
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  3  6  8  9 14 17 25 28 70 77 81 92 99]"
+            },
+            "lasso_rf": {
+                "performance": 0.7,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.001
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 10 12 13 14 16 17 18 19 25 26 27 28 30 32\n 38 40 41 43 44 45 50 52 53 55 58 59 60 62 63 64 66 67 69 70 71 72 73 74\n 77 78 80 81 82 83 86 87 88 89 90 92 94 95 96 97 99]"
+            },
+            "lasso_svm": {
+                "performance": 0.9,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.001
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "rbf",
+                        "gamma": 1,
+                        "C": 5,
+                        "degree": 0
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 10 12 13 14 16 17 18 19 25 26 27 28 30 32\n 38 40 41 43 44 45 50 52 53 55 58 59 60 62 63 64 66 67 69 70 71 72 73 74\n 77 78 80 81 82 83 86 87 88 89 90 92 94 95 96 97 99]"
+            },
+            "lasso_knn": {
+                "performance": 0.6970930232558139,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  5  6  7  8  9 13 14 16 17 19 25 26 28 30 32 40 41 43 44 45\n 50 52 55 60 62 64 69 70 71 72 73 74 77 78 81 82 83 88 89 90 92 99]"
+            }
+        }
+    },
+    "9": {
+        "roc_auc": {
+            "none_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_svm": {
+                "performance": 0.9883720930232558,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "linear",
+                        "gamma": "auto",
+                        "C": 1,
+                        "degree": 0
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_knn": {
+                "performance": 0.5,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 10
+                    }
+                },
+                "sel_features": "all"
+            },
+            "ses_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.2
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 300,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  6  8  9 14 16 17 25 26 27 28 30 32 40 43 52 64 70 71 77 81\n 88 89 92 99]"
+            },
+            "ses_svm": {
+                "performance": 1.0,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.1
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "rbf",
+                        "gamma": 2,
+                        "C": 5,
+                        "degree": 0
+                    }
+                },
+                "sel_features": "[ 0  3  6  8  9 14 16 17 25 26 30 32 43 70 77 81 92 99]"
+            },
+            "ses_knn": {
+                "performance": 0.5970930232558139,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 2,
+                        "alpha": 0.1
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  3  6  8  9 14 16 17 25 26 30 32 43 70 77 81 92 99]"
+            },
+            "lasso_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 12 13 14 16 17 19 20 25 26 27 28 30 32 35\n 38 40 41 43 44 45 50 52 62 64 65 69 70 71 72 77 78 81 88 89 90 92 94 99]"
+            },
+            "lasso_svm": {
+                "performance": 1.0,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.001
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 2
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 11 12 13 14 16 17 18 19 20 23 25 26 27 28\n 30 31 32 34 35 36 38 40 41 42 43 44 45 47 48 50 51 52 53 54 55 57 58 59\n 62 63 64 65 67 68 69 70 71 72 73 77 78 81 82 83 84 87 88 89 90 92 94 98\n 99]"
+            },
+            "lasso_knn": {
+                "performance": 0.897093023255814,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 12 13 14 16 17 19 20 25 26 27 28 30 32 35\n 38 40 41 43 44 45 50 52 62 64 65 69 70 71 72 77 78 81 88 89 90 92 94 99]"
+            }
+        }
+    },
+    "10": {
+        "roc_auc": {
+            "none_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_svm": {
+                "performance": 0.9,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 2
+                    }
+                },
+                "sel_features": "all"
+            },
+            "none_knn": {
+                "performance": 0.5,
+                "var_sel": {
+                    "alg_id": "none",
+                    "params": {}
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 10
+                    }
+                },
+                "sel_features": "all"
+            },
+            "ses_rf": {
+                "performance": 0.8,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 3,
+                        "alpha": 0.2
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  3  4  8  9 14 17 25 28 50 70 77 81 88 89 92 99]"
+            },
+            "ses_svm": {
+                "performance": 0.897093023255814,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 3,
+                        "alpha": 0.2
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 5,
+                        "degree": 3
+                    }
+                },
+                "sel_features": "[ 0  3  4  8  9 14 17 25 28 50 70 77 81 88 89 92 99]"
+            },
+            "ses_knn": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "ses",
+                    "params": {
+                        "max_k": 3,
+                        "alpha": 0.1
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  3  4  8  9 14 17 25 70 77 81 92 99]"
+            },
+            "lasso_rf": {
+                "performance": 0.6,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.001
+                    }
+                },
+                "classifier": {
+                    "alg_id": "rf",
+                    "params": {
+                        "n_estimators": 100,
+                        "min_samples_leaf": 1,
+                        "criterion": "entropy"
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 10 12 13 14 16 17 18 19 20 21 23 25 26 27\n 28 29 30 32 35 36 39 40 41 43 44 45 46 48 49 50 51 52 53 54 55 56 60 62\n 63 64 68 69 70 71 72 73 74 77 78 79 81 82 83 88 89 90 91 92 94 98 99]"
+            },
+            "lasso_svm": {
+                "performance": 0.9,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.001
+                    }
+                },
+                "classifier": {
+                    "alg_id": "svm",
+                    "params": {
+                        "kernel": "poly",
+                        "gamma": 1,
+                        "C": 1,
+                        "degree": 3
+                    }
+                },
+                "sel_features": "[ 0  1  2  3  4  5  6  7  8  9 10 12 13 14 16 17 18 19 20 21 23 25 26 27\n 28 29 30 32 35 36 39 40 41 43 44 45 46 48 49 50 51 52 53 54 55 56 60 62\n 63 64 68 69 70 71 72 73 74 77 78 79 81 82 83 88 89 90 91 92 94 98 99]"
+            },
+            "lasso_knn": {
+                "performance": 0.49709302325581395,
+                "var_sel": {
+                    "alg_id": "lasso",
+                    "params": {
+                        "alpha": 0.002
+                    }
+                },
+                "classifier": {
+                    "alg_id": "knn",
+                    "params": {
+                        "n_neighbors": 5
+                    }
+                },
+                "sel_features": "[ 0  2  3  4  5  6  7  8  9 12 14 16 17 19 21 25 26 28 32 39 40 41 43 44\n 45 48 50 52 54 60 62 64 69 70 71 72 73 74 77 78 81 83 88 89 92 98 99]"
+            }
+        }
+    }
+}
