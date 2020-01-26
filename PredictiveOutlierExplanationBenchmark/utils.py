@@ -169,30 +169,48 @@ def calc_feature_count(rfile, rel_features):
     return alg_feature_dict
 
 
-def construct_alg_features_dataframes(alg_dim_feature_dict):
+def get_rel_feature_with_group(f, rel_features):
+    for gid, features in rel_features.items():
+        if f in features:
+            return 'G' + str(gid) + '_F' + str(f)
+
+
+def construct_alg_features_dataframes(alg_dim_feature_dict, rel_features):
     alg_dim_df = {}
     for alg, dim_dict in alg_dim_feature_dict.items():
-        fcount_df = pd.DataFrame(columns=list(dim_dict.keys()))
+        fcount_df = pd.DataFrame()
         for dim, fcount in dim_dict.items():
+            dim_str = str(dim) + '-D'
             fcount = dict(collections.OrderedDict(sorted(fcount.items())))
             for rel_f, rel_f_count in fcount.items():
-                fcount_df.loc[rel_f, dim] = rel_f_count
+                rel_f_with_group = get_rel_feature_with_group(rel_f, rel_features)
+                fcount_df.loc[rel_f_with_group, dim_str] = rel_f_count
         alg_dim_df[alg] = fcount_df
     return alg_dim_df
+
+
+def heatmap_colobar_range(rfile):
+    with open(rfile) as json_file:
+        results = json.load(json_file)
+        reps = len(results.keys()) + 1
+        return list(range(reps))
 
 
 def feature_count_df(dir_path):
     result_files = get_results_files(dir_path, exclude='log', ending='json')
     alg_dim_feature_dict = {}
+    colorbar_range = None
     for v in get_dataset_paths(dir_path):
         for log, dataset in v.items():
             df = pd.read_csv(dataset)
             rel_features = get_relevant_features(df)
             rfile = find_result_file(result_files, log)
+            if colorbar_range is None:
+                colorbar_range = heatmap_colobar_range(rfile)
             dim = df.shape[1]-2
             for alg, fcount in calc_feature_count(rfile, rel_features).items():
                 if alg not in alg_dim_feature_dict:
                     alg_dim_feature_dict[alg] = {}
                 alg_dim_feature_dict[alg][dim] = fcount
-    return construct_alg_features_dataframes(alg_dim_feature_dict)
+    return construct_alg_features_dataframes(alg_dim_feature_dict, rel_features), colorbar_range
 
