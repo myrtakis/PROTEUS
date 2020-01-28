@@ -63,13 +63,11 @@ def plot_dim_experiment(args):
 
 
 def plot_features(args):
-    import pandas as pd
-    alg_dim_fcount_df, colorbar_range = feature_count_df(args.plot_features)
-    # exit()
+    alg_dim_fcount_df, alg_feature_mean_prec_dfs, colorbar_range = feature_count_df(args.plot_features)
 
     for alg, fcount_df in alg_dim_fcount_df.items():
         sns.heatmap(fcount_df, annot=True, cbar_kws={'label': 'Frequency', 'ticks': colorbar_range},
-                    annot_kws={'size':10}, xticklabels=False)
+                    annot_kws={'size':10}, xticklabels=False, vmin=min(colorbar_range), vmax=max(colorbar_range))
         sns.set({'axes.labelsize': 11})
         #plt.xlabel('Dataset Dimensionality')
         plt.ylabel('Relevant Features')
@@ -82,19 +80,19 @@ def plot_features(args):
         if not os.path.exists(args.savedir):
             os.makedirs(args.savedir)
         outputdir = os.path.join(args.savedir, title + '.png')
-        df = pd.DataFrame([[1,2,3,4,5]], columns=fcount_df.columns)
-        table = plt.table(cellText=df.values, colLabels=df.columns, loc='bottom', cellLoc='center')
+        alg_features_mean_prec_df = alg_feature_mean_prec_dfs[alg]
+        table = plt.table(cellText=alg_features_mean_prec_df.values, colLabels=alg_features_mean_prec_df.columns,
+                          loc='bottom', cellLoc='center')
         table.scale(1, 2)
         table.set_fontsize(12)
         for (row, col), cell in table.get_celld().items():
             if (row == 0) or (col == -1):
                 cell.set_text_props(fontproperties=FontProperties(weight='bold'))
                 cell.set_linewidth(0)
-        plt.subplots_adjust(bottom=0.3, hspace=1.0)
+        plt.subplots_adjust(left=0.2, bottom=0.3, hspace=1.0)
         print('Figure saved in ', outputdir)
         plt.savefig(outputdir, dpi=300, bbox_inches='tight', pad_inches=0.3)
         plt.clf()
-        break
 
 
 if __name__ == '__main__':

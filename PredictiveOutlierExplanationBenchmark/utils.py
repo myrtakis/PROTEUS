@@ -3,6 +3,7 @@ import os
 import collections
 import pandas as pd
 from itertools import chain
+import numpy as np
 
 
 def calculate_metrics_avg(results_json):
@@ -150,6 +151,7 @@ def init_alg_feature_dict(alg, alg_feature_dict, rel_features):
 def calc_feature_count(rfile, rel_features):
     metric = 'roc_auc'
     alg_feature_dict = {}
+    alg_feature_mean_precision_dict = {}
     with open(rfile) as json_file:
         results = json.load(json_file)
         reps = len(results.keys())
@@ -161,12 +163,18 @@ def calc_feature_count(rfile, rel_features):
                 sel_features = list(map(int, sel_features))
                 if alg not in alg_feature_dict:
                     alg_feature_dict = init_alg_feature_dict(alg, alg_feature_dict, rel_features)
+                    alg_feature_mean_precision_dict[alg] = []
+                rel_features_count = 0
                 for feature in sel_features:
                     if not feature_is_rel(feature, rel_features):
                         continue
+                    rel_features_count += 1
                     alg_feature_dict[alg][feature] += 1
                     assert alg_feature_dict[alg][feature] <= reps
-    return alg_feature_dict
+                alg_feature_mean_precision_dict[alg].append(rel_features_count / len(sel_features))
+    for alg, rep_precisions in alg_feature_mean_precision_dict.items():
+        alg_feature_mean_precision_dict[alg] = round((sum(rep_precisions) / len(rep_precisions)), 2)
+    return alg_feature_dict, alg_feature_mean_precision_dict
 
 
 def get_rel_feature_with_group(f, rel_features):
@@ -189,6 +197,13 @@ def construct_alg_features_dataframes(alg_dim_feature_dict, rel_features):
     return alg_dim_df
 
 
+def convert_alg_features_prec_to_dataframes(alg_features_precision_dict):
+    alg_features_precision_df_dict = {}
+    for alg, dim_mean_prec in alg_features_precision_dict.items():
+        alg_features_precision_df_dict[alg] = pd.DataFrame(data=dim_mean_prec, index=[0])
+    return alg_features_precision_df_dict
+
+
 def heatmap_colobar_range(rfile):
     with open(rfile) as json_file:
         results = json.load(json_file)
@@ -196,10 +211,20 @@ def heatmap_colobar_range(rfile):
         return list(range(reps))
 
 
+def update_dict(old_dict, new_dict, new_key):
+    for k, v in new_dict.items():
+        if k not in old_dict:
+            old_dict[k] = {}
+        old_dict[k][new_key] = v
+    return old_dict
+
+
 def feature_count_df(dir_path):
     result_files = get_results_files(dir_path, exclude='log', ending='json')
     alg_dim_feature_dict = {}
     colorbar_range = None
+    rel_features = []
+    alg_features_precision_dict = {}
     for v in get_dataset_paths(dir_path):
         for log, dataset in v.items():
             df = pd.read_csv(dataset)
@@ -208,9 +233,9 @@ def feature_count_df(dir_path):
             if colorbar_range is None:
                 colorbar_range = heatmap_colobar_range(rfile)
             dim = df.shape[1]-2
-            for alg, fcount in calc_feature_count(rfile, rel_features).items():
-                if alg not in alg_dim_feature_dict:
-                    alg_dim_feature_dict[alg] = {}
-                alg_dim_feature_dict[alg][dim] = fcount
-    return construct_alg_features_dataframes(alg_dim_feature_dict, rel_features), colorbar_range
-
+            curr_alg_feature_counts, curr_alg_feature_precision = calc_feature_count(rfile, rel_features)
+            alg_dim_feature_dict = update_dict(alg_dim_feature_dict, curr_alg_feature_counts, dim)
+            alg_features_precision_dict = update_dict(alg_features_precision_dict, curr_alg_feature_precision, dim)
+    return construct_alg_features_dataframes(alg_dim_feature_dict, rel_features), \
+           convert_alg_features_prec_to_dataframes(alg_features_precision_dict),\
+           colorbar_range
