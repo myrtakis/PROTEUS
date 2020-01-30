@@ -239,3 +239,46 @@ def feature_count_df(dir_path):
     return construct_alg_features_dataframes(alg_dim_feature_dict, rel_features), \
            convert_alg_features_prec_to_dataframes(alg_features_precision_dict),\
            colorbar_range
+
+
+def calc_mean_runtime(repetitions_results):
+    metric = 'roc_auc'
+    avg_runtime_dict = {'ses':0.0, 'lasso':0.0}
+    repetitions_runtime_dict = {}
+    for rep, val in repetitions_results.items():
+        repetitions_runtime_dict[rep] = {}
+        for alg_id, data in val[metric].items():
+            if 'none' in alg_id:
+                continue
+            # for the same repetition the var selection time is the same
+            if 'ses' in alg_id and 'ses' not in repetitions_runtime_dict[rep]:
+                repetitions_runtime_dict[rep]['ses'] = round(data['var_sel_elapsed_time'], 2)
+            if 'lasso' in alg_id and 'lasso' not in repetitions_runtime_dict[rep]:
+                repetitions_runtime_dict[rep]['lasso'] = round(data['var_sel_elapsed_time'], 2)
+    for rep, res in repetitions_runtime_dict.items():
+        for fselid, time in res.items():
+            avg_runtime_dict[fselid] += time
+    for fselid, time in avg_runtime_dict.items():
+        avg_runtime_dict[fselid] /= len(repetitions_runtime_dict)
+    return avg_runtime_dict
+
+
+def get_dim_runtime_dict(results_dir):
+    log_files = get_results_files(results_dir, contains='log')
+    fsel_dim_runtime_dict = {}
+    for logfile in log_files:
+        with open(logfile) as json_file:
+            log = json.load(json_file)
+            with open(log['config']) as conf_json:
+                config = json.load(conf_json)
+                for d, val in config['datasets'].items():
+                    df = pd.read_csv(val['dataset_path'])
+                dim = df.shape[1]-2
+                avg_run_time = calc_mean_runtime(log['repetitions'])
+                for fsel, time in avg_run_time.items():
+                    if fsel not in fsel_dim_runtime_dict:
+                        fsel_dim_runtime_dict[fsel] = {}
+                    fsel_dim_runtime_dict[fsel][dim] = time
+    for fsel, val in fsel_dim_runtime_dict.items():
+        fsel_dim_runtime_dict[fsel] = dict(collections.OrderedDict(sorted(val.items())))
+    return fsel_dim_runtime_dict

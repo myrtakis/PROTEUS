@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="abod_based" type="PythonConfigurationType" factoryName="Python" folderName="plotter_realdata">
+  <configuration default="false" name="runtime_oc50" type="PythonConfigurationType" factoryName="Python" folderName="runtime_dimexp" singleton="false">
     <module name="MxM" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/PredictiveOutlierExplanationBenchmark/plotter.py" />
-    <option name="PARAMETERS" value="-r results/real/abod_based -sdir figures/realexp/abod_based" />
+    <option name="PARAMETERS" value="-rt results/synthetic/dimexp/g1dmin4dmax5/ocluster50 -sdir figures/synthetic/dimexp/hics/runtime/ocluster50" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

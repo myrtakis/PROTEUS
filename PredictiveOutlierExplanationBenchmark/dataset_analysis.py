@@ -98,6 +98,15 @@ def get_files(dir_path):
     return fileslist
 
 
+def get_files_recursively(dir_path):
+    files = []
+    for r, d, f in os.walk(dir_path):
+        for file in f:
+            if file.endswith('.csv'):
+                files.append(os.path.join(r, file))
+    return files
+
+
 def outlier_differences(diffs):
     data_diffs = diffs.split(',')
     for i in range(len(data_diffs)):
@@ -110,6 +119,18 @@ def outlier_differences(diffs):
             print(os.path.splitext(os.path.basename(d1))[0], os.path.splitext(os.path.basename(d2))[0], diff)
 
 
+def print_datasets_statistics(datadir):
+    print('Dataset', '#samples', '#features', '#outliers', '%outlier ratio')
+    for f in get_files_recursively(datadir):
+        df = pd.read_csv(f)
+        outliers = df[df[is_anomaly_column] == 1].shape[0]
+        outlier_ratio = round(outliers / df.shape[0], 2)
+        features = df.shape[1] - 1
+        samples = df.shape[0]
+        dataset_name = os.path.splitext(os.path.basename(f))[0]
+        print(dataset_name, samples, features, outliers, outlier_ratio)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-tocsv', '--arfftocsv', help='Arff dataset path to convert to csv', default=None)
@@ -117,6 +138,7 @@ if __name__ == '__main__':
     parser.add_argument('-sv', '--saveviz', help='Directory to save the image.', default=None)
     parser.add_argument('-diff', '--differences', default=None, help='-datadiff d1,d2,d3', type=str)
     parser.add_argument('-sub', '--subspace', default=None, help='e.g. [2,3]')
+    parser.add_argument('-pstats', '--print_stats', default=None, help='-pstats <dir>')
     args = parser.parse_args()
     if args.arfftocsv is not None:
         arff_to_csv(args.arfftocsv)
@@ -126,4 +148,6 @@ if __name__ == '__main__':
         tsne_visualizer(args.visualise, args.saveviz)
     elif args.differences is not None:
         outlier_differences(args.differences)
+    elif args.print_stats is not None:
+        print_datasets_statistics(args.print_stats)
 
