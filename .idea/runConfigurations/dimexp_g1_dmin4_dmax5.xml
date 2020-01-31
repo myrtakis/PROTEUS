@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="dimexp_g1_dmin4_dmax5" type="CompoundRunConfigurationType">
-    <toRun name="plot_hics_g1dmin4dmax5_oc50" type="PythonConfigurationType" />
-    <toRun name="plot_hics_g1dmin4dmax5_oc25" type="PythonConfigurationType" />
-    <toRun name="plot_hics_g1dmin4dmax5_oc5" type="PythonConfigurationType" />
+  <configuration default="false" name="dimexp_g1_dmin4_dmax5" type="CompoundRunConfigurationType" factoryName="Compound Run Configuration">
+    <toRun type="PythonConfigurationType" name="plot_hics_g1dmin4dmax5_oc25" />
+    <toRun type="PythonConfigurationType" name="plot_hics_g1dmin4dmax5_oc5" />
+    <toRun type="PythonConfigurationType" name="plot_hics_g1dmin4dmax5_oc50" />
     <method v="2" />
   </configuration>
 </component>
