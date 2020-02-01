@@ -84,7 +84,6 @@ def plot_dim_experiment(args):
 
 def plot_features(args):
     alg_dim_fcount_df, alg_feature_mean_prec_dfs, colorbar_range = feature_count_df(args.plot_features)
-
     for alg, fcount_df in alg_dim_fcount_df.items():
         sns.heatmap(fcount_df, annot=True, cbar_kws={'label': 'Frequency', 'ticks': colorbar_range},
                     annot_kws={'size':10}, xticklabels=False, vmin=min(colorbar_range), vmax=max(colorbar_range))
@@ -101,6 +100,7 @@ def plot_features(args):
             os.makedirs(args.savedir)
         outputdir = os.path.join(args.savedir, title + '.png')
         alg_features_mean_prec_df = alg_feature_mean_prec_dfs[alg]
+        # To add row name just add to the plt.table function rowLabels=['Mean Precision']
         table = plt.table(cellText=alg_features_mean_prec_df.values, colLabels=alg_features_mean_prec_df.columns,
                           loc='bottom', cellLoc='center')
         table.scale(1, 2)

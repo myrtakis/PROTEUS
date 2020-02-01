@@ -188,7 +188,7 @@ def construct_alg_features_dataframes(alg_dim_feature_dict, rel_features):
     for alg, dim_dict in alg_dim_feature_dict.items():
         fcount_df = pd.DataFrame()
         for dim, fcount in dim_dict.items():
-            dim_str = str(dim) + '-D'
+            dim_str = str(dim) + '-d'
             fcount = dict(collections.OrderedDict(sorted(fcount.items())))
             for rel_f, rel_f_count in fcount.items():
                 rel_f_with_group = get_rel_feature_with_group(rel_f, rel_features)
@@ -235,7 +235,7 @@ def feature_count_df(dir_path):
             dim = df.shape[1]-2
             curr_alg_feature_counts, curr_alg_feature_precision = calc_feature_count(rfile, rel_features)
             alg_dim_feature_dict = update_dict(alg_dim_feature_dict, curr_alg_feature_counts, dim)
-            alg_features_precision_dict = update_dict(alg_features_precision_dict, curr_alg_feature_precision, dim)
+            alg_features_precision_dict = update_dict(alg_features_precision_dict, curr_alg_feature_precision, str(dim) + '-d')
     return construct_alg_features_dataframes(alg_dim_feature_dict, rel_features), \
            convert_alg_features_prec_to_dataframes(alg_features_precision_dict),\
            colorbar_range

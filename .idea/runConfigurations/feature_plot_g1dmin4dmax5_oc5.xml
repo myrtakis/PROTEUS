@@ -11,8 +11,9 @@
     <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
+    <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/PredictiveOutlierExplanationBenchmark/plotter.py" />
-    <option name="PARAMETERS" value="-f results/synthetic/dimexp/g1dmin4dmax5/ocluster5 -sdir figures/synthetic/feature_plot/g1dmin4dmax5/ocluster5 -t g1_dmin4_dmax5_ocluster5" />
+    <option name="PARAMETERS" value="-f results/synthetic/dimexp/g1dmin4dmax5/ocluster5 -sdir figures/synthetic/feature_plot/g1dmin4dmax5/ocluster5 -t g1_dmin4_dmax5_ocluster10" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
