@@ -180,7 +180,7 @@ def calc_feature_count(rfile, rel_features):
 def get_rel_feature_with_group(f, rel_features):
     for gid, features in rel_features.items():
         if f in features:
-            return 'G' + str(gid) + '_F' + str(f)
+            return 'S' + str(gid) + '_F' + str(f)
 
 
 def construct_alg_features_dataframes(alg_dim_feature_dict, rel_features):

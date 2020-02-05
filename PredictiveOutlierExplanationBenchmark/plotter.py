@@ -66,6 +66,8 @@ def plot_dim_experiment(args):
             y = list(dim_perfomances.values())
             if beautiful_x_ticks is None:
                 beautiful_x_ticks = [str(x) + '-d' for x in dim_perfomances.keys()]
+            if 'none_' in alg:
+                alg = alg.replace('none_', '')
             plt.plot(x, y, label=alg, linestyle='solid', marker=markers[counter])
             counter += 1
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.125), ncol=3, frameon=False, fontsize=14)
@@ -89,10 +91,9 @@ def plot_features(args):
                     annot_kws={'size':10}, xticklabels=False, vmin=min(colorbar_range), vmax=max(colorbar_range))
         sns.set({'axes.labelsize': 11})
         #plt.xlabel('Dataset Dimensionality')
-        plt.ylabel('Relevant Features')
-        plt.title(alg)
+        #plt.ylabel('Relevant Features')
         title = alg + '_' + ('' if args.title is None else args.title)
-        plt.title(title)
+        # plt.title(title)
         plt.tick_params(axis='x', labelsize=11)
         plt.tick_params(axis='y', labelsize=11)
         plt.yticks(rotation=45)
