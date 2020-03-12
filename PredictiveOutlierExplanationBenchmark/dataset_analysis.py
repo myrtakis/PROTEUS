@@ -23,37 +23,40 @@ def arff_to_csv(arff_dataset_path):
     df.to_csv(outputfile, index=False)
 
 
-def tsne_visualizer(dataset_path, savedir):
+def tsne_visualizer(df, savedir):
+    final_df = df.iloc[:, 0:df.shape[1]-2]
+    feat_cols = list(range(final_df.shape[1]))
+    final_df['y'] = df.iloc[:, df.shape[1]-1]
+    final_df['label'] = final_df['y'].apply(lambda i: str(i))
+    tsne_results = TSNE(n_components=2, random_state=0, perplexity=50).fit_transform(df.iloc[:, feat_cols])
+
+    final_df['tsne-2d-one'] = tsne_results[:, 0]
+    final_df['tsne-2d-two'] = tsne_results[:, 1]
+
+    colors = ["#383838", "#FF0B04"]
+
+    sns.scatterplot(
+        x="tsne-2d-one", y="tsne-2d-two",
+        hue="y",
+        palette=sns.color_palette(colors),
+        data=final_df,
+        legend="full",
+    )
+
+    dataset_name = os.path.splitext(os.path.basename(f))[0]
+    output = os.path.join(savedir, 'tsne_' + dataset_name + '.png')
+    if not os.path.exists(savedir):
+        os.makedirs(savedir)
+
+    plt.title(dataset_name)
+    plt.savefig(output, dpi=300)
+    plt.clf()
+
+
+def dataset_visualizer(dataset_path, savedir):
     fileslist = get_files(dataset_path)
     for f in fileslist:
-        df = pd.read_csv(f)
-        final_df = df.iloc[:, 0:df.shape[1]-2]
-        feat_cols = list(range(final_df.shape[1]))
-        final_df['y'] = df.iloc[:, df.shape[1]-1]
-        final_df['label'] = final_df['y'].apply(lambda i: str(i))
-        tsne_results = TSNE(n_components=2, random_state=0, perplexity=50).fit_transform(df.iloc[:, feat_cols])
-
-        final_df['tsne-2d-one'] = tsne_results[:, 0]
-        final_df['tsne-2d-two'] = tsne_results[:, 1]
-
-        colors = ["#383838", "#FF0B04"]
-
-        sns.scatterplot(
-            x="tsne-2d-one", y="tsne-2d-two",
-            hue="y",
-            palette=sns.color_palette(colors),
-            data=final_df,
-            legend="full",
-        )
-
-        dataset_name = os.path.splitext(os.path.basename(f))[0]
-        output = os.path.join(savedir, 'tsne_' + dataset_name + '.png')
-        if not os.path.exists(savedir):
-            os.makedirs(savedir)
-
-        plt.title(dataset_name)
-        plt.savefig(output, dpi=300)
-        plt.clf()
+        tsne_visualizer(pd.read_csv(f), savedir)
 
 
 def plot_2d_subspace(path_to_df, dims_str):
