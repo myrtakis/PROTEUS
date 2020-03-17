@@ -34,8 +34,41 @@ def run_feature_selection_algs():
         # break
 
 
-def visualize_ideal_features(features, min_dataset_dim):
+def visualize_ideal_features(group_dir, group_id):
+    files_path = {}
+    for r, d, f in os.walk(group_dir):
+        for file in f:
+            if file.endswith('.csv'):
+                files_path[os.path.basename(r)] = os.path.join(r, file)
+    for cluster_size, dataset_path in files_path.items():
+        df = pd.read_csv(dataset_path)
+        subspaces_as_int_list = get_subspaces_as_list(df)
+        df = df.drop(columns=['subspaces'])
+        fig_path = os.path.join('visualizations', 'synthetic', group_id, 'ideal', cluster_size)
+        if not os.path.exists(fig_path):
+            os.makedirs(fig_path)
+        for subspace in subspaces_as_int_list:
+            print('Visualizing ideal path of cluster', cluster_size, 'and subspace', subspace)
+            cols = ['is_anomaly']
+            cols.extend(df.columns[subspace])
+            subDf = df.loc[:, cols]
+            visualize_selected_features(subDf, subspace, fig_path)
+
+
+def visualize_best_selected_features(results):
     pass
+
+
+def get_subspaces_as_list(df):
+    subspaces = set(df.loc[df['subspaces'] != '-', 'subspaces'].values)
+    subspaces_as_list_ind = []
+    all_rel_features = set()
+    for s in subspaces:
+        subspace = list(map(int, s[s.index('[')+1: s.index(']')].split()))
+        subspaces_as_list_ind.append(subspace)
+        all_rel_features = all_rel_features.union(subspace)
+    subspaces_as_list_ind.append(list(all_rel_features))
+    return subspaces_as_list_ind
 
 
 def check_if_normalized(f):
@@ -61,4 +94,8 @@ def run_lasso(df):
 
 
 if __name__=='__main__':
-    run_feature_selection_algs()
+    # run_feature_selection_algs()
+    group1 = 'datasets/synthetic/hics/dimexp/g1dmin2dmax3'
+    group2 = 'datasets/synthetic/hics/dimexp/g1dmin4dmax5'
+    # visualize_ideal_features(group1, 'G1')
+    visualize_ideal_features(group2, 'G2')

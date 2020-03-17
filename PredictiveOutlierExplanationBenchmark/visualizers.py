@@ -1,6 +1,7 @@
+import os
 from collections import OrderedDict
 from functools import partial
-from time import time
+from time import time, strftime, gmtime
 
 from adjustText import adjust_text
 from multipledispatch import dispatch
@@ -158,8 +159,11 @@ def actual_features_vizualizations(df, feature_ids, savedir):
                         fontweight='bold',
                         # bbox={'facecolor': 'red', 'alpha': 0.8, 'pad': 1},
                         size=9)
-    plt.tight_layout()
-    plt.show()
+    # plt.tight_layout()
+    # plt.show()
+    dt_string = strftime("%d%m%Y%H%M%S", gmtime())
+    final_output = os.path.join(savedir, 'actual_viz_' + dt_string + '.png')
+    plt.savefig(final_output, dpi=300, bbox_inches='tight', pad_inches=0.1)
     plt.clf()
 
 
@@ -178,7 +182,7 @@ def dim_reduction_vizualizations(df, feature_ids, savedir):
                     'y_axis_name': 'Principal Component 2'
                     },
                't-SNE':
-                   {'method': manifold.TSNE(n_components=n_components, perplexity=40, random_state=0),
+                   {'method': manifold.TSNE(n_components=n_components, init='pca', perplexity=40, random_state=0),
                     'x_axis_name': 't-SNE Embedding 1',
                     'y_axis_name': 't-SNE Embedding 2'
                     }
@@ -211,9 +215,12 @@ def dim_reduction_vizualizations(df, feature_ids, savedir):
                                       size=9))
         adjust_text(texts, autoalign='')  # , arrowprops=dict(arrowstyle="->", color='black', lw=0.5, shrinkA=5))
 
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.subplots_adjust(top=0.8)
-    plt.show()
+    # plt.show()
+    dt_string = strftime("%d%m%Y%H%M%S", gmtime())
+    final_output = os.path.join(savedir, 'dim_reduction_' + dt_string + '.png')
+    plt.savefig(final_output, dpi=300, bbox_inches='tight', pad_inches=0.1)
     plt.clf()
 
 
