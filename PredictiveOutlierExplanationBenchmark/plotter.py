@@ -46,7 +46,7 @@ def draw_barplot(args):
                 title = title.replace('_results', '')
             if 'knn' in title:
                 title = title.replace('knn', 'db')
-            plt.title(title, fontsize=14)
+            #plt.title(title, fontsize=14)
             output = os.path.join(args.savedir, res_name + "_" + metric_id + '.png')
             if not os.path.exists(args.savedir):
                 os.makedirs(args.savedir)

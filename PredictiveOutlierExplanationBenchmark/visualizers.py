@@ -21,29 +21,38 @@ from sklearn.decomposition import FastICA
 from sklearn.manifold import Isomap
 
 
+def pca_visualization(df, feature_ids, savedir):
+    inliers = np.array(df.loc[df['is_anomaly'] == 0, 'is_anomaly'].index).tolist()
+    outliers = np.array(df.loc[df['is_anomaly'] == 1, 'is_anomaly'].index).tolist()
+    zindex_points = [*inliers, *outliers]
+    X = df.drop(columns=['is_anomaly'])
+    # Fixing z-index to be higher for outliers (they will be rendered last)
+    X = pd.concat([X.iloc[inliers], X.iloc[outliers]], axis=0)
 
-def pca_visualization(df, savedir):
-    pca = PCA(n_components=2)
-    principalComponents = pca.fit_transform(df.drop(columns=['is_anomaly']))
-    principalDf = pd.DataFrame(data=principalComponents
-                               , columns=['pc1', 'pc2'])
-    finalDf = pd.concat([principalDf, df[['is_anomaly']]], axis=1)
-    fig = plt.figure(figsize=(8, 8))
-    ax = fig.add_subplot(1, 1, 1)
-    ax.set_xlabel('Principal Component 1', fontsize=15)
-    ax.set_ylabel('Principal Component 2', fontsize=15)
-    ax.set_title('2 component PCA', fontsize=20)
-    targets = [0, 1]
-    colors = ['b', 'r']
-    for target, color in zip(targets, colors):
-        indicesToKeep = finalDf['is_anomaly'] == target
-        ax.scatter(finalDf.loc[indicesToKeep, 'pc1']
-                   , finalDf.loc[indicesToKeep, 'pc2']
-                   , c=color
-                   )
-    ax.legend(targets)
-    ax.grid()
-    plt.show()
+    n_components = 2
+
+    plt.suptitle('Features = ' + str(feature_ids), fontsize=12, wrap=True)
+
+    colors = get_colors(len(inliers), len(outliers))
+    pca = PCA(n_components=n_components, random_state=0)
+    t0 = time()
+    X_tr = pca.fit_transform(X)
+    t1 = time()
+    plt.scatter(X_tr[:, 0], X_tr[:, 1], c=colors, cmap='Spectral')
+    plt.title("%s (%.2g sec)" % ('PCA', t1 - t0))
+    plt.xlabel('Principal Component 1')
+    plt.ylabel('Principal Component 2')
+    texts = []
+    for j, p in enumerate(zindex_points):
+        if p in outliers:
+            texts.append(plt.text(X_tr[j, 0], X_tr[j, 1], p, color='brown', fontweight='bold', size=9))
+    adjust_text(texts, autoalign='')
+    dt_string = strftime("%d%m%Y%H%M%S", gmtime())
+    if not os.path.exists(savedir):
+        os.makedirs(savedir)
+    final_output = os.path.join(savedir, 'pca_' + dt_string + '.png')
+    plt.savefig(final_output, dpi=300, bbox_inches='tight', pad_inches=0.1)
+    # plt.show()
     plt.clf()
 
 
@@ -81,43 +90,50 @@ def umap_visualization(df, savedir):
     plt.show()
 
 
-def tsne_visualization(df, savedir):
-    final_df = df.iloc[:, 0:df.shape[1] - 2]
-    feat_cols = list(range(final_df.shape[1]))
-    final_df['y'] = df.iloc[:, df.shape[1] - 1]
-    final_df['label'] = final_df['y'].apply(lambda i: str(i))
-    tsne_results = manifold.TSNE(n_components=2, random_state=0, perplexity=30).fit_transform(df.iloc[:, feat_cols])
+def tsne_visualization(df, feature_ids, savedir):
+    inliers = np.array(df.loc[df['is_anomaly'] == 0, 'is_anomaly'].index).tolist()
+    outliers = np.array(df.loc[df['is_anomaly'] == 1, 'is_anomaly'].index).tolist()
+    zindex_points = [*inliers, *outliers]
+    X = df.drop(columns=['is_anomaly'])
+    # Fixing z-index to be higher for outliers (they will be rendered last)
+    X = pd.concat([X.iloc[inliers], X.iloc[outliers]], axis=0)
 
-    final_df['tsne-axis-one'] = tsne_results[:, 0]
-    final_df['tsne-axis-two'] = tsne_results[:, 1]
+    n_components = 2
 
-    colors = ["#383838", "#FF0B04"]
+    plt.suptitle('Features = ' + str(feature_ids), fontsize=12, wrap=True)
 
-    sns.scatterplot(
-        x="tsne-axis-one", y="tsne-axis-two",
-        hue="y",
-        palette=sns.color_palette(colors),
-        data=final_df,
-        legend="full",
-    )
-
-    # dataset_name = os.path.splitext(os.path.basename(f))[0]
-    # output = os.path.join(savedir, 'tsne_' + dataset_name + '.png')
-    # if not os.path.exists(savedir):
-    #     os.makedirs(savedir)
-
-    # plt.title(dataset_name)
-    # plt.savefig(output, dpi=300)
-    plt.show()
+    colors = get_colors(len(inliers), len(outliers))
+    tsne = manifold.TSNE(n_components=n_components, init='pca', perplexity=40, random_state=0)
+    t0 = time()
+    X_tr = tsne.fit_transform(X)
+    t1 = time()
+    plt.scatter(X_tr[:, 0], X_tr[:, 1], c=colors, cmap='Spectral')
+    plt.title("%s (%.2g sec)" % ('t-SNE', t1 - t0))
+    plt.xlabel('t-SNE Embedding 1')
+    plt.ylabel('t-SNE Embedding 2')
+    texts = []
+    for j, p in enumerate(zindex_points):
+        if p in outliers:
+            texts.append(plt.text(X_tr[j, 0], X_tr[j, 1], p, color='brown', fontweight='bold', size=9))
+    adjust_text(texts, autoalign='')
+    dt_string = strftime("%d%m%Y%H%M%S", gmtime())
+    if not os.path.exists(savedir):
+        os.makedirs(savedir)
+    final_output = os.path.join(savedir, 'tsne_' + dt_string + '.png')
+    plt.savefig(final_output, dpi=300, bbox_inches='tight', pad_inches=0.1)
     plt.clf()
 
 
 def visualize_selected_features(df, feature_ids, savedir):
-    if len(feature_ids) >= 3:
+    if len(feature_ids) > 3:
+        dim_reduction_vizualizations(df, feature_ids, savedir)
+    elif len(feature_ids) == 3:
         dim_reduction_vizualizations(df, feature_ids, savedir)
         actual_features_vizualizations(df, feature_ids, savedir)
-    else:
+    elif len(feature_ids) == 2:
         actual_features_vizualizations(df, feature_ids, savedir)
+    else:
+        print('Only one feature to visualize...')
 
 
 def actual_features_vizualizations(df, feature_ids, savedir):
@@ -218,6 +234,8 @@ def dim_reduction_vizualizations(df, feature_ids, savedir):
     # plt.tight_layout()
     plt.subplots_adjust(top=0.8)
     # plt.show()
+    if not os.path.exists(savedir):
+        os.makedirs(savedir)
     dt_string = strftime("%d%m%Y%H%M%S", gmtime())
     final_output = os.path.join(savedir, 'dim_reduction_' + dt_string + '.png')
     plt.savefig(final_output, dpi=300, bbox_inches='tight', pad_inches=0.1)
