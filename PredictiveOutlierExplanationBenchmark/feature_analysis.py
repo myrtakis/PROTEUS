@@ -158,8 +158,8 @@ def get_df_by_log(log_file_path):
 
 # MAIN #
 
-
 if __name__=='__main__':
+    print('Feature Analysis Main')
     # run_feature_selection_algs()
 
     # Visualize Ideal Features
@@ -172,21 +172,30 @@ if __name__=='__main__':
     # Visualize specific features
 
     # features = [' var_0003',' var_0036',' var_0023',' var_0069',' var_0025',' var_0075',' var_0024',' var_0089',' var_0041',' var_0006',' var_0060',' var_0031',' var_0019',' var_0059',' var_0028',' var_0035',' var_0030',' var_0004',' var_0040',' var_0048',' var_0037',' var_0047',' var_0002',' var_0014',' var_0029','is_anomaly']
-    # df = pd.read_csv('datasets/synthetic/hics/dimexp/g1dmin2dmax3/ocluster50/hics_100_g1_dmin2_dmax3.csv').loc[:, features]
-    # tsne_visualization(df, [], 'visualizations/jadFeatures/g1/ocluster50/tsne')
-    # pca_visualization(df, [], 'visualizations/jadFeatures/g1/ocluster50/pca')
+    df = pd.read_csv('datasets/real/lof_based/electricity_lof.csv')
+    tsne_visualization(df, [], 'visualizations/original/real/lof_based/electricity')
+    pca_visualization(df, [], 'visualizations/original/real/lof_based/electricity')
 
     # Visualize Features of best configurations
 
     # find_best_selected_features('results/synthetic/dimexp/g1dmin2dmax3/ocluster5/hics100_g1_dmin2_dmax3.json',
-    #                             'datasets/synthetic/hics/dimexp/g1dmin2dmax3/ocluster5/hics_100_g1_dmin2_dmax3.csv',
-    #                             'visualizations/best_configs/synthetic/g1/original_data')
+    #                                 'datasets/synthetic/hics/dimexp/g1dmin2dmax3/ocluster5/hics_100_g1_dmin2_dmax3.csv',
+    #                                 'visualizations/best_configs/synthetic/g1/original_data')
     # find_best_selected_features('results/synthetic/dimexp/g1dmin2dmax3/ocluster25/hics100_g1_dmin2_dmax3.json',
-    #                             'datasets/synthetic/hics/dimexp/g1dmin2dmax3/ocluster25/hics_100_g1_dmin2_dmax3.csv',
-    #                             'visualizations/best_configs/synthetic/g1/ocluster25')
+    #                                 'datasets/synthetic/hics/dimexp/g1dmin2dmax3/ocluster25/hics_100_g1_dmin2_dmax3.csv',
+    #                                 'visualizations/best_configs/synthetic/g1/ocluster25')
     # find_best_selected_features('results/synthetic/dimexp/g1dmin2dmax3/ocluster50/hics100_g1_dmin2_dmax3.json',
-    #                             'datasets/synthetic/hics/dimexp/g1dmin2dmax3/ocluster50/hics_100_g1_dmin2_dmax3.csv',
-    #                             'visualizations/best_configs/synthetic/g1/ocluster50')
+    #                                 'datasets/synthetic/hics/dimexp/g1dmin2dmax3/ocluster50/hics_100_g1_dmin2_dmax3.csv',
+    #                                 'visualizations/best_configs/synthetic/g1/ocluster50')
+    # find_best_selected_features('results/synthetic/dimexp/g1dmin4dmax5/ocluster5/hics100_g1_dmin4_dmax5.json',
+    #                             'datasets/synthetic/hics/dimexp/g1dmin4dmax5/ocluster5/hics_100_g1_dmin4_dmax5.csv',
+    #                             'visualizations/best_configs/synthetic/g2/original_data')
+    # find_best_selected_features('results/synthetic/dimexp/g1dmin4dmax5/ocluster25/hics100_g1_dmin4_dmax5.json',
+    #                             'datasets/synthetic/hics/dimexp/g1dmin4dmax5/ocluster25/hics_100_g1_dmin4_dmax5.csv',
+    #                             'visualizations/best_configs/synthetic/g2/ocluster25')
+    # find_best_selected_features('results/synthetic/dimexp/g1dmin4dmax5/ocluster50/hics100_g1_dmin4_dmax5.json',
+    #                             'datasets/synthetic/hics/dimexp/g1dmin4dmax5/ocluster50/hics_100_g1_dmin4_dmax5.csv',
+    #                             'visualizations/best_configs/synthetic/g2/ocluster50')
 
     # find_best_selected_features('results/real/lof_based/breast_lof_results.json',
     #                             'datasets/real/lof_based/breast_lof.csv',
@@ -194,7 +203,7 @@ if __name__=='__main__':
     # find_best_selected_features('results/real/lof_based/breast_diag_lof_results.json',
     #                             'datasets/real/lof_based/breast_diagnostic_lof.csv',
     #                             'visualizations/best_configs/real/lof_based/breast_diag')
-    find_best_selected_features('results/real/lof_based/electricity_lof_results.json',
-                                'datasets/real/lof_based/electricity_lof.csv',
-                                'visualizations/best_configs/real/lof_based/electricity')
+    # find_best_selected_features('results/real/lof_based/electricity_lof_results.json',
+    #                             'datasets/real/lof_based/electricity_lof.csv',
+    #                             'visualizations/best_configs/real/lof_based/electricity')
 
