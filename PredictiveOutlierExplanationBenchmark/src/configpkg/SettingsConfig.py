@@ -5,25 +5,35 @@ class SettingsConfig:
 
     def __init__(self):
         self.__SETTINGS_KEY = 'settings'
-        self.__DATASET_KEY = 'dataset'
-        self.__OUTPUT_FOLDER_KEY = "output_folder"
+        self.__TASK_KEY = 'task'
         self.__FOLDS_KEY = "kfolds"
-        self.__ANOMALY_COL_KEY = "is_anomaly_column"
-        self.__SUBSPACE_COL_KEY = "subspace_column"
-        self.__TOP_K_POINTS_TO_EXPLAIN = "top_k_points_to_explain"
+        self.__TEST_SIZE_KEY = "test_size"
+        self.__TOP_K_POINTS_TO_EXPLAIN_KEY = "top_k_points_to_explain"
+        self.__PSEUDO_SAMPLES_KEY = 'pseudo_samples_per_outlier'
         self.__default_output_folder = os.path.join("results")
         self.__settings_json_obj = None
 
     def setup(self, settings_json_obj):
         self.__settings_json_obj = settings_json_obj[self.__SETTINGS_KEY]
 
-    def get_dataset_path(self):
-        return self.__settings_json_obj[self.__DATASET_KEY]
+    def get_task(self):
+        return self.__settings_json_obj[self.__TASK_KEY]
 
-    def get_output_folder(self):
-        if self.__OUTPUT_FOLDER_KEY not in self.__settings_json_obj:
-            return os.path.join(self.__default_output_folder, self.__DATASET_KEY)
+    def task_is_classification(self):
+        return self.get_task() == 'classification'
+
+    def get_folds(self):
+        return self.__settings_json_obj[self.__FOLDS_KEY]
+
+    def get_test_size(self):
+        return self.__settings_json_obj[self.__TEST_SIZE_KEY]
+
+    def get_top_k_points_to_explain(self):
+        assert self.__TASK_KEY == 'regression' or self.__TASK_KEY == 'classification'
+        if self.__TASK_KEY == 'regression':
+            return None
         else:
-            return self.__settings_json_obj[self.__OUTPUT_FOLDER_KEY]
+            return self.__settings_json_obj[self.__TOP_K_POINTS_TO_EXPLAIN_KEY]
 
-    def
+    def get_pseudo_samples_num(self):
+        return self.__settings_json_obj[self.__PSEUDO_SAMPLES_KEY]

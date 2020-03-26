@@ -8,3 +8,9 @@ class FeatureSelectionConfig:
 
     def setup(self, feature_selection_json_obj):
         self.__feature_selection_json_obj = feature_selection_json_obj[self.__FEATURE_SELECTION_KEY]
+
+    def get_id(self):
+        return self.__feature_selection_json_obj[self.__ID_KEY]
+
+    def get_params(self):
+        return self.__feature_selection_json_obj[self.__PARAMS_KEY]
