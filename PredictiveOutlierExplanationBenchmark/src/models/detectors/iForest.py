@@ -29,6 +29,7 @@ class iForest:
             if predictions is None:
                 predictions = tmp_arr
             else:
-                predictions = np.vstack((predictions, tmp_arr)).T
+                predictions = np.vstack((predictions, tmp_arr))
+        predictions = predictions.T
         return np.average(predictions, axis=1)
 

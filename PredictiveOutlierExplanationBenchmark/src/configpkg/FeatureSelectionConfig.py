@@ -1,16 +1,21 @@
 class FeatureSelectionConfig:
 
+    __FEATURE_SELECTION_KEY = "feature_selection"
+    __ID_KEY = "id"
+    __PARAMS_KEY = "params"
+    __feature_selection_json_obj = None
+
     def __init__(self):
-        self.__FEATURE_SELECTION_KEY = "feature_selection"
-        self.__ID_KEY = "id"
-        self.__PARAMS_KEY = "params"
-        self.__feature_selection_json_obj = None
+        pass
 
-    def setup(self, feature_selection_json_obj):
-        self.__feature_selection_json_obj = feature_selection_json_obj[self.__FEATURE_SELECTION_KEY]
+    @staticmethod
+    def setup(config_json_obj):
+        FeatureSelectionConfig.__feature_selection_json_obj = config_json_obj[FeatureSelectionConfig.__FEATURE_SELECTION_KEY]
 
-    def get_id(self):
-        return self.__feature_selection_json_obj[self.__ID_KEY]
+    @staticmethod
+    def get_id():
+        return FeatureSelectionConfig.__feature_selection_json_obj[FeatureSelectionConfig.__ID_KEY]
 
-    def get_params(self):
-        return self.__feature_selection_json_obj[self.__PARAMS_KEY]
+    @staticmethod
+    def get_params():
+        return FeatureSelectionConfig.__feature_selection_json_obj[FeatureSelectionConfig.__PARAMS_KEY]

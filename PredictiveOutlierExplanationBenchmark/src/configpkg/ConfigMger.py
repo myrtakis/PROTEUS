@@ -8,49 +8,29 @@ from PredictiveOutlierExplanationBenchmark.src.configpkg.DatasetConfig import *
 
 class ConfigMger:
 
-    def __init__(self, path):
-        self.__SettingsConf = SettingsConfig()
-        self.__DetectorConf = DetectorConfig()
-        self.__ClassifiersConf = ClassifiersConfig()
-        self.__FeatureSelectionConf = FeatureSelectionConfig()
-        self.__DatasetConf = DatasetConfig()
-        self.__config_path = path
-        with open(path) as json_file:
-            self.__config_data = json.load(json_file)
+    __config_path = None
+    __config_data = None
+
+    def __init__(self):
+        pass
 
     # Base Functions
-
-    def setup_configs(self):
-        self.__SettingsConf.setup(self.__config_data)
-        self.__DetectorConf.setup(self.__config_data)
-        self.__ClassifiersConf.setup(self.__config_data)
-        self.__FeatureSelectionConf.setup(self.__config_data)
-        self.__DatasetConf.setup(self.__config_data)
+    @staticmethod
+    def setup_configs(path):
+        with open(path) as json_file:
+            ConfigMger.__config_data = json.load(json_file)
+        SettingsConfig.setup(ConfigMger.__config_data)
+        DetectorConfig.setup(ConfigMger.__config_data)
+        ClassifiersConfig.setup(ConfigMger.__config_data)
+        FeatureSelectionConfig.setup(ConfigMger.__config_data)
+        DatasetConfig.setup(ConfigMger.__config_data)
 
     # Getter Functions
 
-    def get_config_path(self):
-        return self.__config_path
+    @staticmethod
+    def get_config_path():
+        return ConfigMger.__config_path
 
-    def get_config_data(self):
-        return self.__config_data
-
-    def get_SettingsConf(self):
-        return self.__SettingsConf
-
-    def get_DetectorConf(self):
-        return self.__DetectorConf
-
-    def get_ClassifiersConf(self):
-        return self.__ClassifiersConf
-
-    def get_FeatureSelectionConf(self):
-        return self.__FeatureSelectionConf
-
-    def get_DatasetConf(self):
-        return self.__DatasetConf
-
-    # Util Functions
-
-    def model_configurations(self):
-        pass
+    @staticmethod
+    def get_config_data():
+        return ConfigMger.__config_data

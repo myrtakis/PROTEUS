@@ -3,37 +3,48 @@ import os
 
 class SettingsConfig:
 
+    __SETTINGS_KEY = 'settings'
+    __TASK_KEY = 'task'
+    __FOLDS_KEY = "kfolds"
+    __TEST_SIZE_KEY = "test_size"
+    __TOP_K_POINTS_TO_EXPLAIN_KEY = "top_k_points_to_explain"
+    __PSEUDO_SAMPLES_KEY = 'pseudo_samples_per_outlier'
+    __default_output_folder = os.path.join("results")
+    __settings_json_obj = None
+
     def __init__(self):
-        self.__SETTINGS_KEY = 'settings'
-        self.__TASK_KEY = 'task'
-        self.__FOLDS_KEY = "kfolds"
-        self.__TEST_SIZE_KEY = "test_size"
-        self.__TOP_K_POINTS_TO_EXPLAIN_KEY = "top_k_points_to_explain"
-        self.__PSEUDO_SAMPLES_KEY = 'pseudo_samples_per_outlier'
-        self.__default_output_folder = os.path.join("results")
-        self.__settings_json_obj = None
+        pass
 
-    def setup(self, settings_json_obj):
-        self.__settings_json_obj = settings_json_obj[self.__SETTINGS_KEY]
+    @staticmethod
+    def setup(config_json_obj):
+        SettingsConfig.__settings_json_obj = config_json_obj[SettingsConfig.__SETTINGS_KEY]
 
-    def get_task(self):
-        return self.__settings_json_obj[self.__TASK_KEY]
+    @staticmethod
+    def get_task():
+        task = SettingsConfig.__settings_json_obj[SettingsConfig.__TASK_KEY]
+        assert task == 'regression' or task == 'classification', "Task should be either 'regression' or 'classification'"
+        return task
 
-    def task_is_classification(self):
-        return self.get_task() == 'classification'
+    @staticmethod
+    def is_classification_task():
+        return SettingsConfig.get_task() == 'classification'
 
-    def get_folds(self):
-        return self.__settings_json_obj[self.__FOLDS_KEY]
+    @staticmethod
+    def get_folds():
+        return SettingsConfig.__settings_json_obj[SettingsConfig.__FOLDS_KEY]
 
-    def get_test_size(self):
-        return self.__settings_json_obj[self.__TEST_SIZE_KEY]
+    @staticmethod
+    def get_test_size():
+        return SettingsConfig.__settings_json_obj[SettingsConfig.__TEST_SIZE_KEY]
 
-    def get_top_k_points_to_explain(self):
-        assert self.__TASK_KEY == 'regression' or self.__TASK_KEY == 'classification'
-        if self.__TASK_KEY == 'regression':
-            return None
+    @staticmethod
+    def get_top_k_points_to_explain():
+        assert SettingsConfig.is_classification_task(), "Top-k points to explain applies only to classification task"
+        return SettingsConfig.__settings_json_obj[SettingsConfig.__TOP_K_POINTS_TO_EXPLAIN_KEY]
+
+    @staticmethod
+    def get_pseudo_samples_array():
+        if SettingsConfig.__PSEUDO_SAMPLES_KEY in SettingsConfig.__settings_json_obj:
+            return SettingsConfig.__settings_json_obj[SettingsConfig.__PSEUDO_SAMPLES_KEY]
         else:
-            return self.__settings_json_obj[self.__TOP_K_POINTS_TO_EXPLAIN_KEY]
-
-    def get_pseudo_samples_num(self):
-        return self.__settings_json_obj[self.__PSEUDO_SAMPLES_KEY]
+            return None

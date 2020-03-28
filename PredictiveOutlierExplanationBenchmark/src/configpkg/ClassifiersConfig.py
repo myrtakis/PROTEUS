@@ -1,28 +1,36 @@
 class ClassifiersConfig:
 
+    __CLASSIFIERS_KEY = "classifiers"
+    __ID_KEY = "id"
+    __PARAMS_KEY = "params"
+    __OMIT_COMBINATIONS_KEY = "omit_combinations"
+    __PRIME_PARAM_KEY = "prime_param"
+    __COMBS_KEY = "combs"
+    __classifier_json_obj = None
+
     def __init__(self):
-        self.__CLASSIFIERS_KEY = "classifiers"
-        self.__ID_KEY = "id"
-        self.__PARAMS_KEY = "params"
-        self.__OMIT_COMBINATIONS_KEY = "omit_combinations"
-        self.__PRIME_PARAM_KEY = "prime_param"
-        self.__COMBS_KEY = "combs"
-        self.__classifier_json_obj = None
+        pass
 
-    def setup(self, classifier_json_obj):
-        self.__classifier_json_obj = classifier_json_obj[self.__CLASSIFIERS_KEY]
+    @staticmethod
+    def setup(config_json_obj):
+        ClassifiersConfig.__classifier_json_obj = config_json_obj[ClassifiersConfig.__CLASSIFIERS_KEY]
 
-    def get_id(self):
-        return self.__classifier_json_obj[self.__ID_KEY]
+    @staticmethod
+    def get_id():
+        return ClassifiersConfig.__classifier_json_obj[ClassifiersConfig.__ID_KEY]
 
-    def get_params(self):
-        return self.__classifier_json_obj[self.__PARAMS_KEY]
+    @staticmethod
+    def get_params():
+        return ClassifiersConfig.__classifier_json_obj[ClassifiersConfig.__PARAMS_KEY]
 
-    def get_omit_combinations(self):
-        return self.__classifier_json_obj[self.__OMIT_COMBINATIONS_KEY]
+    @staticmethod
+    def get_omit_combinations():
+        return ClassifiersConfig.__classifier_json_obj[ClassifiersConfig.__OMIT_COMBINATIONS_KEY]
 
-    def get_prime_param_key(self):
-        return self.__PRIME_PARAM_KEY
+    @staticmethod
+    def get_prime_param_key():
+        return ClassifiersConfig.__PRIME_PARAM_KEY
 
-    def get_combs_key(self):
-        return self.__COMBS_KEY
+    @staticmethod
+    def get_combs_key():
+        return ClassifiersConfig.__COMBS_KEY
