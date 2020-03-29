@@ -16,21 +16,26 @@ class ClassifiersConfig:
         ClassifiersConfig.__classifier_json_obj = config_json_obj[ClassifiersConfig.__CLASSIFIERS_KEY]
 
     @staticmethod
-    def get_id():
-        return ClassifiersConfig.__classifier_json_obj[ClassifiersConfig.__ID_KEY]
+    def list_all_classifiers():
+        assert ClassifiersConfig.__classifier_json_obj is not None
+        return ClassifiersConfig.__classifier_json_obj
 
     @staticmethod
-    def get_params():
-        return ClassifiersConfig.__classifier_json_obj[ClassifiersConfig.__PARAMS_KEY]
+    def id_key():
+        return ClassifiersConfig.__ID_KEY
 
     @staticmethod
-    def get_omit_combinations():
-        return ClassifiersConfig.__classifier_json_obj[ClassifiersConfig.__OMIT_COMBINATIONS_KEY]
+    def params_key():
+        return ClassifiersConfig.__PARAMS_KEY
 
     @staticmethod
-    def get_prime_param_key():
+    def omit_combinations_key():
+        return ClassifiersConfig.__OMIT_COMBINATIONS_KEY
+
+    @staticmethod
+    def prime_param_key():
         return ClassifiersConfig.__PRIME_PARAM_KEY
 
     @staticmethod
-    def get_combs_key():
+    def combs_key():
         return ClassifiersConfig.__COMBS_KEY

@@ -1,1 +1,1 @@
-from PredictiveOutlierExplanationBenchmark.src.pipeline import *
+from PredictiveOutlierExplanationBenchmark.src.pipeline.Pipeline import Pipeline

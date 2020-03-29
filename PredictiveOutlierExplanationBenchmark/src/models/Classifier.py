@@ -1,62 +1,69 @@
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
+from PredictiveOutlierExplanationBenchmark.src.models.classifiers import *
+from PredictiveOutlierExplanationBenchmark.src.configpkg.ClassifiersConfig import ClassifiersConfig
 
 
 class Classifier:
 
-    def __init__(self, classifier_obj):
-        self.__classifiers = {
-            'rf': {'train': self.__train_random_forest, 'predict': self.__predict_random_forest},
-            'svm': {'train': self.__train_svm, 'predict': self.__predict_svm},
-            'knn': {'train': self.__train_knn, 'predict': self.__predict_knn}
-        }
-        assert classifier_obj['id'] in self.__classifiers
-        self.__classifier_obj = classifier_obj
-        self.__model = None
-        self.__predictions = None
+    __algorithms = {
+        'rf': RandomForest,
+        'svm': SVM,
+        'knn': KNN
+    }
 
-    # Base Functions
+    __PREDICTIONS_KEY = 'predictions'
+    __EFFECTIVENESS_KEY = 'effectiveness'
+    __TIME_KEY = 'time'
+
+    def __init__(self, classifier_obj):
+        assert classifier_obj[ClassifiersConfig.id_key()] in Classifier.__algorithms
+        self.__classifier_obj = classifier_obj
+        self.__params = classifier_obj[ClassifiersConfig.params_key()]
+        self.__id = classifier_obj[ClassifiersConfig.id_key()]
+        self.__predictions = None
+        self.__time = None
+        self.__effectiveness = None
+        self.__model = None
 
     def train(self, X_train, Y_train):
-        train_func = self.__classifiers[self.__classifier_obj['id']]['train']
-        self.__model = train_func(self.__classifier_obj['params'], X_train, Y_train)
+        clf = Classifier.__algorithms[self.__id]
+        self.__model = clf(self.__params).train(X_train, Y_train)
 
     def predict(self, X_test):
-        assert self.__model is not None
-        predict_func = self.__classifiers[self.__classifier_obj['id']]['predict']
-        self.__predictions = predict_func(X_test)
+        self.__predictions = self.__model.predict(X_test)
+        return self.__predictions
 
-    # Model Train
+    def set_time(self, time):
+        self.__time = time
 
-    def __train_random_forest(self, params, X_train, Y_train):
-        return RandomForestClassifier(n_estimators=params['n_estimators'],
-                                      min_samples_leaf=params['min_samples_leaf'],
-                                      criterion=params['criterion']).fit(X_train, Y_train)
+    def set_effectiveness(self, effectiveness):
+        self.__effectiveness = effectiveness
 
-    def __train_knn(self, params, X_train, Y_train):
-        return KNeighborsClassifier(n_neighbors=params['n_neighbors']).fit(X_train, Y_train)
+    def get_time(self):
+        return self.__time
 
-    def __train_svm(self, params, X_train, Y_train):
-        if str(params['gamma']).lower() == 'na':
-            params['gamma'] = 'auto'
-        if str(params['degree']).lower() == 'na':
-            params['degree'] = 0
-        return SVC(gamma=params['gamma'], kernel=params['kernel'], C=params['C'],
-                   degree=params['degree']).fit(X_train, Y_train)
-
-    # Models Predict
-
-    def __predict_random_forest(self, X_test):
-        return self.__model.predict(X_test)
-
-    def __predict_svm(self, X_test):
-        return self.__model.predict(X_test)
-
-    def __predict_knn(self, X_test):
-        return self.__model.predict(X_test)
-
-    # Getter Functions
+    def get_params(self):
+        return self.__params
 
     def get_predictions(self):
         return self.__predictions
+
+    def get_effectiveness(self):
+        return self.__effectiveness
+
+    def to_dict(self):
+        self.__classifier_obj[Classifier.__EFFECTIVENESS_KEY] = self.__effectiveness
+        self.__classifier_obj[Classifier.__TIME_KEY] = self.__time
+        self.__classifier_obj[Classifier.__PREDICTIONS_KEY] = self.__predictions
+        return self.__classifier_obj
+
+    @staticmethod
+    def predictions_key():
+        return Classifier.__PREDICTIONS_KEY
+
+    @staticmethod
+    def time_key():
+        return Classifier.__TIME_KEY
+
+    @staticmethod
+    def effectiveness_key():
+        return Classifier.__EFFECTIVENESS_KEY

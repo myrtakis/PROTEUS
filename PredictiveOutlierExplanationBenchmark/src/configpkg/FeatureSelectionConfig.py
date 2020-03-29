@@ -13,9 +13,14 @@ class FeatureSelectionConfig:
         FeatureSelectionConfig.__feature_selection_json_obj = config_json_obj[FeatureSelectionConfig.__FEATURE_SELECTION_KEY]
 
     @staticmethod
-    def get_id():
-        return FeatureSelectionConfig.__feature_selection_json_obj[FeatureSelectionConfig.__ID_KEY]
+    def list_all_feature_selection_algs():
+        assert FeatureSelectionConfig.__feature_selection_json_obj is not None
+        return FeatureSelectionConfig.__feature_selection_json_obj
 
     @staticmethod
-    def get_params():
-        return FeatureSelectionConfig.__feature_selection_json_obj[FeatureSelectionConfig.__PARAMS_KEY]
+    def id_key():
+        return FeatureSelectionConfig.__ID_KEY
+
+    @staticmethod
+    def params_key():
+        return FeatureSelectionConfig.__PARAMS_KEY
