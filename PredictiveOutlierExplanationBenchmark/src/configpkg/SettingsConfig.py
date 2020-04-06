@@ -10,7 +10,7 @@ class SettingsConfig:
     __REPETITIONS_KEY = "repetitions"
     __TOP_K_POINTS_TO_EXPLAIN_KEY = "top_k_points_to_explain"
     __PSEUDO_SAMPLES_KEY = 'pseudo_samples_per_outlier'
-    __default_output_folder = os.path.join("results")
+    __default_output_folder = os.path.join("old_results")
     __settings_json_obj = None
 
     def __init__(self):

@@ -24,3 +24,7 @@ class FeatureSelectionConfig:
     @staticmethod
     def params_key():
         return FeatureSelectionConfig.__PARAMS_KEY
+
+    @staticmethod
+    def feature_selection_key():
+        return FeatureSelectionConfig.__FEATURE_SELECTION_KEY

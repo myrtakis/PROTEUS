@@ -178,32 +178,32 @@ if __name__=='__main__':
 
     # Visualize Features of best configurations
 
-    # find_best_selected_features('results/synthetic/dimexp/g1dmin2dmax3/ocluster5/hics100_g1_dmin2_dmax3.json',
+    # find_best_selected_features('old_results/synthetic/dimexp/g1dmin2dmax3/ocluster5/hics100_g1_dmin2_dmax3.json',
     #                                 'datasets/synthetic/hics/dimexp/g1dmin2dmax3/ocluster5/hics_100_g1.csv',
     #                                 'visualizations/best_configs/synthetic/g1/original_data')
-    # find_best_selected_features('results/synthetic/dimexp/g1dmin2dmax3/ocluster25/hics100_g1_dmin2_dmax3.json',
+    # find_best_selected_features('old_results/synthetic/dimexp/g1dmin2dmax3/ocluster25/hics100_g1_dmin2_dmax3.json',
     #                                 'datasets/synthetic/hics/dimexp/g1dmin2dmax3/ocluster25/hics_100_g1.csv',
     #                                 'visualizations/best_configs/synthetic/g1/ocluster25')
-    # find_best_selected_features('results/synthetic/dimexp/g1dmin2dmax3/ocluster50/hics100_g1_dmin2_dmax3.json',
+    # find_best_selected_features('old_results/synthetic/dimexp/g1dmin2dmax3/ocluster50/hics100_g1_dmin2_dmax3.json',
     #                                 'datasets/synthetic/hics/dimexp/g1dmin2dmax3/ocluster50/hics_100_g1.csv',
     #                                 'visualizations/best_configs/synthetic/g1/ocluster50')
-    # find_best_selected_features('results/synthetic/dimexp/g1dmin4dmax5/ocluster5/hics100_g1_dmin4_dmax5.json',
+    # find_best_selected_features('old_results/synthetic/dimexp/g1dmin4dmax5/ocluster5/hics100_g1_dmin4_dmax5.json',
     #                             'datasets/synthetic/hics/dimexp/g1dmin4dmax5/ocluster5/hics_100_g2.csv',
     #                             'visualizations/best_configs/synthetic/g2/original_data')
-    # find_best_selected_features('results/synthetic/dimexp/g1dmin4dmax5/ocluster25/hics100_g1_dmin4_dmax5.json',
+    # find_best_selected_features('old_results/synthetic/dimexp/g1dmin4dmax5/ocluster25/hics100_g1_dmin4_dmax5.json',
     #                             'datasets/synthetic/hics/dimexp/g1dmin4dmax5/ocluster25/hics_100_g2.csv',
     #                             'visualizations/best_configs/synthetic/g2/ocluster25')
-    # find_best_selected_features('results/synthetic/dimexp/g1dmin4dmax5/ocluster50/hics100_g1_dmin4_dmax5.json',
+    # find_best_selected_features('old_results/synthetic/dimexp/g1dmin4dmax5/ocluster50/hics100_g1_dmin4_dmax5.json',
     #                             'datasets/synthetic/hics/dimexp/g1dmin4dmax5/ocluster50/hics_100_g2.csv',
     #                             'visualizations/best_configs/synthetic/g2/ocluster50')
 
-    # find_best_selected_features('results/real/lof_based/breast_lof_results.json',
+    # find_best_selected_features('old_results/real/lof_based/breast_lof_results.json',
     #                             'datasets/real/lof_based/breast_lof.csv',
     #                             'visualizations/best_configs/real/lof_based/breast')
-    # find_best_selected_features('results/real/lof_based/breast_diag_lof_results.json',
+    # find_best_selected_features('old_results/real/lof_based/breast_diag_lof_results.json',
     #                             'datasets/real/lof_based/breast_diagnostic_lof.csv',
     #                             'visualizations/best_configs/real/lof_based/breast_diag')
-    # find_best_selected_features('results/real/lof_based/electricity_lof_results.json',
+    # find_best_selected_features('old_results/real/lof_based/electricity_lof_results.json',
     #                             'datasets/real/lof_based/electricity_lof.csv',
     #                             'visualizations/best_configs/real/lof_based/electricity')
 

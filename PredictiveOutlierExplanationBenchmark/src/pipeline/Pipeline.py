@@ -1,5 +1,6 @@
 from PredictiveOutlierExplanationBenchmark.src.configpkg import *
 from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import *
+from PredictiveOutlierExplanationBenchmark.src.utils.ResultsWriter import ResultsWriter
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Detection import detect_outliers
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Benchmark import Benchmark
 from PredictiveOutlierExplanationBenchmark.src.pipeline.DatasetTransformer import Transfomer
@@ -17,14 +18,17 @@ class Pipeline:
                                    DatasetConfig.get_subspace_column_name())
         datasets_for_cv = {}
         dataset_detected_outliers, detector, threshold = detect_outliers(original_dataset)
-        datasets_for_cv['original'] = dataset_detected_outliers
+        datasets_for_cv[0] = dataset_detected_outliers
         pseudo_samples_array = SettingsConfig.get_pseudo_samples_array()
         if pseudo_samples_array is not None:
             assert SettingsConfig.is_classification_task(), "Pseudo samples are allowed only in classification task"
             datasets_for_cv.update(Pipeline.__add_datasets_with_pseudo_samples(dataset_detected_outliers, detector,
                                                                                threshold, pseudo_samples_array))
-        for dataset_key, dataset in datasets_for_cv.items():
-            Benchmark.run(dataset)
+        print('Running Dataset:', DatasetConfig.get_dataset_path())
+        for pseudo_samples, dataset in datasets_for_cv.items():
+            benchmark_dict, best_model_dict = Benchmark.run(pseudo_samples, dataset)
+            rw = ResultsWriter(benchmark_dict, best_model_dict, pseudo_samples, dataset)
+            rw.write()
 
     # Util Functions
 
@@ -35,5 +39,5 @@ class Pipeline:
             if ps_num == 0:
                 continue
             dataset = Transfomer.add_pseudo_samples_naive(dataset_detected_outliers, ps_num, detector, threshold)
-            datasets_with_pseudo_samples[str(ps_num) + '_pseudo_samples'] = dataset
+            datasets_with_pseudo_samples[ps_num] = dataset
         return datasets_with_pseudo_samples

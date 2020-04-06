@@ -23,7 +23,7 @@
   "feature_selection": [
     {
       "id": "none",
-      "params": []
+      "params": {}
     },
     {
       "id": "ses",

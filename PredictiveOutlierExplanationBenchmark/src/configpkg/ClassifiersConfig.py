@@ -21,6 +21,10 @@ class ClassifiersConfig:
         return ClassifiersConfig.__classifier_json_obj
 
     @staticmethod
+    def classifier_key():
+        return ClassifiersConfig.__CLASSIFIERS_KEY
+
+    @staticmethod
     def id_key():
         return ClassifiersConfig.__ID_KEY
 

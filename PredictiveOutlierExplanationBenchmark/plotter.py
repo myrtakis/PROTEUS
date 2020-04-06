@@ -144,8 +144,8 @@ def plot_runtime_cluster_size(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="""Plot benchmark results.""")
-    parser.add_argument('-r', '--results', help='The results file (json file).', default=None)
+    parser = argparse.ArgumentParser(description="""Plot benchmark old_results.""")
+    parser.add_argument('-r', '--old_results', help='The old_results file (json file).', default=None)
     parser.add_argument('-dimexp', help='-dimexp dir', default=None)
     parser.add_argument('-sdir', '--savedir', help='The directory of the created plots.', required=True)
     parser.add_argument('-f', '--plot_features', default=None)

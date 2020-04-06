@@ -268,7 +268,7 @@ def manifold_visualizations(df, savedir):
                                      random_state=0)
     methods['UMAP'] = umap.UMAP(n_neighbors=n_neighbors, random_state=0, n_components=n_components)
 
-    # Plot results
+    # Plot old_results
     for i, (label, method) in enumerate(methods.items()):
         t0 = time()
         X_tr = method.fit_transform(X)

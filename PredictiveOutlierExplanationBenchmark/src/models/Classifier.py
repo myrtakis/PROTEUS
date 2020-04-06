@@ -10,9 +10,8 @@ class Classifier:
         'knn': KNN
     }
 
-    __PREDICTIONS_KEY = 'predictions'
-    __EFFECTIVENESS_KEY = 'effectiveness'
-    __TIME_KEY = 'time'
+    PREDICTIONS_KEY = 'predictions'
+    TIME_KEY = 'time'
 
     def __init__(self, classifier_obj):
         assert classifier_obj[ClassifiersConfig.id_key()] in Classifier.__algorithms
@@ -21,12 +20,15 @@ class Classifier:
         self.__id = classifier_obj[ClassifiersConfig.id_key()]
         self.__predictions = None
         self.__time = None
-        self.__effectiveness = None
         self.__model = None
+
+    def __str__(self):
+        return self.to_dict()
 
     def train(self, X_train, Y_train):
         clf = Classifier.__algorithms[self.__id]
         self.__model = clf(self.__params).train(X_train, Y_train)
+        return self
 
     def predict(self, X_test):
         self.__predictions = self.__model.predict(X_test)
@@ -35,35 +37,31 @@ class Classifier:
     def set_time(self, time):
         self.__time = time
 
-    def set_effectiveness(self, effectiveness):
-        self.__effectiveness = effectiveness
-
     def get_time(self):
         return self.__time
 
     def get_params(self):
         return self.__params
 
+    def get_id(self):
+        return self.__id
+
     def get_predictions(self):
         return self.__predictions
 
-    def get_effectiveness(self):
-        return self.__effectiveness
+    def get_config(self):
+        return self.__classifier_obj
 
     def to_dict(self):
-        self.__classifier_obj[Classifier.__EFFECTIVENESS_KEY] = self.__effectiveness
-        self.__classifier_obj[Classifier.__TIME_KEY] = self.__time
-        self.__classifier_obj[Classifier.__PREDICTIONS_KEY] = self.__predictions
-        return self.__classifier_obj
+        classifier_dict = self.__classifier_obj
+        classifier_dict[Classifier.TIME_KEY] = self.__time
+        classifier_dict[Classifier.PREDICTIONS_KEY] = list(self.__predictions)
+        return classifier_dict
 
     @staticmethod
     def predictions_key():
-        return Classifier.__PREDICTIONS_KEY
+        return Classifier.PREDICTIONS_KEY
 
     @staticmethod
     def time_key():
-        return Classifier.__TIME_KEY
-
-    @staticmethod
-    def effectiveness_key():
-        return Classifier.__EFFECTIVENESS_KEY
+        return Classifier.TIME_KEY
