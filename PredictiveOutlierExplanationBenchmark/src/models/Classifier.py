@@ -32,6 +32,7 @@ class Classifier:
 
     def predict(self, X_test):
         self.__predictions = self.__model.predict(X_test)
+        self.__convert_predictions_to_int_type()
         return self.__predictions
 
     def set_time(self, time):
@@ -57,6 +58,9 @@ class Classifier:
         classifier_dict[Classifier.TIME_KEY] = self.__time
         classifier_dict[Classifier.PREDICTIONS_KEY] = list(self.__predictions)
         return classifier_dict
+
+    def __convert_predictions_to_int_type(self):
+        self.__predictions = [int(x) for x in self.__predictions]
 
     @staticmethod
     def predictions_key():

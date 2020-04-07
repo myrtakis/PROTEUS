@@ -7,7 +7,8 @@ class FeatureSelection:
     __algorithms = {
         "none": AllFeatures,
         "ses": SES,
-        "lasso": LASSO
+        "lasso": LASSO,
+        'fbed': FBED
     }
 
     FEATURES_KEY = 'features'
@@ -37,6 +38,8 @@ class FeatureSelection:
     def run(self, X_train, Y_train):
         fsel = FeatureSelection.__algorithms[self.__id]
         self.__features, self.__equivalent_features = fsel(self.__params).run(X_train, Y_train)
+        self.__convert_features_to_int_type()
+        self.__convert_equiv_features_to_int_type()
         return self
 
     def set_time(self, time):
@@ -69,3 +72,11 @@ class FeatureSelection:
             fsel_as_dict[FeatureSelection.EQUIVALENT_FEATURES_KEY] = ''
         fsel_as_dict[FeatureSelection.TIME_KEY] = self.__time
         return fsel_as_dict
+
+    def __convert_features_to_int_type(self):
+        if len(self.__features) > 0:
+            self.__features = [int(x) for x in self.__features]
+
+    def __convert_equiv_features_to_int_type(self):
+        if self.__equivalent_features is not None:
+            self.__equivalent_features = [[int(x) for x in lst] for lst in self.__equivalent_features]

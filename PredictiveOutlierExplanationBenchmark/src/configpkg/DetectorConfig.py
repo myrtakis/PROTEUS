@@ -19,3 +19,15 @@ class DetectorConfig:
     @staticmethod
     def get_params():
         return DetectorConfig.__detector_json_obj[DetectorConfig.__PARAMS_KEY]
+
+    @staticmethod
+    def id_key():
+        return DetectorConfig.__ID_KEY
+
+    @staticmethod
+    def detector_key():
+        return DetectorConfig.__DETECTOR_KEY
+
+    @staticmethod
+    def params_key():
+        return DetectorConfig.__PARAMS_KEY

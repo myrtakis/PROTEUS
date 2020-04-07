@@ -3,6 +3,7 @@ from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import Dataset
 from PredictiveOutlierExplanationBenchmark.src.configpkg.SettingsConfig import SettingsConfig
 from math import floor
 import numpy as np
+from PredictiveOutlierExplanationBenchmark.src.utils.metrics import calculate_all_metrics
 
 
 def detect_outliers(dataset):
@@ -10,11 +11,13 @@ def detect_outliers(dataset):
     detector.train(dataset.get_X())
     scores = detector.score_samples()
     if SettingsConfig.is_classification_task():
-        dataset, threshold = create_dataset_classification(SettingsConfig.get_top_k_points_to_explain(), dataset, scores)
-        return dataset, detector, threshold
+        new_dataset, threshold = create_dataset_classification(SettingsConfig.get_top_k_points_to_explain(), dataset, scores)
+        detector.set_labels(dataset.get_Y())
+        detector.set_effectiveness(assess_detector(new_dataset.get_Y(), dataset.get_Y()))
+        return new_dataset, detector, threshold
     else:
-        dataset, threshold = create_dataset_regression(dataset, scores)
-        return dataset, detector, threshold
+        new_dataset, threshold = create_dataset_regression(dataset, scores)
+        return new_dataset, detector, threshold
 
 
 def create_dataset_classification(top_k_points, dataset, scores):
@@ -43,3 +46,8 @@ def create_dataset_regression(dataset, scores):
     new_dataset = Dataset(df, dataset.get_anomaly_column_name(), dataset.get_subspace_column_name())
     threshold = None
     return new_dataset, threshold
+
+
+def assess_detector(y_pred, y_true):
+    assert SettingsConfig.is_classification_task()
+    return calculate_all_metrics(y_true, y_pred)

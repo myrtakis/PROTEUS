@@ -17,18 +17,23 @@ class Pipeline:
         original_dataset = Dataset(DatasetConfig.get_dataset_path(), DatasetConfig.get_anomaly_column_name(),
                                    DatasetConfig.get_subspace_column_name())
         datasets_for_cv = {}
-        dataset_detected_outliers, detector, threshold = detect_outliers(original_dataset)
-        datasets_for_cv[0] = dataset_detected_outliers
+        dataset_with_detected_outliers, detector, threshold = detect_outliers(original_dataset)
+        datasets_for_cv[0] = dataset_with_detected_outliers
         pseudo_samples_array = SettingsConfig.get_pseudo_samples_array()
         if pseudo_samples_array is not None:
             assert SettingsConfig.is_classification_task(), "Pseudo samples are allowed only in classification task"
-            datasets_for_cv.update(Pipeline.__add_datasets_with_pseudo_samples(dataset_detected_outliers, detector,
+            datasets_for_cv.update(Pipeline.__add_datasets_with_pseudo_samples(dataset_with_detected_outliers, detector,
                                                                                threshold, pseudo_samples_array))
+        datasets_for_cv[0] = original_dataset # todo delete this line (debugging)
         print('Running Dataset:', DatasetConfig.get_dataset_path())
+        rw = None
         for pseudo_samples, dataset in datasets_for_cv.items():
-            benchmark_dict, best_model_dict = Benchmark.run(pseudo_samples, dataset)
-            rw = ResultsWriter(benchmark_dict, best_model_dict, pseudo_samples, dataset)
-            rw.write()
+            benchmark_dict, best_model_dict, train_test_indices_dict = Benchmark.run(pseudo_samples, dataset)
+            rw = ResultsWriter(benchmark_dict, best_model_dict, train_test_indices_dict, pseudo_samples, dataset)
+            rw.write_results()
+        rw.write_detector_info_file(detector)
+        rw.create_navigator_file()
+
 
     # Util Functions
 

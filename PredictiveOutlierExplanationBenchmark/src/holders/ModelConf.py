@@ -1,3 +1,7 @@
+from PredictiveOutlierExplanationBenchmark.src.configpkg.FeatureSelectionConfig import FeatureSelectionConfig
+from PredictiveOutlierExplanationBenchmark.src.configpkg.ClassifiersConfig import ClassifiersConfig
+
+
 class ModelConf:
 
     def __init__(self, fsel, clf, conf_id):
@@ -39,3 +43,10 @@ class ModelConf:
     def get_effectiveness(self):
         assert self.__effectiveness is not None
         return self.__effectiveness
+
+    def to_dict(self):
+        return {
+            **{'effectiveness': self.get_effectiveness()},
+            **{FeatureSelectionConfig.feature_selection_key(): self.get_fsel().to_dict()},
+            **{ClassifiersConfig.classifier_key(): self.get_clf().to_dict()}
+        }
