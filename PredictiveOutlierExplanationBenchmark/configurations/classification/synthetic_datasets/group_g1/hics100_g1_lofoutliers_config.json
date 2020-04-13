@@ -3,22 +3,21 @@
     "task": "classification",
     "test_size": 0.2,
     "kfolds": 5,
-    "repetitions": 10,
+    "repetitions": 2,
     "top_k_points_to_explain": 0.05,
-    "pseudo_samples_per_outlier": [1, 3, 5]
+    "pseudo_samples_per_outlier": [5]
   },
 
   "dataset": {
-    "path": "../datasets/synthetic/hics/group_g1/hics_20_g1.csv",
+    "path": "../datasets/synthetic/hics/group_g1/hics_100_g1.csv",
     "is_anomaly_column": "is_anomaly",
     "subspace_column": "subspaces"
   },
 
   "detector": {
-    "id": "iforest",
+    "id": "lof",
     "params": {
-      "max_samples": 256,
-      "n_estimators": 100
+      "n_neighbors": 15
     }
   },
 
@@ -30,7 +29,7 @@
     {
       "id": "ses",
       "params": {
-        "max_k": [2, 3, 4, 5],
+        "max_k": [2, 3],
         "alpha": [0.05, 0.1, 0.2]
        }
     },
@@ -74,7 +73,7 @@
     {
       "id": "knn",
       "params": {
-        "n_neighbors": [5, 10, 15, 25]
+        "n_neighbors": [5, 15, 25]
       }
     }
   ]

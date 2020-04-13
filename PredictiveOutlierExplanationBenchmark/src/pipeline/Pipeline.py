@@ -11,6 +11,10 @@ class Pipeline:
     def __init__(self):
         pass
 
+    # TODO ###################################################
+    # Recall if you want to explain only the best detector among the available ones
+    ##########################################################
+
     @staticmethod
     def run(config_file_path, save_dir):
         ConfigMger.setup_configs(config_file_path)
@@ -24,7 +28,10 @@ class Pipeline:
             assert SettingsConfig.is_classification_task(), "Pseudo samples are allowed only in classification task"
             datasets_for_cv.update(Pipeline.__add_datasets_with_pseudo_samples(dataset_with_detected_outliers, detector,
                                                                                threshold, pseudo_samples_array))
-        datasets_for_cv[0] = original_dataset # todo delete this line (debugging)
+
+        # todo delete this line (debugging)
+        datasets_for_cv[0] = original_dataset
+
         print('Running Dataset:', DatasetConfig.get_dataset_path())
         rw = None
         for pseudo_samples, dataset in datasets_for_cv.items():

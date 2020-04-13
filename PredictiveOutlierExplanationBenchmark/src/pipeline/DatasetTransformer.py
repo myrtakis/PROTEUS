@@ -28,7 +28,7 @@ class Transfomer:
         assert pseudo_samples_df.shape[0] == total_pseudo_samples
         pseudo_samples_scores = detector.predict(pseudo_samples_df)
         pseudo_samples_labels = np.zeros(len(pseudo_samples_scores))
-        pseudo_samples_labels[np.where(pseudo_samples_scores > threshold)] = 1
+        pseudo_samples_labels[np.where(np.array(pseudo_samples_scores) > threshold)] = 1
         new_dataset = Transfomer.__dataset_with_anomaly_column(dataset, new_df, pseudo_samples_labels, pseudo_samples_indices)
         return new_dataset
 
