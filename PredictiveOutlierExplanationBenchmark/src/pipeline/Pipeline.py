@@ -25,7 +25,7 @@ class Pipeline:
                                                                                threshold, pseudo_samples_array))
 
         # todo delete this line (debugging)
-        datasets_for_cv[0] = original_dataset
+        # datasets_for_cv[0] = original_dataset
 
         print('Running Dataset:', DatasetConfig.get_dataset_path())
         rw = None

@@ -1,6 +1,5 @@
 from pyod.models.sod import SOD
-import numpy as np
-
+import pandas as pd
 
 class Sod:
 
@@ -15,4 +14,6 @@ class Sod:
         return self.__clf.decision_scores_
 
     def predict_scores(self, new_samples):
+        if isinstance(new_samples, pd.DataFrame):
+            new_samples = new_samples.values
         return self.__clf.decision_function(new_samples)
