@@ -3,25 +3,39 @@ from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import Dataset
 from PredictiveOutlierExplanationBenchmark.src.configpkg.SettingsConfig import SettingsConfig
 from math import floor
 import numpy as np
-from PredictiveOutlierExplanationBenchmark.src.utils.metrics import calculate_all_metrics
+from PredictiveOutlierExplanationBenchmark.src.utils.metrics import calculate_roc_auc
 
 
 def detect_outliers(dataset):
-    detector = Detector()
-    detector.train(dataset.get_X())
-    scores = detector.score_samples()
+    detectors_arr = Detector.init_detectors()
+    best_detector = select_best_detector(detectors_arr, dataset)
     if SettingsConfig.is_classification_task():
-        new_dataset, threshold = create_dataset_classification(SettingsConfig.get_top_k_points_to_explain(), dataset, scores)
-        detector.set_labels(dataset.get_Y())
-        detector.set_effectiveness(assess_detector(new_dataset.get_Y(), dataset.get_Y()))
-        return new_dataset, detector, threshold
+        new_dataset, threshold = create_dataset_classification(dataset, best_detector.get_scores_in_train())
+        return new_dataset, best_detector, threshold
     else:
-        new_dataset, threshold = create_dataset_regression(dataset, scores)
-        return new_dataset, detector, threshold
+        new_dataset, threshold = create_dataset_regression(dataset, best_detector.get_scores_in_train())
+        return new_dataset, best_detector, threshold
 
 
-def create_dataset_classification(top_k_points, dataset, scores):
-    top_k_points_to_keep = floor(top_k_points * dataset.get_X().shape[0])
+def select_best_detector(detectors_arr, dataset):
+    best_detector = None
+    max_perf = None
+    for det in detectors_arr:
+        det.train(dataset.get_X())
+        scores = det.get_scores_in_train()
+        perf = assess_detector(scores, dataset.get_Y())
+        det.set_effectiveness(perf)
+        perf_value = perf[next(iter(perf))]
+        if max_perf is None or perf_value > max_perf:
+            max_perf = perf_value
+            best_detector = det
+    print('Best detector:', best_detector.get_id(), 'with auc score', max_perf)
+    return best_detector
+
+
+def create_dataset_classification(dataset, scores):
+    top_k_points = SettingsConfig.get_top_k_points_to_explain(),
+    top_k_points_to_keep = floor(top_k_points[0] * dataset.get_X().shape[0])
     desc_ordered_indices = np.argsort(scores)[::-1]
     desc_ordered_outlier_indices = desc_ordered_indices[range(top_k_points_to_keep)]
     lowest_outlier_score = scores[desc_ordered_outlier_indices[-1]]
@@ -50,4 +64,4 @@ def create_dataset_regression(dataset, scores):
 
 def assess_detector(y_pred, y_true):
     assert SettingsConfig.is_classification_task()
-    return calculate_all_metrics(y_true, y_pred)
+    return calculate_roc_auc(y_true, y_pred)

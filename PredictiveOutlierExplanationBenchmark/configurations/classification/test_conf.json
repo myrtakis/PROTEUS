@@ -5,21 +5,38 @@
     "kfolds": 5,
     "repetitions": 2,
     "top_k_points_to_explain": 0.05,
-    "pseudo_samples_per_outlier": [5]
+    "pseudo_samples_per_outlier": [0, 1]
   },
 
   "dataset": {
-    "path": "../datasets/synthetic/hics/group_g1/hics_100_g1.csv",
+    "path": "../datasets/synthetic/hics/group_g1/hics_20_g1.csv",
     "is_anomaly_column": "is_anomaly",
     "subspace_column": "subspaces"
   },
 
-  "detector": {
-    "id": "lof",
-    "params": {
-      "n_neighbors": 15
+  "detectors": [
+    {
+      "id": "iforest",
+      "params": {
+        "max_samples": 256,
+        "n_estimators": 100
+      }
+    },
+    {
+      "id": "lof",
+      "params": {
+        "n_neighbors": 15
+      }
+    },
+    {
+      "id": "sod",
+      "params": {
+        "n_neighbors": 15,
+        "ref_set": 10,
+        "alpha": 0.8
+      }
     }
-  },
+  ],
 
   "feature_selection": [
     {
@@ -30,7 +47,7 @@
       "id": "ses",
       "params": {
         "max_k": [2, 3],
-        "alpha": [0.05, 0.1, 0.2]
+        "alpha": [0.05, 0.1]
        }
     },
     {
@@ -43,7 +60,7 @@
     {
       "id": "lasso",
       "params":{
-        "alpha": [0.001, 0.01, 0.1, 0.2, 0.25]
+        "alpha": [0.001, 0.01, 0.1]
       }
     }
   ],
@@ -52,8 +69,8 @@
     {
       "id": "rf",
       "params": {
-        "n_estimators": [100, 300, 500],
-        "min_samples_leaf": [1, 2, 3],
+        "n_estimators": [100],
+        "min_samples_leaf": [1, 2],
         "criterion": ["entropy"]
       }
     },
@@ -61,20 +78,14 @@
       "id": "svm",
       "params": {
         "kernel": ["linear", "poly", "rbf"],
-        "gamma": ["NA", 1, 2, 5],
-        "C": [1, 5, 10],
-        "degree": ["NA", 2, 3]
+        "gamma": ["NA", 1, 2],
+        "C": [1, 5],
+        "degree": ["NA", 2]
       },
       "omit_combinations": [
         {"prime_param":{"kernel": "linear"}, "combs":{"gamma":"NA", "degree":"NA"}},
         {"prime_param":{"kernel": "rbf"}, "combs": {"degree": "NA"}}
       ]
-    },
-    {
-      "id": "knn",
-      "params": {
-        "n_neighbors": [5, 15, 25]
-      }
     }
   ]
 

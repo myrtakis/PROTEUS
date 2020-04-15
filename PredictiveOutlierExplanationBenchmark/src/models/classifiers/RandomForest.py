@@ -12,5 +12,5 @@ class RandomForest:
                                       min_samples_leaf=self.__params['min_samples_leaf'],
                                       criterion=self.__params['criterion']).fit(X_train, Y_train)
 
-    def predict(self, X_test):
-        return self.__model.predict(X_test)
+    def predict_proba(self, X_test):
+        return self.__model.predict_proba(X_test)

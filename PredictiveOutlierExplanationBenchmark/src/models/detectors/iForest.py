@@ -20,7 +20,15 @@ class iForest:
                                               behaviour='new', contamination='auto').fit(X_train))
 
     def score_samples(self):
-        return self.predict_scores(self.__X_train)
+        scores = None
+        for m in self.__clf:
+            tmp_arr = np.array(m.score_samples(self.__X_train)) * -1
+            if scores is None:
+                scores = tmp_arr
+            else:
+                scores = np.vstack((scores, tmp_arr))
+        scores = scores.T
+        return np.average(scores, axis=1)
 
     def predict_scores(self, new_samples):
         predictions = None

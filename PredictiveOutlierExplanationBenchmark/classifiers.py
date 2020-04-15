@@ -81,11 +81,11 @@ def test_iforest(models, X_test):
 
 
 def test_random_forest(model, X_test):
-    return [model[0].predict(X_test)]
+    return [model[0].predict_proba(X_test)]
 
 
 def test_svm(model, X_test):
-    return [model[0].predict(X_test)]
+    return [model[0].predict_proba(X_test)]
 
 
 def test_lof(model, X_test):
@@ -93,4 +93,4 @@ def test_lof(model, X_test):
 
 
 def test_knn(model, X_test):
-    return [model[0].predict(X_test)]
+    return [model[0].predict_proba(X_test)]

@@ -90,8 +90,7 @@ class ResultsWriter:
             FileNames.default_folder,
             SettingsConfig.get_task(),
             dataset_path,
-            base_name,
-            DetectorConfig.get_id())
+            base_name)
         self.__final_dir = os.path.join(self.__base_dir, self.__pseudo_samples_key)
         Path(self.__final_dir).mkdir(parents=True, exist_ok=True)
 

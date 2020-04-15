@@ -11,10 +11,6 @@ class Pipeline:
     def __init__(self):
         pass
 
-    # TODO ###################################################
-    # Recall if you want to explain only the best detector among the available ones
-    ##########################################################
-
     @staticmethod
     def run(config_file_path, save_dir):
         ConfigMger.setup_configs(config_file_path)
@@ -22,7 +18,6 @@ class Pipeline:
                                    DatasetConfig.get_subspace_column_name())
         datasets_for_cv = {}
         dataset_with_detected_outliers, detector, threshold = detect_outliers(original_dataset)
-        datasets_for_cv[0] = dataset_with_detected_outliers
         pseudo_samples_array = SettingsConfig.get_pseudo_samples_array()
         if pseudo_samples_array is not None:
             assert SettingsConfig.is_classification_task(), "Pseudo samples are allowed only in classification task"
@@ -49,6 +44,7 @@ class Pipeline:
         datasets_with_pseudo_samples = {}
         for ps_num in pseudo_samples_arr:
             if ps_num == 0:
+                datasets_with_pseudo_samples[0] = dataset_detected_outliers
                 continue
             dataset = Transfomer.add_pseudo_samples_naive(dataset_detected_outliers, ps_num, detector, threshold)
             datasets_with_pseudo_samples[ps_num] = dataset

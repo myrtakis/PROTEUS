@@ -69,7 +69,7 @@ class Benchmark:
                     classifier = Classifier(classifier_conf)
                     Benchmark.__console_log(fold_id, fsel, classifier)
                     if len(fsel.get_features()) > 0:
-                        classifier.train(X_train_new, Y_train).predict(X_test_new)
+                        classifier.train(X_train_new, Y_train).predict_proba(X_test_new)
                     conf_perfs_per_metric = Benchmark.__update_conf_perfs_per_metric(conf_perfs_per_metric, conf_id,
                                                                                      fsel, classifier, Y_test)
                     conf_id += 1
@@ -81,7 +81,7 @@ class Benchmark:
     @staticmethod
     def __update_conf_perfs_per_metric(conf_perfs_per_metric, conf_id, fsel, classifier, Y_true):
         fsel_clf_id = fsel.get_id() + '_' + classifier.get_id()
-        Y_pred = classifier.get_predictions()
+        Y_pred = classifier.get_predictions_proba()
         if Y_pred is None:
             assert len(fsel.get_features()) == 0
             metrics_vals = dict.fromkeys(metric_names(), 0.0)
@@ -145,8 +145,8 @@ class Benchmark:
         for m_id, metric_data in best_confs_per_metric.items():
             for fsel_clf_id, conf in metric_data.items():
                 X_test_new = X_test.iloc[:, conf.get_fsel().get_features()]
-                conf.get_clf().predict(X_test_new)
-                Y_pred = conf.get_clf().get_predictions()
+                conf.get_clf().predict_proba(X_test_new)
+                Y_pred = conf.get_clf().get_predictions_proba()
                 assert Y_pred is not None
                 val = calculate_metric(Y_test, Y_pred, m_id)
                 conf.set_effectiveness(val, m_id, conf.get_conf_id())

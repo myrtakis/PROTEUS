@@ -10,5 +10,5 @@ class KNN:
     def train(self, X_train, Y_train):
         return KNeighborsClassifier(n_neighbors=self.__params['n_neighbors']).fit(X_train, Y_train)
 
-    def predict(self, X_test):
-        return self.__model.predict(X_test)
+    def predict_proba(self, X_test):
+        return self.__model.predict_proba(X_test)

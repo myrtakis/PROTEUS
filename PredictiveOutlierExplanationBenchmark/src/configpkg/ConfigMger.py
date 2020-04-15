@@ -1,6 +1,6 @@
 import json
 from PredictiveOutlierExplanationBenchmark.src.configpkg.SettingsConfig import SettingsConfig
-from PredictiveOutlierExplanationBenchmark.src.configpkg.DetectorConfig import DetectorConfig
+from PredictiveOutlierExplanationBenchmark.src.configpkg.DetectorsConfig import DetectorConfig
 from PredictiveOutlierExplanationBenchmark.src.configpkg.DatasetConfig import DatasetConfig
 from PredictiveOutlierExplanationBenchmark.src.configpkg.ClassifiersConfig import ClassifiersConfig
 from PredictiveOutlierExplanationBenchmark.src.configpkg.FeatureSelectionConfig import FeatureSelectionConfig
@@ -17,6 +17,7 @@ class ConfigMger:
     # Base Functions
     @staticmethod
     def setup_configs(path):
+        ConfigMger.__config_path = path
         with open(path) as json_file:
             ConfigMger.__config_data = json.load(json_file)
         SettingsConfig.setup(ConfigMger.__config_data)

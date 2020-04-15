@@ -13,7 +13,7 @@ class SVM:
         if str(self.__params['degree']).lower() == 'na':
             self.__params['degree'] = 0
         return SVC(gamma=self.__params['gamma'], kernel=self.__params['kernel'], C=self.__params['C'],
-                   degree=self.__params['degree']).fit(X_train, Y_train)
+                   degree=self.__params['degree'], probability=True).fit(X_train, Y_train)
 
-    def predict(self, X_test):
-        return self.__model.predict(X_test)
+    def predict_proba(self, X_test):
+        return self.__model.predict_proba(X_test)
