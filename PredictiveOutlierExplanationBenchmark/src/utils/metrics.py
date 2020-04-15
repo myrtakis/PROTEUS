@@ -66,12 +66,9 @@ def calculate_f1_score_outliers(y_true, y_pred):
 
 
 def make_y_pred_is_binary(y_pred):
-    if len(np.unique(y_pred)) == 2:
-        return y_pred
-    else:
-        assert min(y_pred) >= 0.0 and max(y_pred) <= 1.0, 'min %f, max %f' % (min(y_pred), max(y_pred))
-        if not isinstance(y_pred, np.ndarray):
-            y_pred = np.array(y_pred)
-        y_pred[np.where(y_pred >= 0.5)] = 1
-        y_pred[np.where(y_pred < 0.5)] = 0
-        return y_pred
+    assert min(y_pred) >= 0.0 and max(y_pred) <= 1.0, 'min %f, max %f' % (min(y_pred), max(y_pred))
+    if not isinstance(y_pred, np.ndarray):
+        y_pred = np.array(y_pred)
+    y_pred[np.where(y_pred >= 0.5)] = 1
+    y_pred[np.where(y_pred < 0.5)] = 0
+    return y_pred
