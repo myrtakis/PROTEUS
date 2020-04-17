@@ -51,6 +51,7 @@ def min_max_normalization(df, target_col_name, subspace_col_name=None):
         ground_truth = df.loc[:, [target_col_name]]
     X_scaled = scaler.fit_transform(X.values)
     X = pd.DataFrame(X_scaled, columns=X.columns)
+    print('Dataframe normalized using MinMax normalization')
     return pd.concat([X, ground_truth], axis=1)
 
 
@@ -58,6 +59,7 @@ def remove_nan_columns(df, target_column):
     y = df[target_column]
     df = df.drop(columns=[target_column])
     nan_cols = df.columns[df.isna().any()].tolist()
+    print(len(nan_cols), 'contained NaN and removed')
     if len(nan_cols) > 0:
         df = df.drop(columns=nan_cols)
     return pd.concat([df, y], axis=1)
@@ -68,10 +70,14 @@ def remove_features_of_single_value(df, target_column):
     df = df.drop(columns=[target_column])
     unq = df.nunique()
     one_val_columns = list(unq[unq == 1].index)
+    print(len(one_val_columns), 'contained were single valued and removed')
     if len(one_val_columns) > 0:
         df = df.drop(columns=one_val_columns)
     return pd.concat([df, y], axis=1)
 
 
 def remove_duplicates(df):
+    old_rows = df.shape[0]
+    df = df.drop_duplicates()
+    print(old_rows - df.shape[0], 'rows were duplicated and removed')
     return df
