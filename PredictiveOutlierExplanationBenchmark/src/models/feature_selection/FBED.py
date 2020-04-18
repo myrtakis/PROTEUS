@@ -4,6 +4,7 @@ import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
 import numpy as np
 import pandas as pd
+import warnings
 
 
 class FBED:
@@ -12,6 +13,7 @@ class FBED:
         self.__params = params
 
     def run(self, X_train, Y_train):
+        warnings.filterwarnings("ignore")
         if not isinstance(Y_train, pd.Series):
             Y_train = pd.Series(Y_train)
         fbed = rpy2.robjects.r("fbed.reg")

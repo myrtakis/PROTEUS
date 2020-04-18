@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore")
 from PredictiveOutlierExplanationBenchmark.src.models.classifiers import *
 from PredictiveOutlierExplanationBenchmark.src.configpkg.ClassifiersConfig import ClassifiersConfig
 import numpy as np

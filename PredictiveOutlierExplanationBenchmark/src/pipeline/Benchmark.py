@@ -124,7 +124,6 @@ class Benchmark:
                 fsel = FeatureSelection(best_conf.get_fsel().get_config())
                 fsel.run(X_train, Y_train)
                 if len(fsel.get_features()) == 0:
-                    assert best_conf.get_effectiveness() == 0
                     continue
                 end = time.time()
                 fsel.set_time(round(end - start, 2))

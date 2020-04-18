@@ -9,8 +9,9 @@
   },
 
   "dataset": {
-    "path": "../datasets/real/arrhythmia.csv",
-    "is_anomaly_column": "is_anomaly"
+    "path": "../datasets/synthetic/hics/group_g2/hics_20_g2.csv",
+    "is_anomaly_column": "is_anomaly",
+    "subspace_column": "subspaces"
   },
 
   "detectors": [

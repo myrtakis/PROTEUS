@@ -4,6 +4,10 @@ import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
 import numpy as np
 import pandas as pd
+import warnings
+
+
+warnings.filterwarnings("ignore")
 
 
 class SES:
