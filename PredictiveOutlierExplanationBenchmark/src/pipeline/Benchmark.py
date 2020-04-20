@@ -163,16 +163,16 @@ class Benchmark:
                     if fs is False and 'none' not in fsel_clf_id:
                         continue
                     if len(best_model_per_metric[m_id]) == 0:
-                        best_model_per_metric[m_id][fsel_clf_id] = conf_data
-                    best_model_fsel_clf_id = next(iter(best_model_per_metric[m_id]))
-                    if best_model_per_metric[m_id][best_model_fsel_clf_id].get_effectiveness() < conf_data.get_effectiveness():
-                        best_model_per_metric[m_id][fsel_clf_id] = conf_data
-                        del best_model_per_metric[m_id][best_model_fsel_clf_id]
-                    elif conf_data.get_effectiveness() == best_model_per_metric[m_id][best_model_fsel_clf_id].get_effectiveness():
-                        if len(conf_data.get_fsel().get_features()) < len(
-                                best_model_per_metric[m_id][best_model_fsel_clf_id].get_fsel().get_features()):
-                            best_model_per_metric[m_id][fsel_clf_id] = conf_data
-                            del best_model_per_metric[m_id][best_model_fsel_clf_id]
+                        best_model_per_metric[m_id] = conf_data
+                    if best_model_per_metric[m_id].get_effectiveness() < conf_data.get_effectiveness():
+                        best_model_per_metric[m_id] = conf_data
+                    elif conf_data.get_effectiveness() == best_model_per_metric[m_id].get_effectiveness():
+                        if len(conf_data.get_fsel().get_features()) < len(best_model_per_metric[m_id].get_fsel().get_features()):
+                            best_model_per_metric[m_id] = conf_data
+        # Refine the key names in dict
+        for m_id, best_conf in best_model_per_metric.items():
+            fsel_clf_id = best_conf.get_fsel().get_id() + '_' + best_conf.get_clf().get_id()
+            best_model_per_metric[m_id] = {fsel_clf_id: best_conf}
         return best_model_per_metric
 
     @staticmethod
