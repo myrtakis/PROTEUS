@@ -27,6 +27,9 @@ class FeatureSelection:
     def __str__(self):
         return self.to_dict()
 
+    def __repr__(self):
+        return str(self.to_dict())
+
     def __eq__(self, other):
         if not self.__class__ == self.__class__:
             return False

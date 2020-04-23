@@ -1,9 +1,7 @@
 {
   "settings": {
     "task": "classification",
-    "test_size": 0.2,
-    "kfolds": 5,
-    "repetitions": 2,
+    "kfolds": 10,
     "top_k_points_to_explain": 0.05,
     "pseudo_samples_per_outlier": [0, 1]
   },

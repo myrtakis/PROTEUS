@@ -44,6 +44,9 @@ class ModelConf:
         assert self.__effectiveness is not None
         return self.__effectiveness
 
+    def __repr__(self):
+        return str(self.to_dict())
+
     def to_dict(self):
         return {
             **{'effectiveness': self.get_effectiveness()},

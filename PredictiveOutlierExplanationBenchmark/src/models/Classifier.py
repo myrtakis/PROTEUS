@@ -30,6 +30,9 @@ class Classifier:
     def __str__(self):
         return self.to_dict()
 
+    def __repr__(self):
+        return str(self.to_dict())
+
     def train(self, X_train, Y_train):
         clf = Classifier.__algorithms[self.__id]
         self.__model = clf(self.__params).train(X_train, Y_train)
