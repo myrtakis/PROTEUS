@@ -26,21 +26,32 @@ def calculate_all_metrics(y_true, y_pred, run_R=False):
 
 
 def calculate_metric(y_true, y_pred, metric_id, run_R=False):
+    assert len(y_true.shape) == 1, len(y_true)
+    assert y_true.shape[0] == y_pred.shape[0]
     if metric_id == _ROC_AUC:
         return calculate_roc_auc(y_true, y_pred, run_R)
     elif metric_id == _PRECISION_OUTLIERS:
-        return calculate_precision_outliers(y_true, y_pred)
+        return run_metric(y_true, y_pred, calculate_precision_outliers, metric_id)
     elif metric_id == _RECALL_OUTLIERS:
-        return calculate_recall_outliers(y_true, y_pred)
+        return run_metric(y_true, y_pred, calculate_recall_outliers, metric_id)
     elif metric_id == _F1_SCORE_OUTLIERS:
-        return calculate_f1_score_outliers(y_true, y_pred)
+        return run_metric(y_true, y_pred, calculate_f1_score_outliers, metric_id)
     else:
         assert False, 'Metric ' + metric_id + ' not found'
 
 
+def run_metric(y_true, y_pred, metric_func, metric_id):
+    if predictions_have_mul_cols(y_pred):
+        vals = np.zeros(y_pred.shape[1])
+        for i in range(y_pred.shape[1]):
+            val = metric_func(y_true, y_pred[:, i])
+            vals[i] =val[metric_id]
+        return {metric_id: vals}
+    else:
+        return metric_func(y_true, y_pred)
+
+
 def calculate_roc_auc(y_true, y_pred, run_R=False):
-    assert y_true.shape[0] == y_pred.shape[0]
-    assert len(y_true.shape) == 1, len(y_true)
     y_true = np.copy(y_true)
     if len(np.unique(y_true)) == 1:
         return {_ROC_AUC: -1}
@@ -95,8 +106,12 @@ def calculate_f1_score_outliers(y_true, y_pred):
 
 
 def make_y_pred_is_binary(y_pred):
-    assert min(y_pred) >= 0.0 and max(y_pred) <= 1.0, 'min %f, max %f' % (min(y_pred), max(y_pred))
     y_pred_cp = np.copy(y_pred)
+    assert np.min(y_pred_cp) >= 0.0 and np.max(y_pred_cp) <= 1.0, 'min %f, max %f' % (np.min(y_pred_cp), np.max(y_pred_cp))
     y_pred_cp[np.where(y_pred >= 0.5)] = 1
     y_pred_cp[np.where(y_pred < 0.5)] = 0
     return y_pred_cp
+
+
+def predictions_have_mul_cols(y_pred):
+    return len(y_pred.shape) == 2 and y_pred.shape[1] > 1

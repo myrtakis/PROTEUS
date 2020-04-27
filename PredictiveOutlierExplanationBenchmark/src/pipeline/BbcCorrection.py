@@ -5,7 +5,6 @@ from PredictiveOutlierExplanationBenchmark.src.utils.metrics import calculate_me
 class BBC:
 
     __B = 1000
-    __cores = 2
 
     def __init__(self, y_true, out_of_sample_predictions, metric_id):
         self.out_of_sample_predictions = out_of_sample_predictions
