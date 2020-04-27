@@ -84,9 +84,13 @@ class Classifier:
         self.__preditions_labels = np.argmax(self.__predictions_proba, axis=1)
 
     def __convert_array_to_int_type(self, array):
+        if array is None:
+            return None
         return [int(x) for x in array]
 
     def __convert_array_to_float_type(self, array):
+        if array is None:
+            return None
         return [float(x) for x in array]
 
     @staticmethod

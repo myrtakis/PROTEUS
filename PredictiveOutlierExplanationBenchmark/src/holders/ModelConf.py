@@ -41,7 +41,6 @@ class ModelConf:
         return self.__conf_id
 
     def get_effectiveness(self):
-        assert self.__effectiveness is not None
         return self.__effectiveness
 
     def __repr__(self):

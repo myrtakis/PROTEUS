@@ -63,7 +63,7 @@ class Detector:
 
     def to_dict(self):
         return {
-            DetectorConfig.detectors_key():
+            self.__det_id:
                 {
                     DetectorConfig.id_key(): self.__det_id,
                     DetectorConfig.params_key(): self.__params,

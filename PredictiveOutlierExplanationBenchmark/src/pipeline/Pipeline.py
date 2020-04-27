@@ -3,7 +3,7 @@ from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import *
 from PredictiveOutlierExplanationBenchmark.src.utils.ResultsWriter import ResultsWriter
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Detection import detect_outliers
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Benchmark import Benchmark
-from PredictiveOutlierExplanationBenchmark.src.pipeline.DatasetTransformer import Transfomer
+from PredictiveOutlierExplanationBenchmark.src.pipeline.DatasetTransformer import Transformer
 
 
 class Pipeline:
@@ -17,11 +17,11 @@ class Pipeline:
         original_dataset = Dataset(DatasetConfig.get_dataset_path(), DatasetConfig.get_anomaly_column_name(),
                                    DatasetConfig.get_subspace_column_name())
         datasets_for_cv = {}
-        dataset_with_detected_outliers, detector, threshold = detect_outliers(original_dataset)
+        dataset_with_detected_outliers, detectors_info, threshold = detect_outliers(original_dataset)
         pseudo_samples_array = SettingsConfig.get_pseudo_samples_array()
         if pseudo_samples_array is not None:
             assert SettingsConfig.is_classification_task(), "Pseudo samples are allowed only in classification task"
-            datasets_for_cv.update(Pipeline.__add_datasets_with_pseudo_samples(dataset_with_detected_outliers, detector,
+            datasets_for_cv.update(Pipeline.__add_datasets_with_pseudo_samples(dataset_with_detected_outliers, detectors_info['best'],
                                                                                threshold, pseudo_samples_array))
 
         # todo delete this line (debugging)
@@ -30,10 +30,12 @@ class Pipeline:
         print('Running Dataset:', DatasetConfig.get_dataset_path())
         rw = None
         for pseudo_samples, dataset in datasets_for_cv.items():
-            benchmark_dict, best_model_dict, train_test_indices_dict = Benchmark.run(pseudo_samples, dataset)
-            rw = ResultsWriter(benchmark_dict, best_model_dict, train_test_indices_dict, pseudo_samples, dataset)
+            results = Benchmark.run(pseudo_samples, dataset)
+            rw = ResultsWriter(results, pseudo_samples, dataset)
             rw.write_results()
-        rw.write_detector_info_file(detector)
+            # todo delete the break
+            break
+        rw.write_detector_info_file(detectors_info['info'])
         rw.create_navigator_file()
 
 
@@ -46,6 +48,6 @@ class Pipeline:
             if ps_num == 0:
                 datasets_with_pseudo_samples[0] = dataset_detected_outliers
                 continue
-            dataset = Transfomer.add_pseudo_samples_naive(dataset_detected_outliers, ps_num, detector, threshold)
+            dataset = Transformer.add_pseudo_samples_naive(dataset_detected_outliers, ps_num, detector, threshold)
             datasets_with_pseudo_samples[ps_num] = dataset
         return datasets_with_pseudo_samples

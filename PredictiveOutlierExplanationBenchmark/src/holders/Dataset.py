@@ -79,6 +79,12 @@ class Dataset:
         assert self.__task_is_classification, "Outliers are predefined only for Classifcation Task and not for Regression"
         return self.__outlier_indices
 
+    def get_std_per_column(self):
+        return np.std(self.get_X().values, axis=0)
+
+    def get_mean_per_column(self):
+        return np.mean(self.get_X().values, axis=0)
+
     def get_inlier_indices(self):
         assert self.__task_is_classification, "Inliers are predefined only for Classifcation Task and not for Regression"
         return self.__inlier_indices

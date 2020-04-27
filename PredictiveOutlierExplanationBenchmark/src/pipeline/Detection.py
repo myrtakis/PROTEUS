@@ -8,29 +8,32 @@ from PredictiveOutlierExplanationBenchmark.src.utils.metrics import calculate_ro
 
 def detect_outliers(dataset):
     detectors_arr = Detector.init_detectors()
-    best_detector = select_best_detector(detectors_arr, dataset)
+    detectors_info = select_best_detector(detectors_arr, dataset)
     if SettingsConfig.is_classification_task():
-        new_dataset, threshold = create_dataset_classification(dataset, best_detector.get_scores_in_train())
-        return new_dataset, best_detector, threshold
+        new_dataset, threshold = create_dataset_classification(dataset, detectors_info['best'].get_scores_in_train())
+        return new_dataset, detectors_info, threshold
     else:
-        new_dataset, threshold = create_dataset_regression(dataset, best_detector.get_scores_in_train())
-        return new_dataset, best_detector, threshold
+        new_dataset, threshold = create_dataset_regression(dataset, detectors_info['best'].get_scores_in_train())
+        return new_dataset, detectors_info, threshold
 
 
 def select_best_detector(detectors_arr, dataset):
     best_detector = None
     max_perf = None
+    detectors_info = {'info': {}, 'best': None}
     for det in detectors_arr:
         det.train(dataset.get_X())
         scores = det.get_scores_in_train()
         perf = assess_detector(scores, dataset.get_Y())
         det.set_effectiveness(perf)
         perf_value = perf[next(iter(perf))]
+        detectors_info['info'][det.get_id()] = det
         if max_perf is None or perf_value > max_perf:
             max_perf = perf_value
             best_detector = det
     print('Best detector:', best_detector.get_id(), 'with auc score', max_perf)
-    return best_detector
+    detectors_info['best'] = best_detector
+    return detectors_info
 
 
 def create_dataset_classification(dataset, scores):

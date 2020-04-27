@@ -33,7 +33,10 @@ def calculate_metric(y_true, y_pred, metric_id):
 
 
 def calculate_roc_auc(y_true, y_pred):
-    return {_ROC_AUC: roc_auc_score(y_true, y_pred)}
+    try:
+        return {_ROC_AUC: roc_auc_score(y_true, y_pred)}
+    except ValueError:
+        return {_ROC_AUC: -1}
 
 
 def calculate_precision_outliers(y_true, y_pred):
