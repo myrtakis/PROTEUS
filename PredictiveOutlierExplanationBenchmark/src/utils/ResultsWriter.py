@@ -51,7 +51,7 @@ class ResultsWriter:
         self.__detector_info_path = os.path.join(self.__base_dir, FileNames.detector_info_fname)
         det_dict = {}
         for det_id, det_val in detectors_info.items():
-            det_dict[det_id] = det_val.to_dict()
+            det_dict.update(det_val.to_dict())
         with open(self.__detector_info_path, 'w', encoding='utf-8') as f:
             f.write(json.dumps(det_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
 

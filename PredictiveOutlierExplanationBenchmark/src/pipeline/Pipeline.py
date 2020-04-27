@@ -33,8 +33,6 @@ class Pipeline:
             results = Benchmark.run(pseudo_samples, dataset)
             rw = ResultsWriter(results, pseudo_samples, dataset)
             rw.write_results()
-            # todo delete the break
-            break
         rw.write_detector_info_file(detectors_info['info'])
         rw.create_navigator_file()
 

@@ -98,17 +98,15 @@ class Benchmark:
         if knowledge_discovery is False:
             return conf_data_in_folds
         conf_data_in_folds_small_explanations = {}
-        for c_id, c_data in conf_data_in_folds.items():
-            feature_num_per_fold = []
-            for f_id, f_data in c_data.items():
-                feature_num_per_fold.append(len(f_data.get_fsel().get_features()))
-            if np.mean(feature_num_per_fold) <= max_features:
-                conf_data_in_folds_small_explanations[c_id] = c_data
-        if len(conf_data_in_folds_small_explanations) < 2:
-            Benchmark.__exclude_explanations_with_many_features(conf_data_in_folds, knowledge_discovery, max_features + 1)
-        else:
-            return conf_data_in_folds_small_explanations
-
+        while len(conf_data_in_folds_small_explanations) < 2:
+            for c_id, c_data in conf_data_in_folds.items():
+                feature_num_per_fold = []
+                for f_id, f_data in c_data.items():
+                    feature_num_per_fold.append(len(f_data.get_fsel().get_features()))
+                if np.mean(feature_num_per_fold) <= max_features:
+                    conf_data_in_folds_small_explanations[c_id] = c_data
+            max_features += 1
+        return conf_data_in_folds_small_explanations
 
     @staticmethod
     def __merge_predictions_from_folds(conf_data_in_folds, folds):
@@ -182,9 +180,6 @@ class Benchmark:
     @staticmethod
     def __remove_bias(data_dict):
         for m_id in data_dict['best_model_trained_per_metric']:
-            # todo delete following line
-            if m_id != 'roc_auc':
-                continue
             preds = pd.DataFrame(data_dict['predictions_merged']).values
             correct_perf = BBC(data_dict['true_labels'], preds, m_id).correct_bias()
             data_dict['best_model_trained_per_metric'][m_id].set_effectiveness(correct_perf, m_id, -1)
