@@ -45,7 +45,7 @@ class Benchmark:
         start = time.time()
         print('Knowledge Discovery:', knowledge_discovery, ', Total Configs:', total_combs)
         for train_index, test_index in skf.split(X, Y):
-            elapsed_time = round(time.time() - start, 2)
+            elapsed_time = time.time() - start
             start = elapsed_time
             X_train, X_test = X.iloc[train_index, :], X.iloc[test_index, :]
             Y_train, Y_test = Y[train_index], Y[test_index]
@@ -65,7 +65,7 @@ class Benchmark:
                     assert X_test_new.shape[1] == len(fsel.get_features())
                 for classifier_conf in classifiers_conf_combs:
                     classifier = Classifier(classifier_conf)
-                    Benchmark.__console_log(fold_id, fsel, classifier, elapsed_time)
+                    Benchmark.__console_log(fold_id, fsel, classifier, round(elapsed_time, 2))
                     conf_id += 1
                     conf_data_in_folds.setdefault(conf_id, {})
                     if len(fsel.get_features()) > 0:

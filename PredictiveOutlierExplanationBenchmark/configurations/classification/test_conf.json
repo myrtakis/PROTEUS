@@ -1,7 +1,7 @@
 {
   "settings": {
     "task": "classification",
-    "kfolds": 5,
+    "kfolds": 4,
     "top_k_points_to_explain": 0.05,
     "pseudo_samples_per_outlier": [1]
   },

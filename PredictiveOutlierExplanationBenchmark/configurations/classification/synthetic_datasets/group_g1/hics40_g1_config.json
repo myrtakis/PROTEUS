@@ -88,7 +88,7 @@
     {
       "id": "knn",
       "params": {
-        "n_neighbors": [5, 15, 20]
+        "n_neighbors": [5, 10, 15]
       }
     }
   ]
