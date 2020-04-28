@@ -77,6 +77,7 @@ class Benchmark:
                     assert X_test_new.shape[1] == len(fsel.get_features())
                 for classifier_conf in classifiers_conf_combs:
                     classifier = Classifier(classifier_conf)
+                    Logger.log('Classifier init successfully')
                     Benchmark.__console_log(fold_id, fsel, classifier, round(elapsed_time, 2))
                     conf_id += 1
                     conf_data_in_folds.setdefault(conf_id, {})
@@ -86,6 +87,7 @@ class Benchmark:
                         Logger.log('Classifier train and predict completed')
                         Logger.log(classifier.to_dict())
                         conf_data_in_folds[conf_id][fold_id] = ModelConf(fsel, classifier, conf_id)
+                        Logger.log('Configurations in folds updated')
             assert total_combs == conf_id, str(total_combs) + ' ' + str(conf_id)
         print()
         conf_data_in_folds = Benchmark.__exclude_confs_with_no_selected_features(conf_data_in_folds, folds)
