@@ -95,7 +95,9 @@ class Benchmark:
         conf_perfs = Benchmark.__compute_confs_perf_per_metric(conf_data_in_folds_small_expl, folds_true_labels, folds)
         best_model_per_metric = Benchmark.__select_best_model_per_metric(conf_perfs)
         best_model_trained_per_metric = Benchmark.__train_best_model_in_all_data(best_model_per_metric, conf_data_in_folds_small_expl, X, Y)
+        Logger.log('Best model trained successfully')
         predictions_merged = Benchmark.__merge_predictions_from_folds(conf_data_in_folds_small_expl, folds)
+        Logger.log('Predictions merged successfully')
         return {'best_model_trained_per_metric': best_model_trained_per_metric,
                 'predictions_merged': predictions_merged, 'true_labels': true_labels,
                 'train_test_indices_folds': train_test_indices_folds,
@@ -171,15 +173,20 @@ class Benchmark:
             for best_c_id, c_data in m_data.items():
                 conf = conf_data_in_folds[best_c_id][1]  # simply take the configuration of the 1st fold (starting by 1) which is the same for every fold
                 print('\r', 'Training in all data the', conf.get_fsel().get_config(), '>', conf.get_clf().get_config(), end='')
+                Logger.log('\n****Inside the training of best model in all data')
+                Logger.log('Run fsel: ' + str(conf.get_fsel().get_config()))
                 fsel = FeatureSelection(conf.get_fsel().get_config())
                 start = time.time()
                 fsel.run(X, Y)
+                Logger.log('Fsel run successfully')
                 end = time.time()
                 fsel.set_time(round(end - start, 2))
                 assert len(fsel.get_features()) > 0
+                Logger.log('Run clf: ' + str(conf.get_clf().get_config()))
                 clf = Classifier(conf.get_clf().get_config())
                 start = time.time()
                 clf.train(X, Y)
+                Logger.log('Classifier trained successfully')
                 end = time.time()
                 clf.set_time(round(end - start, 2))
                 best_model_per_metric[m_id] = ModelConf(fsel, clf, -1)
