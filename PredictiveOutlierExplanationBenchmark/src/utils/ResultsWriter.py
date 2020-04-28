@@ -11,28 +11,36 @@ class ResultsWriter:
 
     __pseudo_samples_dirs_dict = {}
 
-    def __init__(self, results, pseudo_samples, dataset):
-        self.__benchmark_dict = self.__prepare_benchmark_dict(results)
-        self.__best_model_dict = self.__prepare_best_models_dict(results)
+    def __init__(self, pseudo_samples):
         self.__pseudo_samples = pseudo_samples
-        self.__train_test_indices_dict = self.__prepare_train_tets_indices_dict(results)
         self.__pseudo_samples_key = 'pseudo_samples_' + str(pseudo_samples)
+        self.__benchmark_dict = None
+        self.__best_model_dict = None
+        self.__train_test_indices_dict = None
         self.__dataset_path = None
-        self.__dataset = dataset
         self.__base_dir = None
         self.__final_dir = None
         self.__detector_info_path = None
         self.__generate_dir()
 
-    def write_results(self):
-        self.__dataset_path = os.path.join(self.__final_dir, self.__pseudo_samples_key + '_data.csv')
+    def write_results(self, results):
+        self.__prepare_results(results)
         with open(os.path.join(self.__final_dir, FileNames.best_models_bench_fname), 'w', encoding='utf-8') as f:
             f.write(json.dumps(self.__benchmark_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
         with open(os.path.join(self.__final_dir, FileNames.best_model_fname), 'w', encoding='utf-8') as f:
             f.write(json.dumps(self.__best_model_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
         with open(os.path.join(self.__final_dir, FileNames.train_test_indices_fname), 'w', encoding='utf-8') as f:
             f.write(json.dumps(self.__train_test_indices_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
-        self.__dataset.get_df().to_csv(self.__dataset_path, index=False)
+        self.__update_pseudo_samples_dir()
+
+    def __prepare_results(self, results):
+        self.__benchmark_dict = self.__prepare_benchmark_dict(results)
+        self.__best_model_dict = self.__prepare_best_models_dict(results)
+        self.__train_test_indices_dict = self.__prepare_train_tets_indices_dict(results)
+
+    def write_dataset(self, dataset):
+        self.__dataset_path = os.path.join(self.__final_dir, self.__pseudo_samples_key + '_data.csv')
+        dataset.get_df().to_csv(self.__dataset_path, index=False)
         self.__update_pseudo_samples_dir()
 
     def create_navigator_file(self):

@@ -1,5 +1,6 @@
 from PredictiveOutlierExplanationBenchmark.src.configpkg import *
 from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import *
+from PredictiveOutlierExplanationBenchmark.src.utils.Logger import Logger
 from PredictiveOutlierExplanationBenchmark.src.utils.ResultsWriter import ResultsWriter
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Detection import detect_outliers
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Benchmark import Benchmark
@@ -30,9 +31,11 @@ class Pipeline:
         print('Running Dataset:', DatasetConfig.get_dataset_path())
         rw = None
         for pseudo_samples, dataset in datasets_for_cv.items():
+            Logger.initialize(pseudo_samples)
+            rw = ResultsWriter(pseudo_samples)
+            rw.write_dataset(dataset)
             results = Benchmark.run(pseudo_samples, dataset)
-            rw = ResultsWriter(results, pseudo_samples, dataset)
-            rw.write_results()
+            rw.write_results(results)
         rw.write_detector_info_file(detectors_info['info'])
         rw.create_navigator_file()
 

@@ -5,6 +5,8 @@ from PredictiveOutlierExplanationBenchmark.src.models.Classifier import Classifi
 from PredictiveOutlierExplanationBenchmark.src.holders.ModelConf import ModelConf
 import time
 import numpy as np
+
+from PredictiveOutlierExplanationBenchmark.src.utils.Logger import Logger
 from PredictiveOutlierExplanationBenchmark.src.utils.metrics import calculate_all_metrics
 import collections
 import pandas as pd
@@ -21,6 +23,8 @@ class Benchmark:
     def run(pseudo_samples, dataset):
         print('----------\n')
         print('Pseudo samples:', pseudo_samples)
+
+        Logger.log('==================\nPseudo Samples: ' + str(pseudo_samples))
 
         kfolds = min(SettingsConfig.get_kfolds(), Benchmark.__get_rarest_class_count(dataset.get_Y()))
         assert kfolds > 1, kfolds
@@ -44,7 +48,11 @@ class Benchmark:
         total_combs = len(fsel_conf_combs) * len(classifiers_conf_combs) - len(classifiers_conf_combs) if knowledge_discovery is True else len(classifiers_conf_combs)
         start = time.time()
         print('Knowledge Discovery:', knowledge_discovery, ', Total Configs:', total_combs)
+        Logger.log('Knowledge Discovery: ' + str(knowledge_discovery))
         for train_index, test_index in skf.split(X, Y):
+            Logger.log('--------------\nFold: ' + str(fold_id + 1))
+            Logger.log('Train ind: ' + str(train_index.tolist()))
+            Logger.log('Test ind: ' + str(test_index.tolist()))
             elapsed_time = time.time() - start
             start = elapsed_time
             X_train, X_test = X.iloc[train_index, :], X.iloc[test_index, :]
@@ -57,8 +65,12 @@ class Benchmark:
             for fsel_conf in fsel_conf_combs:
                 if Benchmark.__omit_fsel(fsel_conf, knowledge_discovery):
                     continue
+                Logger.log('\nRun fsel: ' + str(fsel_conf))
                 fsel = FeatureSelection(fsel_conf)
                 fsel.run(X_train, Y_train)
+                Logger.log(fsel.to_dict())
+                Logger.log('Feature Selection Completed\n')
+
                 if len(fsel.get_features()) > 0:
                     X_train_new = X_train.iloc[:, fsel.get_features()]
                     X_test_new = X_test.iloc[:, fsel.get_features()]
@@ -69,7 +81,10 @@ class Benchmark:
                     conf_id += 1
                     conf_data_in_folds.setdefault(conf_id, {})
                     if len(fsel.get_features()) > 0:
+                        Logger.log('Train and predict clf ' + str(conf_id) + '/' + str(total_combs) + ': ' + str(classifier.to_dict()))
                         classifier.train(X_train_new, Y_train).predict_proba(X_test_new)
+                        Logger.log('Classifier train and predict completed')
+                        Logger.log(classifier.to_dict())
                         conf_data_in_folds[conf_id][fold_id] = ModelConf(fsel, classifier, conf_id)
             assert total_combs == conf_id, str(total_combs) + ' ' + str(conf_id)
         print()
