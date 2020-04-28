@@ -1,7 +1,7 @@
 from scipy.io import loadmat
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from arff2pandas import a2p
 
 
@@ -37,7 +37,7 @@ def preprocess(df, target_column, subspace_column=None):
     df = remove_features_of_single_value(df, target_column)
     df = remove_duplicates(df)
     df = df.apply(pd.to_numeric)
-    df = min_max_normalization(df, target_column, subspace_column)
+    df = standarization(df, target_column, subspace_column)
     return df
 
 
@@ -52,6 +52,20 @@ def min_max_normalization(df, target_col_name, subspace_col_name=None):
     X_scaled = scaler.fit_transform(X.values)
     X = pd.DataFrame(X_scaled, columns=X.columns)
     print('Dataframe normalized using MinMax normalization')
+    return pd.concat([X, ground_truth], axis=1)
+
+
+def standarization(df, target_col_name, subspace_col_name=None):
+    standar = StandardScaler()
+    X = df.drop(columns=[target_col_name])
+    if subspace_col_name is not None:
+        X = df.drop(columns=[subspace_col_name])
+        ground_truth = df.loc[:, [target_col_name, subspace_col_name]]
+    else:
+        ground_truth = df.loc[:, [target_col_name]]
+    X_scaled = standar.fit_transform(X.values)
+    X = pd.DataFrame(X_scaled, columns=X.columns)
+    print('Dataframe standarized using Z-score')
     return pd.concat([X, ground_truth], axis=1)
 
 

@@ -1,13 +1,13 @@
 {
   "settings": {
     "task": "classification",
-    "kfolds": 4,
+    "kfolds": 5,
     "top_k_points_to_explain": 0.05,
-    "pseudo_samples_per_outlier": [1]
+    "pseudo_samples_per_outlier": [0, 5]
   },
 
   "dataset": {
-    "path": "../datasets/synthetic/hics/group_g1/hics_20_g1.csv",
+    "path": "../hics_100_g1_standar.csv",
     "is_anomaly_column": "is_anomaly",
     "subspace_column": "subspaces"
   },
