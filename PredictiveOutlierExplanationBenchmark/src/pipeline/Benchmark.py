@@ -71,11 +71,15 @@ class Benchmark:
             start = time.time()
             train_inds = inds['train_indices']
             test_inds = inds['test_indices']
+            Logger.log('-----------\nFold ' + str(fold_id))
+            Logger.log('train indices: ' + str(train_inds))
+            Logger.log('test indices: ' + str(test_inds))
             assert not np.array_equal(train_inds, test_inds)
             X_train, X_test = X.iloc[train_inds, :], X.iloc[test_inds, :]
             Y_train, Y_test = Y[train_inds], Y[test_inds]
             conf_id = 0
             for fsel in fsel_in_folds[fold_id]:
+                Logger.log('Reading fsel: ' + str(fsel))
                 X_train_new = X_train.iloc[:, fsel.get_features()]
                 X_test_new = X_test.iloc[:, fsel.get_features()]
                 assert 0 < len(fsel.get_features()) == X_test_new.shape[1]
