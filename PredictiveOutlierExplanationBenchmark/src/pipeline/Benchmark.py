@@ -30,102 +30,163 @@ class Benchmark:
         assert kfolds > 1, kfolds
         skf = StratifiedKFold(n_splits=kfolds, shuffle=True, random_state=0)
 
-        no_fs_dict = Benchmark.__cross_validation(dataset.get_X(), dataset.get_Y(), skf, kfolds, knowledge_discovery=False)
+        no_fs_dict = Benchmark.__cross_validation(dataset.get_X(), dataset.get_Y(), skf, knowledge_discovery=False)
         no_fs_dict['best_model_trained_per_metric'] = Benchmark.__remove_bias(no_fs_dict)
 
-        fs_dict = Benchmark.__cross_validation(dataset.get_X(), dataset.get_Y(), skf, kfolds, knowledge_discovery=True)
+        fs_dict = Benchmark.__cross_validation(dataset.get_X(), dataset.get_Y(), skf, knowledge_discovery=True)
         fs_dict['best_model_trained_per_metric'] = Benchmark.__remove_bias(fs_dict)
         return Benchmark.__make_results(no_fs_dict, fs_dict)
 
-    @staticmethod
-    def __cross_validation(X, Y, skf, folds, knowledge_discovery):
+    @ staticmethod
+    def __cross_validation(X, Y, skf, knowledge_discovery):
+        folds_inds = Benchmark.__indices_in_folds(X, Y, skf)
+        folds = len(folds_inds.keys())
+        true_labels, folds_true_labels = Benchmark.__folds_true_labels(Y, folds_inds)
         fsel_conf_combs, classifiers_conf_combs = generate_param_combs()
-        fold_id = 0
+        fsel_in_folds = Benchmark.__run_feature_selection(X, Y, folds_inds, fsel_conf_combs, knowledge_discovery)
+        conf_data_in_folds = Benchmark.__run_classifiers(X, Y, folds_inds, classifiers_conf_combs,
+                                                         fsel_in_folds, knowledge_discovery)
+        print('Run Classifiers completed')
+
+        conf_perfs = Benchmark.__compute_confs_perf_per_metric(conf_data_in_folds, folds_true_labels, folds)
+        best_model_per_metric = Benchmark.__select_best_model_per_metric(conf_perfs)
+        best_model_trained_per_metric = Benchmark.__train_best_model_in_all_data(best_model_per_metric,
+                                                                                 conf_data_in_folds, X, Y)
+        Logger.log('Best model trained successfully')
+        predictions_merged = Benchmark.__merge_predictions_from_folds(conf_data_in_folds, folds)
+        Logger.log('Predictions merged successfully')
+        print()
+        return {'best_model_trained_per_metric': best_model_trained_per_metric,
+                'predictions_merged': predictions_merged, 'true_labels': true_labels,
+                'train_test_indices_folds': folds_inds,
+                'conf_data_in_folds': conf_data_in_folds}
+
+    @ staticmethod
+    def __run_classifiers(X, Y, folds_inds, clf_conf_combs, fsel_in_folds, knowledge_discovery):
         conf_data_in_folds = {}
-        folds_true_labels = {}
-        train_test_indices_folds = {}
-        true_labels = np.array([])
-        total_combs = len(fsel_conf_combs) * len(classifiers_conf_combs) - len(classifiers_conf_combs) if knowledge_discovery is True else len(classifiers_conf_combs)
-        start = time.time()
-        print('Knowledge Discovery:', knowledge_discovery, ', Total Configs:', total_combs)
-        Logger.log('Knowledge Discovery: ' + str(knowledge_discovery))
-        for train_index, test_index in skf.split(X, Y):
-            Logger.log('--------------\nFold: ' + str(fold_id + 1))
-            Logger.log('Train ind: ' + str(train_index.tolist()))
-            Logger.log('Test ind: ' + str(test_index.tolist()))
-            elapsed_time = time.time() - start
-            start = elapsed_time
-            X_train, X_test = X.iloc[train_index, :], X.iloc[test_index, :]
-            Y_train, Y_test = Y[train_index], Y[test_index]
+        elapsed_time = 0.0
+        total_combs = len(fsel_in_folds) * len(clf_conf_combs) - len(
+            clf_conf_combs) if knowledge_discovery is True else len(clf_conf_combs)
+        for fold_id, inds in folds_inds.items():
+            start = time.time()
+            train_inds = inds['train_indices']
+            test_inds = inds['test_indices']
+            assert not np.array_equal(train_inds, test_inds)
+            X_train, X_test = X.iloc[train_inds, :], X.iloc[test_inds, :]
+            Y_train, Y_test = Y[train_inds], Y[test_inds]
             conf_id = 0
-            fold_id += 1
-            train_test_indices_folds[fold_id] = {'train_indices': train_index, 'test_indices': test_index}
-            folds_true_labels[fold_id] = Y_test
-            true_labels = np.concatenate((true_labels, Y_test))
+            for fsel in fsel_in_folds[fold_id]:
+                X_train_new = X_train.iloc[:, fsel.get_features()]
+                X_test_new = X_test.iloc[:, fsel.get_features()]
+                assert 0 < len(fsel.get_features()) == X_test_new.shape[1]
+                for clf_conf in clf_conf_combs:
+                    conf_data_in_folds.setdefault(conf_id, {})
+                    classifier = Classifier(clf_conf)
+                    Logger.log('Train and predict clf ' + str(conf_id) + '/' + str(total_combs) + ': ' + str(
+                        classifier.to_dict()))
+                    Benchmark.__console_log(fold_id, fsel, classifier, elapsed_time)
+                    classifier.train(X_train_new, Y_train).predict_proba(X_test_new)
+                    Logger.log('Classifier train and predict completed')
+                    Logger.log(classifier.to_dict())
+                    conf_data_in_folds[conf_id][fold_id] = ModelConf(fsel, classifier, conf_id)
+                    conf_id += 1
+            elapsed_time = time.time() - start
+        print()
+        return conf_data_in_folds
+
+    @ staticmethod
+    def __run_feature_selection(X, Y, folds_inds, fsel_conf_combs, knowledge_discovery):
+        fsel_fold_dict = {}
+        for fold_id, inds in folds_inds.items():
+            train_inds = inds['train_indices']
+            test_inds = inds['test_indices']
+            assert not np.array_equal(train_inds, test_inds)
+            X_train, X_test = X.iloc[train_inds, :], X.iloc[test_inds, :]
+            Y_train, Y_test = Y[train_inds], Y[test_inds]
+            conf_id = 0
             for fsel_conf in fsel_conf_combs:
                 if Benchmark.__omit_fsel(fsel_conf, knowledge_discovery):
                     continue
                 Logger.log('\nRun fsel: ' + str(fsel_conf))
+                if knowledge_discovery is True:
+                    print('\r', 'Running fsel:', fsel_conf, end='')
                 fsel = FeatureSelection(fsel_conf)
                 fsel.run(X_train, Y_train)
-                Logger.log(fsel.to_dict())
+                if knowledge_discovery is True:
+                    print(' Completed', end='')
                 Logger.log('Feature Selection Completed\n')
-
+                fsel_fold_dict.setdefault(conf_id, {})
                 if len(fsel.get_features()) > 0:
-                    X_train_new = X_train.iloc[:, fsel.get_features()]
-                    X_test_new = X_test.iloc[:, fsel.get_features()]
-                    assert X_test_new.shape[1] == len(fsel.get_features())
-                for classifier_conf in classifiers_conf_combs:
-                    classifier = Classifier(classifier_conf)
-                    Logger.log('Classifier init successfully')
-                    Benchmark.__console_log(fold_id, fsel, classifier, round(elapsed_time, 2))
-                    conf_id += 1
-                    conf_data_in_folds.setdefault(conf_id, {})
-                    if len(fsel.get_features()) > 0:
-                        Logger.log('Train and predict clf ' + str(conf_id) + '/' + str(total_combs) + ': ' + str(classifier.to_dict()))
-                        classifier.train(X_train_new, Y_train).predict_proba(X_test_new)
-                        Logger.log('Classifier train and predict completed')
-                        Logger.log(classifier.to_dict())
-                        conf_data_in_folds[conf_id][fold_id] = ModelConf(fsel, classifier, conf_id)
-                        Logger.log('Configurations in folds updated')
-            assert total_combs == conf_id, str(total_combs) + ' ' + str(conf_id)
+                    fsel_fold_dict[conf_id].setdefault(fold_id, [])
+                    fsel_fold_dict[conf_id][fold_id] = fsel
+                conf_id += 1
+        fsel_fold_dict_cleaned = Benchmark.__clean_invalid_feature_selection(fsel_fold_dict, len(folds_inds.keys()))
+        fsel_fold_dict_cleaned = Benchmark.__exclude_explanations_with_many_features(fsel_fold_dict_cleaned,
+                                                                                   knowledge_discovery,
+                                                                                   Benchmark.__MAX_FEATURES)
+        fsel_fold_restructured = Benchmark.__restructure_fsel_dict(fsel_fold_dict_cleaned, len(folds_inds.keys()))
         print()
-        conf_data_in_folds = Benchmark.__exclude_confs_with_no_selected_features(conf_data_in_folds, folds)
-        conf_data_in_folds_small_expl = Benchmark.__exclude_explanations_with_many_features(conf_data_in_folds, knowledge_discovery, Benchmark.__MAX_FEATURES)
-        conf_perfs = Benchmark.__compute_confs_perf_per_metric(conf_data_in_folds_small_expl, folds_true_labels, folds)
-        best_model_per_metric = Benchmark.__select_best_model_per_metric(conf_perfs)
-        best_model_trained_per_metric = Benchmark.__train_best_model_in_all_data(best_model_per_metric, conf_data_in_folds_small_expl, X, Y)
-        Logger.log('Best model trained successfully')
-        predictions_merged = Benchmark.__merge_predictions_from_folds(conf_data_in_folds_small_expl, folds)
-        Logger.log('Predictions merged successfully')
-        return {'best_model_trained_per_metric': best_model_trained_per_metric,
-                'predictions_merged': predictions_merged, 'true_labels': true_labels,
-                'train_test_indices_folds': train_test_indices_folds,
-                'conf_data_in_folds': conf_data_in_folds}
+        return fsel_fold_restructured
+
+    @ staticmethod
+    def __clean_invalid_feature_selection(fsel_fold_dict, folds):
+        fsel_fold_dict_cleaned = {}
+        for conf_id, c_data in fsel_fold_dict.items():
+            assert len(c_data.keys()) <= folds
+            if len(c_data.keys()) < folds:
+                continue
+            Benchmark.__check_if_fsels_are_the_same(list(c_data.values()))
+            fsel_fold_dict_cleaned[conf_id] = c_data
+        return fsel_fold_dict_cleaned
+
+    @ staticmethod
+    def __restructure_fsel_dict(fsel_fold_dict, folds):
+        fsel_dict_mod = {}
+        for conf_id, c_data in fsel_fold_dict.items():
+            assert len(c_data.keys()) == folds
+            for fold_id, fsel in c_data.items():
+                fsel_dict_mod.setdefault(fold_id, [])
+                fsel_dict_mod[fold_id].append(fsel)
+        return fsel_dict_mod
+
+    @ staticmethod
+    def __check_if_fsels_are_the_same(fsel_arr):
+        for i in range(len(fsel_arr) - 1):
+            for j in range(i+1, len(fsel_arr)):
+                assert fsel_arr[i] == fsel_arr[j]
+
+    @ staticmethod
+    def __indices_in_folds(X, Y, skf):
+        folds_inds = {}
+        fold_id = 1
+        for train_index, test_index in skf.split(X, Y):
+            folds_inds[fold_id] = {'train_indices': train_index, 'test_indices': test_index}
+            fold_id += 1
+        return folds_inds
+
+    @ staticmethod
+    def __folds_true_labels(Y, folds_inds):
+        folds_true_labels = {}
+        true_labels = np.array([])
+        for fold_id, inds in folds_inds.items():
+            true_labels = np.concatenate((true_labels, Y[inds['test_indices']]))
+            folds_true_labels[fold_id] = Y[inds['test_indices']]
+        return true_labels, folds_true_labels
 
     @staticmethod
-    def __exclude_confs_with_no_selected_features(conf_data_in_folds, folds):
-        conf_data_in_folds_cleaned = {}
-        for c_id, c_data in conf_data_in_folds.items():
-            assert folds >= len(c_data)
-            if len(c_data) == folds:
-                conf_data_in_folds_cleaned[c_id] = c_data
-        return conf_data_in_folds_cleaned
-
-    @staticmethod
-    def __exclude_explanations_with_many_features(conf_data_in_folds, knowledge_discovery, max_features):
+    def __exclude_explanations_with_many_features(fsel_in_folds, knowledge_discovery, max_features):
         if knowledge_discovery is False:
-            return conf_data_in_folds
-        conf_data_in_folds_small_explanations = {}
-        while len(conf_data_in_folds_small_explanations) < 2:
-            for c_id, c_data in conf_data_in_folds.items():
+            return fsel_in_folds
+        fsel_in_folds_small_expl = {}
+        while len(fsel_in_folds_small_expl) < 2:
+            for c_id, c_data in fsel_in_folds.items():
                 feature_num_per_fold = []
-                for f_id, f_data in c_data.items():
-                    feature_num_per_fold.append(len(f_data.get_fsel().get_features()))
+                for f_id, fsel in c_data.items():
+                    feature_num_per_fold.append(len(fsel.get_features()))
                 if np.mean(feature_num_per_fold) <= max_features:
-                    conf_data_in_folds_small_explanations[c_id] = c_data
+                    fsel_in_folds_small_expl[c_id] = c_data
             max_features += 1
-        return conf_data_in_folds_small_explanations
+        return fsel_in_folds_small_expl
 
     @staticmethod
     def __merge_predictions_from_folds(conf_data_in_folds, folds):
@@ -169,11 +230,12 @@ class Benchmark:
 
     @staticmethod
     def __train_best_model_in_all_data(best_model_per_metric, conf_data_in_folds, X, Y):
+        Logger.log('\n****Inside the training of best model in all data')
         for m_id, m_data in best_model_per_metric.items():
             for best_c_id, c_data in m_data.items():
                 conf = conf_data_in_folds[best_c_id][1]  # simply take the configuration of the 1st fold (starting by 1) which is the same for every fold
+                Logger.log('Metric: ' + m_id)
                 print('\r', 'Training in all data the', conf.get_fsel().get_config(), '>', conf.get_clf().get_config(), end='')
-                Logger.log('\n****Inside the training of best model in all data')
                 Logger.log('Run fsel: ' + str(conf.get_fsel().get_config()))
                 fsel = FeatureSelection(conf.get_fsel().get_config())
                 start = time.time()
@@ -190,6 +252,7 @@ class Benchmark:
                 end = time.time()
                 clf.set_time(round(end - start, 2))
                 best_model_per_metric[m_id] = ModelConf(fsel, clf, -1)
+                Logger.log('Classifier trained successfully')
         print()
         return best_model_per_metric
 
@@ -214,7 +277,7 @@ class Benchmark:
     def __console_log(fold_id, fsel, classifier, elapsed_time):
         print('\r', 'Fold', fold_id, ':', fsel.get_id(), fsel.get_params(), '>',
               classifier.get_id(), classifier.get_params(), 'Time for fold', fold_id-1,
-              'was', elapsed_time, 'secs', end='')
+              'was', round(elapsed_time, 2), 'secs', end='')
 
     @staticmethod
     def __get_rarest_class_count(Y):

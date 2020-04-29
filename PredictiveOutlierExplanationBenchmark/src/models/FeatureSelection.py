@@ -33,6 +33,8 @@ class FeatureSelection:
     def __eq__(self, other):
         if not self.__class__ == self.__class__:
             return False
+        if len(self.__params.keys()) != len(other.__params.keys()):
+            return False
         for k in self.__params:
             if self.__params[k] != other.__params[k]:
                 return False
