@@ -34,14 +34,19 @@ class Classifier:
         return str(self.to_dict())
 
     def train(self, X_train, Y_train):
+        print(' Train', end='')
         clf = Classifier.__algorithms[self.__id]
         self.__model = clf(self.__params).train(X_train, Y_train)
         return self
 
     def predict_proba(self, X_test):
+        print(' Predict', end='')
         self.__predictions_proba = self.__model.predict_proba(X_test)
+        print(' Predict_Completed', end='')
         self.__assign_predictions_labels()
+        print(' Labels_Created', end='')
         self.__modidy_predictions_proba()
+        print(' Proba_Created', end='')
         return self.__predictions_proba
 
     def set_time(self, time):
