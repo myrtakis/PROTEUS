@@ -67,6 +67,7 @@ class Benchmark:
         elapsed_time = 0.0
         total_combs = len(fsel_in_folds) * len(clf_conf_combs) - len(
             clf_conf_combs) if knowledge_discovery is True else len(clf_conf_combs)
+        Logger.log('===========\nRun Classifiers\n')
         for fold_id, inds in folds_inds.items():
             start = time.time()
             train_inds = inds['train_indices']
