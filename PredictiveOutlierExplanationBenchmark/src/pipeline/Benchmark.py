@@ -240,7 +240,7 @@ class Benchmark:
             for best_c_id, c_data in m_data.items():
                 conf = conf_data_in_folds[best_c_id][1]  # simply take the configuration of the 1st fold (starting by 1) which is the same for every fold
                 Logger.log('Metric: ' + m_id)
-                print('\r', 'Training in all data the', conf.get_fsel().get_config(), '>', conf.get_clf().get_config(), end='')
+                print('Metric', m_id, ': Training in all data the', conf.get_fsel().get_config(), '>', conf.get_clf().get_config(), end='')
                 Logger.log('Run fsel: ' + str(conf.get_fsel().get_config()))
                 fsel = FeatureSelection(conf.get_fsel().get_config())
                 start = time.time()

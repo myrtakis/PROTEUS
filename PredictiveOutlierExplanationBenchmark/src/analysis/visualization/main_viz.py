@@ -1,5 +1,4 @@
-import argparse
-from PredictiveOutlierExplanationBenchmark.src.visualization.VizProcessor import VizProcessor
+from PredictiveOutlierExplanationBenchmark.src.analysis.visualization import VizProcessor
 
 
 if __name__ == '__main__':
