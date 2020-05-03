@@ -13,9 +13,6 @@ from adjustText import adjust_text
 
 class VizProcessor:
 
-    __nav_file = None
-    __original_dataset = None
-
     __save_dir = 'figures/vizualizations'
 
     __dim_reduction_methods = {
@@ -30,6 +27,20 @@ class VizProcessor:
                 'axis_labels': ['t-SNE Embedding 1', 't-SNE Embedding 2']
              }
     }
+
+    def __init__(self, path_to_navigator_file):
+        self.original_dataset = None
+        self.nav_file = None
+        self.read_nav_file(path_to_navigator_file)
+        self.read_original_dataset()
+
+    def read_original_dataset(self):
+        self.original_dataset = pd.read_csv(self.nav_file[FileKeys.navigator_original_dataset_path])
+
+    def read_nav_file(self, path_to_navigator_file):
+        with open(path_to_navigator_file) as json_file:
+            self.nav_file = json.load(json_file)
+
 
     @staticmethod
     def process(path_to_navigator_file):

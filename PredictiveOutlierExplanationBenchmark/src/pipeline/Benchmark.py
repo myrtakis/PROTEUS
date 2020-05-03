@@ -20,9 +20,9 @@ class Benchmark:
     __MAX_FEATURES = 10
 
     @staticmethod
-    def run(pseudo_samples, dataset):
+    def run(dataset_kind, pseudo_samples, dataset):
         print('----------\n')
-        print('Pseudo samples:', pseudo_samples)
+        print('Kind of dataset:', dataset_kind, ', Pseudo samples:', pseudo_samples)
 
         Logger.log('==================\nPseudo Samples: ' + str(pseudo_samples))
 
@@ -65,7 +65,7 @@ class Benchmark:
     def __run_classifiers(X, Y, folds_inds, clf_conf_combs, fsel_in_folds, knowledge_discovery):
         conf_data_in_folds = {}
         elapsed_time = 0.0
-        total_combs = len(fsel_in_folds) * len(clf_conf_combs) - len(
+        total_combs = len(fsel_in_folds[next(iter(fsel_in_folds))]) * len(clf_conf_combs) - len(
             clf_conf_combs) if knowledge_discovery is True else len(clf_conf_combs)
         Logger.log('===========\nRun Classifiers\n')
         for fold_id, inds in folds_inds.items():
@@ -89,7 +89,7 @@ class Benchmark:
                     classifier = Classifier(clf_conf)
                     Logger.log('Train and predict clf ' + str(conf_id) + '/' + str(total_combs) + ': ' + str(
                         classifier.to_dict()))
-                    Benchmark.__console_log(fold_id, fsel, classifier, elapsed_time)
+                    Benchmark.__console_log(fold_id, conf_id+1, total_combs, fsel, classifier, elapsed_time)
                     classifier.train(X_train_new, Y_train).predict_proba(X_test_new)
                     Logger.log('Classifier train and predict completed')
                     Logger.log(classifier.to_dict())
@@ -114,7 +114,7 @@ class Benchmark:
                     continue
                 Logger.log('\nRun fsel: ' + str(fsel_conf))
                 if knowledge_discovery is True:
-                    print('\r', 'Running fsel:', fsel_conf, end='')
+                    print('\r', 'Fold', fold_id, '> Running fsel:', fsel_conf, end='')
                 fsel = FeatureSelection(fsel_conf)
                 fsel.run(X_train, Y_train)
                 if knowledge_discovery is True:
@@ -240,7 +240,7 @@ class Benchmark:
             for best_c_id, c_data in m_data.items():
                 conf = conf_data_in_folds[best_c_id][1]  # simply take the configuration of the 1st fold (starting by 1) which is the same for every fold
                 Logger.log('Metric: ' + m_id)
-                print('Metric', m_id, ': Training in all data the', conf.get_fsel().get_config(), '>', conf.get_clf().get_config(), end='')
+                print('\rMetric', m_id, ': Training in all data the', conf.get_fsel().get_config(), '>', conf.get_clf().get_config(), end='')
                 Logger.log('Run fsel: ' + str(conf.get_fsel().get_config()))
                 fsel = FeatureSelection(conf.get_fsel().get_config())
                 start = time.time()
@@ -279,8 +279,8 @@ class Benchmark:
         return data_dict['best_model_trained_per_metric']
 
     @staticmethod
-    def __console_log(fold_id, fsel, classifier, elapsed_time):
-        print('\r', 'Fold', fold_id, ':', fsel.get_id(), fsel.get_params(), '>',
+    def __console_log(fold_id, conf_id, total_confs, fsel, classifier, elapsed_time):
+        print('\r', 'Fold', fold_id, ':', conf_id, '/', total_confs, fsel.get_id(), fsel.get_params(), '>',
               classifier.get_id(), classifier.get_params(), 'Time for fold', fold_id-1,
               'was', round(elapsed_time, 2), 'secs', end='')
 

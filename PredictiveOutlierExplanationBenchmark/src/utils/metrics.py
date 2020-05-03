@@ -52,7 +52,6 @@ def run_metric(y_true, y_pred, metric_func, metric_id):
 
 
 def calculate_roc_auc(y_true, y_pred, run_R=False):
-    y_true = np.copy(y_true)
     if len(np.unique(y_true)) == 1:
         return {_ROC_AUC: -1}
     if run_R is True:
@@ -69,6 +68,8 @@ def calculate_roc_auc(y_true, y_pred, run_R=False):
 
 
 def calculate_precision_outliers(y_true, y_pred):
+    if len(np.unique(y_true)) == 1:
+        return {_PRECISION_OUTLIERS: -1}
     y_pred = make_y_pred_is_binary(y_pred)
     conf_mat = conf_matrix(y_true, y_pred)
     if np.count_nonzero(y_pred == 1) == 0:
@@ -79,10 +80,25 @@ def calculate_precision_outliers(y_true, y_pred):
 
 
 def calculate_recall_outliers(y_true, y_pred):
+    if len(np.unique(y_true)) == 1:
+        return {_RECALL_OUTLIERS: -1}
     y_pred = make_y_pred_is_binary(y_pred)
     conf_mat = conf_matrix(y_true, y_pred)
     rec = conf_mat['tp'] / (conf_mat['tp'] + conf_mat['fn'])
     return {_RECALL_OUTLIERS: rec}
+
+
+def calculate_f1_score_outliers(y_true, y_pred):
+    if len(np.unique(y_true)) == 1:
+        return {_F1_SCORE_OUTLIERS: -1}
+    y_pred = make_y_pred_is_binary(y_pred)
+    recall = calculate_recall_outliers(y_true, y_pred)[_RECALL_OUTLIERS]
+    precision = calculate_precision_outliers(y_pred, y_pred)[_PRECISION_OUTLIERS]
+    if recall == 0 and precision == 0:
+        return {_F1_SCORE_OUTLIERS: 0.0}
+    else:
+        f1 = 2 * ((precision * recall) / (precision + recall))
+        return {_F1_SCORE_OUTLIERS: f1}
 
 
 def conf_matrix(y_true, y_pred):
@@ -92,17 +108,6 @@ def conf_matrix(y_true, y_pred):
         'fn': len(np.intersect1d(np.where(y_true == 1)[0], np.where(y_pred == 0)[0])),
         'tp': len(np.intersect1d(np.where(y_true == 1)[0], np.where(y_pred == 1)[0]))
     }
-
-
-def calculate_f1_score_outliers(y_true, y_pred):
-    y_pred = make_y_pred_is_binary(y_pred)
-    recall = calculate_recall_outliers(y_true, y_pred)[_RECALL_OUTLIERS]
-    precision = calculate_precision_outliers(y_pred, y_pred)[_PRECISION_OUTLIERS]
-    if recall == 0 and precision == 0:
-        return {_F1_SCORE_OUTLIERS: 0.0}
-    else:
-        f1 = 2 * ((precision * recall) / (precision + recall))
-        return {_F1_SCORE_OUTLIERS: f1}
 
 
 def make_y_pred_is_binary(y_pred):

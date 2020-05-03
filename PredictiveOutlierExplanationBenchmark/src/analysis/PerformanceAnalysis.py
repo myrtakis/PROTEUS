@@ -4,9 +4,12 @@ from PredictiveOutlierExplanationBenchmark.src.utils.pseudo_samples import Pseud
 import json
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class PerfAnalysis:
+
+    __markers = ['s', 'o', 'd', 'v', '^', '<', '>', 'x', '+']
 
     def __init__(self, path_to_dir, metric_id):
         self.path_to_dir = path_to_dir
@@ -65,13 +68,17 @@ class PerfAnalysis:
                 k_rel_fratio.setdefault(k, {})
                 k_rel_fratio[k][rel_fratio] = perf
         x_labels = [str(i) + '%' for i in rel_fratio_perfs_by_k.keys()]
+        i = 0
         for k, data in k_rel_fratio.items():
-            plt.plot(range(len(data.keys())), list(data.values()), label='K = ' + str(k))
+            plt.plot(range(len(data.keys())), list(data.values()), label='K = ' + str(k), marker=PerfAnalysis.__markers[i])
+            i += 1
         plt.xticks(range(len(x_labels)), x_labels)
         plt.legend()
         plt.xlabel('Relevant Feature Ratio')
         plt.ylabel(self.metric_id)
         title = 'Explanation of Decision Boundary' if fs is True else 'Learning of Decision Boundary'
         plt.title(title)
+        plt.ylim((0, 1.05))
+        plt.yticks(np.arange(0, 1.1, 0.1))
         plt.show()
         plt.clf()

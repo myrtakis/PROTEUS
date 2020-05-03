@@ -1,13 +1,13 @@
 {
   "settings": {
     "task": "classification",
-    "kfolds": 5,
+    "kfolds": 10,
     "top_k_points_to_explain": 0.05,
     "pseudo_samples_per_outlier": [0]
   },
 
   "dataset": {
-    "path": "../hics_100_g1_standar.csv",
+    "path": "../datasets/test/hics_20_g1.csv",
     "is_anomaly_column": "is_anomaly",
     "subspace_column": "subspaces"
   },
@@ -45,20 +45,20 @@
       "id": "ses",
       "params": {
         "max_k": [2, 3],
-        "alpha": [0.01, 0.05]
+        "alpha": [0.01, 0.05, 0.1]
        }
     },
     {
       "id": "fbed",
       "params": {
         "K": [0, 1, 3],
-        "threshold": [0.05, 0.1]
+        "threshold": [0.01, 0.05, 0.1]
       }
     },
     {
       "id": "lasso",
       "params":{
-        "alpha": [0.01, 0.05, 0.1]
+        "alpha": [0.001, 0.01, 0.1, 0.2]
       }
     }
   ],
@@ -84,6 +84,16 @@
         {"prime_param":{"kernel": "linear"}, "combs":{"gamma":"NA", "degree":"NA"}},
         {"prime_param":{"kernel": "rbf"}, "combs": {"degree": "NA"}}
       ]
+    },
+    {
+      "id": "knn",
+      "params": {
+        "n_neighbors": [
+          5,
+          10,
+          15
+        ]
+      }
     }
   ]
 

@@ -18,24 +18,27 @@ class Pipeline:
         original_dataset = Dataset(DatasetConfig.get_dataset_path(), DatasetConfig.get_anomaly_column_name(),
                                    DatasetConfig.get_subspace_column_name())
         datasets_for_cv = {}
+        datasets_for_cv['original'] = {0: original_dataset}
+        datasets_for_cv['detected'] = {}
         dataset_with_detected_outliers, detectors_info, threshold = detect_outliers(original_dataset)
         pseudo_samples_array = SettingsConfig.get_pseudo_samples_array()
         if pseudo_samples_array is not None:
             assert SettingsConfig.is_classification_task(), "Pseudo samples are allowed only in classification task"
-            datasets_for_cv.update(Pipeline.__add_datasets_with_pseudo_samples(dataset_with_detected_outliers, detectors_info['best'],
-                                                                               threshold, pseudo_samples_array))
-
-        # todo delete this line (debugging)
-        # datasets_for_cv[0] = original_dataset
+            datasets_for_cv['detected'].update(Pipeline.__add_datasets_with_pseudo_samples(dataset_with_detected_outliers,
+                                                                                           detectors_info['best'],
+                                                                                           threshold,
+                                                                                           pseudo_samples_array))
 
         print('Running Dataset:', DatasetConfig.get_dataset_path())
         rw = None
-        for pseudo_samples, dataset in datasets_for_cv.items():
-            Logger.initialize(pseudo_samples)
-            rw = ResultsWriter(pseudo_samples)
-            rw.write_dataset(dataset)
-            results = Benchmark.run(pseudo_samples, dataset)
-            rw.write_results(results)
+
+        for dataset_kind, data in datasets_for_cv.items():
+            for pseudo_samples, dataset in data.items():
+                Logger.initialize(pseudo_samples)
+                rw = ResultsWriter(pseudo_samples)
+                rw.write_dataset(dataset, dataset_kind)
+                results = Benchmark.run(dataset_kind, pseudo_samples, dataset)
+                rw.write_results(results, dataset_kind)
         rw.write_detector_info_file(detectors_info['info'])
         rw.create_navigator_file()
 
