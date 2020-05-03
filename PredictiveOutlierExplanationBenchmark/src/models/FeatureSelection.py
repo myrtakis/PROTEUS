@@ -50,6 +50,10 @@ class FeatureSelection:
     def set_time(self, time):
         self.__time = time
 
+    def set_features(self, features):
+        assert features is not None and len(features) > 0
+        self.__features = features
+
     def get_features(self):
         return self.__features
 

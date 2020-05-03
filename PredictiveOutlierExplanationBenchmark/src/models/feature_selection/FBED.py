@@ -25,6 +25,12 @@ class FBED:
         else:
             X_train_r = ro.conversion.py2rpy(X_train)
             Y_train_r = ro.conversion.py2rpy(Y_train)
-        fbed_object = fbed(Y_train_r, X_train_r, threshold=self.__params['threshold'], K=self.__params['K'], test='testIndReg')
-        selected_vars = np.array(fbed_object[1], dtype=int)[:, 0]
+        fbed_object = fbed(Y_train_r, X_train_r, threshold=self.__params['threshold'], K=self.__params['K'],
+                           test='testIndReg')
+        fbed_features_obj = np.array(fbed_object[1], dtype=float)
+        if len(fbed_features_obj[:, 0]) == 0:
+            return [], None
+        sorted_args_bypvalue = np.argsort(fbed_features_obj[:, 2])
+        fbed_features_obj = fbed_features_obj[sorted_args_bypvalue]
+        selected_vars = np.array(fbed_features_obj, dtype=int)[:, 0]
         return selected_vars - 1, None  # Reduce ids by 1 as R starts counting from 1

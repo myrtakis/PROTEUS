@@ -29,6 +29,9 @@ class SES:
             X_train_r = ro.conversion.py2rpy(X_train)
             Y_train_r = ro.conversion.py2rpy(Y_train)
         ses_object = SES.__sesLib.SES(Y_train_r, X_train_r, max_k=self.__params['max_k'], threshold=self.__params['alpha'])
-        selected_vars = np.array(ses_object.slots['selectedVars'])
+        selected_vars = np.array(ses_object.slots['selectedVarsOrder'])
         equivalent_features = np.array(ses_object.slots['signatures']) - 1
-        return selected_vars - 1, equivalent_features  # Reduce ids by 1 as R starts counting from 1
+        if len(selected_vars) == 0:
+            return [], None
+        else:
+            return selected_vars - 1, equivalent_features  # Reduce ids by 1 as R starts counting from 1

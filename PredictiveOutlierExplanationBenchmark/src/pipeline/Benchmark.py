@@ -19,6 +19,8 @@ class Benchmark:
     __clf_key = ClassifiersConfig.classifier_key()
     __MAX_FEATURES = 10
 
+    __select_features_by_topk = True
+
     @staticmethod
     def run(dataset_kind, pseudo_samples, dataset):
         print('----------\n')
@@ -126,9 +128,12 @@ class Benchmark:
                     fsel_fold_dict[conf_id][fold_id] = fsel
                 conf_id += 1
         fsel_fold_dict_cleaned = Benchmark.__clean_invalid_feature_selection(fsel_fold_dict, len(folds_inds.keys()))
-        fsel_fold_dict_cleaned = Benchmark.__exclude_explanations_with_many_features(fsel_fold_dict_cleaned,
-                                                                                   knowledge_discovery,
-                                                                                   Benchmark.__MAX_FEATURES)
+        if Benchmark.__select_features_by_topk is True:
+            fsel_fold_dict_cleaned = Benchmark.__select_top_k_features(fsel_fold_dict_cleaned, knowledge_discovery)
+        else:
+            fsel_fold_dict_cleaned = Benchmark.__exclude_explanations_with_many_features(fsel_fold_dict_cleaned,
+                                                                                       knowledge_discovery,
+                                                                                       Benchmark.__MAX_FEATURES)
         fsel_fold_restructured = Benchmark.__restructure_fsel_dict(fsel_fold_dict_cleaned, len(folds_inds.keys()))
         print()
         return fsel_fold_restructured
@@ -192,6 +197,18 @@ class Benchmark:
                     fsel_in_folds_small_expl[c_id] = c_data
             max_features += 1
         return fsel_in_folds_small_expl
+
+    @ staticmethod
+    def __select_top_k_features(fsel_in_folds, knowledge_discovery):
+        if knowledge_discovery is False:
+            return fsel_in_folds
+        fsel_fold_dict_topk = {}
+        for c_id, c_data in fsel_in_folds.items():
+            for f_id, fsel in c_data.items():
+                if len(fsel.get_features()) > Benchmark.__MAX_FEATURES:
+                    fsel.set_features(fsel.get_features()[0:Benchmark.__MAX_FEATURES])
+            fsel_fold_dict_topk[c_id] = c_data
+        return fsel_fold_dict_topk
 
     @staticmethod
     def __merge_predictions_from_folds(conf_data_in_folds, folds):
