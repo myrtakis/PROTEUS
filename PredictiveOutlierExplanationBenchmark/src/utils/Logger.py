@@ -11,6 +11,8 @@ class Logger:
     __logger_path = None
     __logger_final_file = None
 
+    __make_log = False
+
     @ staticmethod
     def initialize(pseudo_samples):
         if Logger.__logger_final_file is not None:
@@ -34,4 +36,9 @@ class Logger:
 
     @ staticmethod
     def log(data):
-        Logger.__logger_final_file.write(str(data) + '\n')
+        if Logger.__make_log is True:
+            Logger.__logger_final_file.write(str(data) + '\n')
+
+    @ staticmethod
+    def close():
+        Logger.__logger_final_file.close()

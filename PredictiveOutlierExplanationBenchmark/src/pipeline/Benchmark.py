@@ -264,6 +264,7 @@ class Benchmark:
                 fsel.run(X, Y)
                 Logger.log('Fsel run successfully')
                 end = time.time()
+                fsel.set_features(fsel.get_features()[0:Benchmark.__MAX_FEATURES])
                 fsel.set_time(round(end - start, 2))
                 assert len(fsel.get_features()) > 0
                 Logger.log('Run clf: ' + str(conf.get_clf().get_config()))
