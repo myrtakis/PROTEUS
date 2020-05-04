@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from PredictiveOutlierExplanationBenchmark.src.utils import utils
 from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import *
 from PredictiveOutlierExplanationBenchmark.src.utils.pseudo_samples import PseudoSamplesMger
@@ -16,13 +18,27 @@ class PerfAnalysis:
         self.metric_id = metric_id
         self.nav_files = None
 
-    def analyze(self):
+    def analyze(self, original_data_analysis=False):
         self.nav_files = self.__read_nav_files()
         self.nav_files = self.__sort_files_by_dim()
+        if original_data_analysis:
+            print('performance on original data without feature selection')
+            self.__analysis_of_original_data(fs=False)
+            print('performance on original data with feature selection')
+            self.__analysis_of_original_data(fs=True)
         print('Learning the boundary')
         self.__analysis_per_nav_file(fs=False)
         print('Explaining the boundary')
         self.__analysis_per_nav_file(fs=True)
+
+    def __analysis_of_original_data(self, fs):
+        rel_fratio_perfs_by_orig = {}
+        for dim, nav_file in self.nav_files.items():
+            original_dataset_path = nav_file[FileKeys.navigator_original_dataset_path]
+            rel_fratio = self.__compute_rel_fratio(original_dataset_path, dim - 2)
+            original_data = nav_file[FileKeys.navigator_original_data]
+            rel_fratio_perfs_by_orig[rel_fratio] = utils.get_best_model_perf_original_data(original_data, self.metric_id, fs)
+        print(rel_fratio_perfs_by_orig)
 
     def __analysis_per_nav_file(self, fs):
         rel_fratio_perfs_by_k = {}
@@ -60,6 +76,20 @@ class PerfAnalysis:
     def __compute_rel_fratio(self, original_dataset_path, dim):
         optimal_features = utils.extract_optimal_features(original_dataset_path)
         return round((len(optimal_features) / dim) * 100)
+
+    def __plot_relf_ratio_to_perf_orig(self, rel_fratio_perfs_orig, fs):
+        x_labels = [str(i) + '%' for i in rel_fratio_perfs_orig.keys()]
+        plt.plot(list(rel_fratio_perfs_orig.keys()), list(rel_fratio_perfs_orig.vales()))
+        plt.xticks(range(len(x_labels)), x_labels)
+        plt.legend()
+        plt.xlabel('Relevant Feature Ratio')
+        plt.ylabel(self.metric_id)
+        title = 'Explanation of Decision Boundary' if fs is True else 'Learning of Decision Boundary'
+        plt.title(title)
+        plt.ylim((0, 1.05))
+        plt.yticks(np.arange(0, 1.1, 0.1))
+        plt.show()
+        plt.clf()
 
     def __plot_relf_ratio_to_perf(self, rel_fratio_perfs_by_k, fs):
         k_rel_fratio = {}

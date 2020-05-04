@@ -59,7 +59,7 @@ class ResultsWriter:
             FileKeys.navigator_conf_path: ConfigMger.get_config_path(),
             FileKeys.navigator_original_dataset_path: DatasetConfig.get_dataset_path(),
             FileKeys.navigator_detector_info_path: self.__detector_info_path,
-            FileKeys.navigator_orignal_data: self.__original_data,
+            FileKeys.navigator_original_data: self.__original_data,
             FileKeys.navigator_pseudo_samples_key: ResultsWriter.__pseudo_samples_dirs_dict
         }
         with open(os.path.join(self.__base_dir, FileNames.navigator_fname), 'w', encoding='utf-8') as f:

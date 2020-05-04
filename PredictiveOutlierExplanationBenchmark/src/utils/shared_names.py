@@ -10,7 +10,7 @@ class FileNames:
 class FileKeys:
     navigator_conf_path = 'config_path'
     navigator_original_dataset_path = 'original_dataset_path'
-    navigator_orignal_data = 'original_data'
+    navigator_original_data = 'original_data'
     navigator_pseudo_samples_key = 'pseudo_samples'
     navigator_pseudo_sample_dir_key = 'dir'
     navigator_pseudo_samples_data_path = 'dataset_path'

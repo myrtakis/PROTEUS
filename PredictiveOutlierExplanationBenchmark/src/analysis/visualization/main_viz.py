@@ -2,6 +2,6 @@ from PredictiveOutlierExplanationBenchmark.src.analysis.visualization import Viz
 
 
 if __name__ == '__main__':
-    hics_p = '../results/classification/datasets/real/arrhythmia/navigator.json'
+    hics_p = '../results_topk/classification/datasets/real/arrhythmia/navigator.json'
     VizProcessor.process(hics_p)
     pass
