@@ -6,10 +6,11 @@ from PredictiveOutlierExplanationBenchmark.src.analysis.PerformanceAnalysis impo
 
 
 if __name__ == '__main__':
-    path = '../results/classification/datasets/synthetic/hics/group_g1'
+    # path = '../results/classification/datasets/synthetic/hics/group_g1'
+    path = '../results/classification/datasets/real/arrhythmia_005'
     metric_id = 'roc_auc'
-    RelFeaturesRatio(path, metric_id).analyze()
+    # RelFeaturesRatio(path, metric_id).analyze()
 
-    # DetectorAnalysis(path, metric_id).analyze()
+    # DetectorAnalysis(path, metric_id).analyze(real_data=True)
 
-    # PerfAnalysis(path, metric_id).analyze(original_data_analysis=True)
+    PerfAnalysis(path, metric_id).analyze(original_data_analysis=True, real_data=True)

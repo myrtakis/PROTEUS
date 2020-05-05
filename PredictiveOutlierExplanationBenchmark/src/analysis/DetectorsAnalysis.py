@@ -15,10 +15,20 @@ class DetectorAnalysis:
         self.metric_id = metric_id
         self.nav_files = None
 
-    def analyze(self):
+    def analyze(self, real_data=False):
         self.nav_files = self.__read_nav_files()
+        if real_data:
+            self.__analyze_real_data()
+        else:
+            self.__analyze_synthetic_data()
+
+    def __analyze_real_data(self):
+        det_perfs = self.__detectors_perfs_real_data()
+        print(det_perfs)
+
+    def __analyze_synthetic_data(self):
         self.nav_files = self.__sort_files_by_dim()
-        det_perfs = self.__detectors_perfs()
+        det_perfs = self.__detectors_perfs_synthetic_data()
         self.__plot_detectors_perfs(det_perfs)
 
     def __plot_detectors_perfs(self, detectors_perfs):
@@ -40,7 +50,7 @@ class DetectorAnalysis:
         plt.show()
         plt.clf()
 
-    def __detectors_perfs(self):
+    def __detectors_perfs_synthetic_data(self):
         det_perfs = {}
         for dim, nav_file in self.nav_files.items():
             original_dataset_path = nav_file[FileKeys.navigator_original_dataset_path]
@@ -50,6 +60,15 @@ class DetectorAnalysis:
                 for det, data in json.load(json_file).items():
                     det_perfs.setdefault(det, {})
                     det_perfs[det][rel_fratio] = data['effectiveness'][self.metric_id]
+        return det_perfs
+
+    def __detectors_perfs_real_data(self):
+        det_perfs = {}
+        for nav_file in self.nav_files:
+            detectors_info_file = nav_file[FileKeys.navigator_detector_info_path]
+            with open(detectors_info_file) as json_file:
+                for det, data in json.load(json_file).items():
+                    det_perfs[det] = data['effectiveness'][self.metric_id]
         return det_perfs
 
     def __compute_rel_fratio(self, original_dataset_path, dim):

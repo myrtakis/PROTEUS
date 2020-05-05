@@ -18,20 +18,37 @@ class PerfAnalysis:
         self.metric_id = metric_id
         self.nav_files = None
 
-    def analyze(self, original_data_analysis=False):
+    def analyze(self, original_data_analysis=False, real_data=False):
         self.nav_files = self.__read_nav_files()
+        if real_data:
+            self.__analyze_real_datasets(original_data_analysis)
+        else:
+            self.__analyze_synthetic_datasets(original_data_analysis)
+
+    def __analyze_synthetic_datasets(self, original_data_analysis=False):
         self.nav_files = self.__sort_files_by_dim()
         if original_data_analysis:
             print('performance on original data without feature selection')
-            self.__analysis_of_original_data(fs=False)
+            self.__analysis_of_original_synthetic_data(fs=False)
             print('performance on original data with feature selection')
-            self.__analysis_of_original_data(fs=True)
+            self.__analysis_of_original_synthetic_data(fs=True)
         print('Learning the boundary')
-        self.__analysis_per_nav_file(fs=False)
+        self.__analysis_per_nav_file_synthetic_data(fs=False)
         print('Explaining the boundary')
-        self.__analysis_per_nav_file(fs=True)
+        self.__analysis_per_nav_file_synthetic_data(fs=True)
 
-    def __analysis_of_original_data(self, fs):
+    def __analyze_real_datasets(self, original_data_analysis=False):
+        if original_data_analysis:
+            print('performance on original data without feature selection')
+            self.__analysis_of_original_real_data(fs=False)
+            print('performance on original data with feature selection')
+            self.__analysis_of_original_real_data(fs=True)
+        print('Learning the boundary')
+        self.__analysis_per_nav_file_real_data(fs=False)
+        print('Explaining the boundary')
+        self.__analysis_per_nav_file_real_data(fs=True)
+
+    def __analysis_of_original_synthetic_data(self, fs):
         rel_fratio_perfs_by_orig = {}
         for dim, nav_file in self.nav_files.items():
             original_dataset_path = nav_file[FileKeys.navigator_original_dataset_path]
@@ -40,7 +57,13 @@ class PerfAnalysis:
             rel_fratio_perfs_by_orig[rel_fratio] = utils.get_best_model_perf_original_data(original_data, self.metric_id, fs)
         print(rel_fratio_perfs_by_orig)
 
-    def __analysis_per_nav_file(self, fs):
+    def __analysis_of_original_real_data(self, fs):
+        for nav_file in self.nav_files:
+            original_data = nav_file[FileKeys.navigator_original_data]
+            best_model_perf, best_conf = utils.get_best_model_perf_original_data(original_data, self.metric_id, fs)
+            print(best_model_perf, best_conf)
+
+    def __analysis_per_nav_file_synthetic_data(self, fs):
         rel_fratio_perfs_by_k = {}
         for dim, nav_file in self.nav_files.items():
             original_dataset_path = nav_file[FileKeys.navigator_original_dataset_path]
@@ -49,6 +72,13 @@ class PerfAnalysis:
             perf_per_k, best_model_ids = self.__calculate_performance_per_k(ps_mger)
             rel_fratio_perfs_by_k[rel_fratio] = perf_per_k
         self.__plot_relf_ratio_to_perf(rel_fratio_perfs_by_k, fs)
+
+    def __analysis_per_nav_file_real_data(self, fs):
+        for nav_file in self.nav_files:
+            ps_mger = PseudoSamplesMger(nav_file[FileKeys.navigator_pseudo_samples_key], self.metric_id, fs=fs)
+            perf_per_k, best_model_ids = self.__calculate_performance_per_k(ps_mger)
+            print(perf_per_k)
+        # self.__plot_relf_ratio_to_perf(rel_fratio_perfs_by_k, fs)
 
     def __calculate_performance_per_k(self, ps_mger):
         perf_per_k = {}

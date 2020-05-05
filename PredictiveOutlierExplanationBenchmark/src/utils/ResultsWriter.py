@@ -10,11 +10,11 @@ import os
 class ResultsWriter:
 
     __pseudo_samples_dirs_dict = {}
+    __original_data = None
 
     def __init__(self, pseudo_samples):
         self.__pseudo_samples = pseudo_samples
         self.__pseudo_samples_key = 'pseudo_samples_' + str(pseudo_samples)
-        self.__original_data = None
         self.__benchmark_dict = None
         self.__best_model_dict = None
         self.__train_test_indices_dict = None
@@ -26,9 +26,9 @@ class ResultsWriter:
 
     def write_results(self, results, dataset_kind):
         if dataset_kind == 'original':
-            self.__original_data = Path(self.__base_dir, dataset_kind)
-            self.__original_data.mkdir(parents=True, exist_ok=True)
-            output_dir = self.__original_data
+            ResultsWriter.__original_data = Path(self.__base_dir, dataset_kind)
+            ResultsWriter.__original_data.mkdir(parents=True, exist_ok=True)
+            output_dir = ResultsWriter.__original_data
         else:
             output_dir = self.__final_dir
         self.__prepare_results(results)
@@ -59,7 +59,7 @@ class ResultsWriter:
             FileKeys.navigator_conf_path: ConfigMger.get_config_path(),
             FileKeys.navigator_original_dataset_path: DatasetConfig.get_dataset_path(),
             FileKeys.navigator_detector_info_path: self.__detector_info_path,
-            FileKeys.navigator_original_data: self.__original_data,
+            FileKeys.navigator_original_data: str(ResultsWriter.__original_data),
             FileKeys.navigator_pseudo_samples_key: ResultsWriter.__pseudo_samples_dirs_dict
         }
         with open(os.path.join(self.__base_dir, FileNames.navigator_fname), 'w', encoding='utf-8') as f:

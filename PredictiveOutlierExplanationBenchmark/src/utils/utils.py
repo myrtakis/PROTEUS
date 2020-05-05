@@ -26,6 +26,13 @@ def extract_optimal_features(dataset_path):
     return optimal_features
 
 
+def get_best_model_original_data(original_data_results_path, metric_id, fs):
+    best_model_orig = Path(original_data_results_path, FileNames.best_model_fname)
+    with open(best_model_orig) as json_file:
+        best_model = json.load(json_file)[fs_key(fs)][metric_id]
+        return best_model
+
+
 def get_best_model_perf_original_data(original_data_results_path, metric_id, fs):
     best_model_orig = Path(original_data_results_path, FileNames.best_model_fname)
     with open(best_model_orig) as json_file:

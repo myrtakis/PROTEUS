@@ -7,7 +7,7 @@
   },
 
   "dataset": {
-    "path": "../datasets/synthetic/hics/group_g1/hics_100_g1.csv",
+    "path": "../datasets/test/hics_20_g1.csv",
     "is_anomaly_column": "is_anomaly",
     "subspace_column": "subspaces"
   },

@@ -15,6 +15,8 @@ class Logger:
 
     @ staticmethod
     def initialize(pseudo_samples):
+        if Logger.__make_log is False:
+            return
         if Logger.__logger_final_file is not None:
             Logger.__logger_final_file.close()
         dataset_path = DatasetConfig.get_dataset_path()
@@ -41,4 +43,5 @@ class Logger:
 
     @ staticmethod
     def close():
-        Logger.__logger_final_file.close()
+        if Logger.__make_log is True:
+            Logger.__logger_final_file.close()

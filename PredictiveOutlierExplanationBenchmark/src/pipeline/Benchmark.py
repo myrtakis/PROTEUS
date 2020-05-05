@@ -53,7 +53,7 @@ class Benchmark:
         conf_perfs = Benchmark.__compute_confs_perf_per_metric(conf_data_in_folds, folds_true_labels, folds)
         best_model_per_metric = Benchmark.__select_best_model_per_metric(conf_perfs)
         best_model_trained_per_metric = Benchmark.__train_best_model_in_all_data(best_model_per_metric,
-                                                                                 conf_data_in_folds, X, Y)
+                                                                                 conf_data_in_folds, X, Y, knowledge_discovery)
         Logger.log('Best model trained successfully')
         predictions_merged = Benchmark.__merge_predictions_from_folds(conf_data_in_folds, folds)
         Logger.log('Predictions merged successfully')
@@ -67,8 +67,7 @@ class Benchmark:
     def __run_classifiers(X, Y, folds_inds, clf_conf_combs, fsel_in_folds, knowledge_discovery):
         conf_data_in_folds = {}
         elapsed_time = 0.0
-        total_combs = len(fsel_in_folds[next(iter(fsel_in_folds))]) * len(clf_conf_combs) - len(
-            clf_conf_combs) if knowledge_discovery is True else len(clf_conf_combs)
+        total_combs = len(fsel_in_folds[next(iter(fsel_in_folds))]) * len(clf_conf_combs) if knowledge_discovery is True else len(clf_conf_combs)
         Logger.log('===========\nRun Classifiers\n')
         for fold_id, inds in folds_inds.items():
             start = time.time()
@@ -251,7 +250,7 @@ class Benchmark:
         return best_model_per_metric
 
     @staticmethod
-    def __train_best_model_in_all_data(best_model_per_metric, conf_data_in_folds, X, Y):
+    def __train_best_model_in_all_data(best_model_per_metric, conf_data_in_folds, X, Y, knowledge_discovery):
         Logger.log('\n****Inside the training of best model in all data')
         for m_id, m_data in best_model_per_metric.items():
             for best_c_id, c_data in m_data.items():
@@ -264,7 +263,8 @@ class Benchmark:
                 fsel.run(X, Y)
                 Logger.log('Fsel run successfully')
                 end = time.time()
-                fsel.set_features(fsel.get_features()[0:Benchmark.__MAX_FEATURES])
+                if knowledge_discovery is True and Benchmark.__select_features_by_topk:
+                    fsel.set_features(fsel.get_features()[0:Benchmark.__MAX_FEATURES])
                 fsel.set_time(round(end - start, 2))
                 assert len(fsel.get_features()) > 0
                 Logger.log('Run clf: ' + str(conf.get_clf().get_config()))

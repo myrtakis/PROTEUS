@@ -30,7 +30,7 @@ class PseudoSamplesMger:
         best_model = None
         best_k = None
         for k, kmodel in self.best_model_per_k.items():
-            if best_model is None or self.get_effectiveness_of_best_model(best_model) < self.get_effectiveness_of_best_model(kmodel):
+            if best_model is None or best_model['effectiveness'] < kmodel['effectiveness']:
                 best_model = kmodel
                 best_k = k
         return best_model, best_k
@@ -44,5 +44,8 @@ class PseudoSamplesMger:
         # return something
         pass
 
-    def get_effectiveness_of_best_model(self, best_model):
-        return best_model[fs_key(self.fs)][self.metric_id]['effectiveness']
+    def get_dataset_path_of_k(self, k):
+        for key, data in self.pseudo_samples_raw.items():
+            if data[FileKeys.navigator_pseudo_samples_num_key] == k:
+                return data[FileKeys.navigator_pseudo_samples_data_path]
+
