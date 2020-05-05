@@ -5,6 +5,7 @@ from PredictiveOutlierExplanationBenchmark.src.utils.ResultsWriter import Result
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Detection import detect_outliers
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Benchmark import Benchmark
 from PredictiveOutlierExplanationBenchmark.src.pipeline.DatasetTransformer import Transformer
+import gc
 
 
 class Pipeline:
@@ -39,6 +40,8 @@ class Pipeline:
                 rw.write_dataset(dataset, dataset_kind)
                 results = Benchmark.run(dataset_kind, pseudo_samples, dataset)
                 rw.write_results(results, dataset_kind)
+                del results
+                gc.collect()
         rw.write_detector_info_file(detectors_info['info'])
         rw.create_navigator_file()
 
