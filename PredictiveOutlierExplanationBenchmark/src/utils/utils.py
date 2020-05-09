@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from PredictiveOutlierExplanationBenchmark.src.pipeline.DatasetTransformer import Transformer
 from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import *
 import pandas as pd
 import os
@@ -55,6 +56,17 @@ def get_best_model_features_original_data(original_data_results_path, metric_id)
         clf_id = best_model['classifiers']['id']
         best_conf = fsel_id + '_' + clf_id
         return features, best_conf
+
+
+def add_datasets_with_pseudo_samples(dataset_detected_outliers, detector, threshold, pseudo_samples_arr):
+    datasets_with_pseudo_samples = {}
+    for ps_num in pseudo_samples_arr:
+        if ps_num == 0:
+            datasets_with_pseudo_samples[0] = dataset_detected_outliers
+            continue
+        dataset = Transformer.add_pseudo_samples_naive(dataset_detected_outliers, ps_num, detector, threshold)
+        datasets_with_pseudo_samples[ps_num] = dataset
+    return datasets_with_pseudo_samples
 
 
 def fs_key(fs):

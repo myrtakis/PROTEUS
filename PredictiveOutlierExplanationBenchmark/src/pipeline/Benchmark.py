@@ -5,7 +5,6 @@ from PredictiveOutlierExplanationBenchmark.src.models.Classifier import Classifi
 from PredictiveOutlierExplanationBenchmark.src.holders.ModelConf import ModelConf
 import time
 import numpy as np
-
 from PredictiveOutlierExplanationBenchmark.src.utils.Logger import Logger
 from PredictiveOutlierExplanationBenchmark.src.utils.metrics import calculate_all_metrics
 import collections
