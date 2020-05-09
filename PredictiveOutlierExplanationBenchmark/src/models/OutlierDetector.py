@@ -32,13 +32,20 @@ class Detector:
         self.__params = params
         self.__det_id = det_id
         self.__effectiveness = None
+        self.__hold_out_effectiveness = None
+        self.__scores_in_hold_out = None
         self.__scores_in_train = []
-        self.__scores_in_predict = []
 
     # Base Functions
 
     def set_effectiveness(self, effectiveness):
         self.__effectiveness = effectiveness
+
+    def set_hold_out_effectiveness(self, hold_out_effectiveness):
+        self.__hold_out_effectiveness = hold_out_effectiveness
+
+    def set_scores_in_hold_out(self, scores):
+        self.__scores_in_hold_out = scores
 
     def train(self, X_train):
         self.__detector.train(X_train, self.__params)
@@ -46,8 +53,7 @@ class Detector:
         return self
 
     def predict(self, X_test):
-        self.__scores_in_predict = self.__detector.predict_scores(X_test)
-        return self.__scores_in_predict
+        return self.__detector.predict_scores(X_test)
 
     def get_effectiveness(self):
         return self.__effectiveness
@@ -55,8 +61,11 @@ class Detector:
     def get_scores_in_train(self):
         return self.__scores_in_train
 
-    def get_scores_in_predict(self):
-        return self.__scores_in_predict
+    def get_hold_out_effectiveness(self):
+        return self.__hold_out_effectiveness
+
+    def get_scores_in_hold_out(self):
+        return self.__scores_in_hold_out
 
     def get_id(self):
         return self.__det_id
@@ -68,8 +77,9 @@ class Detector:
                     DetectorConfig.id_key(): self.__det_id,
                     DetectorConfig.params_key(): self.__params,
                     'effectiveness': self.__effectiveness,
+                    'hold_out_effectiveness': self.__hold_out_effectiveness,
+                    'scores_in_hold_out': self.__convert_output_to_float_type(self.__scores_in_hold_out),
                     'scores_in_train': self.__convert_output_to_float_type(self.__scores_in_train),
-                    'scores_in_predict': self.__convert_output_to_float_type(self.__scores_in_predict)
                 }
         }
 

@@ -13,6 +13,7 @@ class ModelConf:
         self.__clf = clf
         self.__metric_id = None
         self.__effectiveness = None
+        self.__hold_out_effectiveness = None
 
     def set_effectiveness(self, value, metric_id, conf_id):
         assert value is not None
@@ -23,6 +24,15 @@ class ModelConf:
             value = float(list(value.values())[0])
         self.__metric_id = metric_id
         self.__effectiveness = value
+
+    def set_hold_out_effectiveness(self, value, metric_id):
+        assert value is not None
+        assert metric_id is not None and metric_id != '', metric_id
+        assert self.__metric_id is not None
+        assert self.__metric_id == metric_id, self.__metric_id + ' != ' + metric_id
+        if isinstance(value, dict):
+            value = float(list(value.values())[0])
+        self.__hold_out_effectiveness = value
 
     def get_fsel(self):
         assert self.__fsel is not None
@@ -43,12 +53,16 @@ class ModelConf:
     def get_effectiveness(self):
         return self.__effectiveness
 
+    def get_hold_out_effectiveness(self):
+        return self.__hold_out_effectiveness
+
     def __repr__(self):
         return str(self.to_dict())
 
     def to_dict(self):
         return {
             **{'effectiveness': self.get_effectiveness()},
+            **{'hold_out_effectiveness': self.get_hold_out_effectiveness()},
             **{FeatureSelectionConfig.feature_selection_key(): self.get_fsel().to_dict()},
             **{ClassifiersConfig.classifier_key(): self.get_clf().to_dict()}
         }
