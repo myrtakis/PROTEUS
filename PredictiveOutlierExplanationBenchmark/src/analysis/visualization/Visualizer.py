@@ -137,8 +137,10 @@ class Visualizer:
         colors = np.full(df.shape[0], 'skyblue', dtype=object)
         fp = self.__get_false_positive_indices(outliers)
         tp = self.__get_true_outliers_indices(outliers)
-        colors[tp] = 'r'
-        colors[fp] = 'gold'
+        high_scored_points = np.concatenate((fp, tp)).astype(int)
+        colors[high_scored_points] = 'r'
+        # colors[tp] = 'r'
+        # colors[fp] = 'gold'
         return colors
 
     def __texts_of_points(self, df):

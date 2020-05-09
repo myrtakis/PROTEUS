@@ -11,7 +11,7 @@ class Transformer:
 
     @staticmethod
     def add_pseudo_samples_naive(dataset, pseudo_samples_per_outlier, detector, threshold):
-        assert pseudo_samples_per_outlier > 0, "Pseudo samples number should be greater than 0"
+        assert pseudo_samples_per_outlier >= 0, "Pseudo samples number should be greater than 0"
         if pseudo_samples_per_outlier == 0:
             return dataset
         total_pseudo_samples = pseudo_samples_per_outlier * len(dataset.get_outlier_indices())
