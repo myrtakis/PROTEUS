@@ -93,7 +93,7 @@ def calculate_f1_score_outliers(y_true, y_pred):
         return {_F1_SCORE_OUTLIERS: -1}
     y_pred = make_y_pred_is_binary(y_pred)
     recall = calculate_recall_outliers(y_true, y_pred)[_RECALL_OUTLIERS]
-    precision = calculate_precision_outliers(y_pred, y_pred)[_PRECISION_OUTLIERS]
+    precision = calculate_precision_outliers(y_true, y_pred)[_PRECISION_OUTLIERS]
     if recall == 0 and precision == 0:
         return {_F1_SCORE_OUTLIERS: 0.0}
     else:
