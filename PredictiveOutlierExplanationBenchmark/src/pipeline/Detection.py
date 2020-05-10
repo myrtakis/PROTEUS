@@ -6,7 +6,7 @@ import numpy as np
 from PredictiveOutlierExplanationBenchmark.src.utils.metrics import calculate_roc_auc
 
 
-def detect_outliers(dataset):
+def evaluate_detectors(dataset):
     detectors_arr = Detector.init_detectors()
     detectors_info = select_best_detector(detectors_arr, dataset)
     if SettingsConfig.is_classification_task():
@@ -38,6 +38,16 @@ def select_best_detector(detectors_arr, dataset):
     print('True outliers found for threshold', SettingsConfig.get_top_k_points_to_explain(), ':', true_outliers)
     detectors_info['best'] = best_detector
     return detectors_info
+
+
+def detect(detector, X, Y):
+    scores = detector.predict(X)
+    desc_ordered_indices = np.argsort(scores)[::-1]
+    topk = floor(SettingsConfig.get_top_k_points_to_explain() * X.shape[0])
+    topk_points = desc_ordered_indices[:topk]
+    labels = np.zeros(X.shape[0], dtype=int)
+    labels[topk_points] = 1
+    return labels, scores, calculate_roc_auc(Y, labels)
 
 
 def create_dataset_classification(dataset, scores):

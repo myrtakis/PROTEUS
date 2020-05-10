@@ -2,7 +2,7 @@ import gc
 from PredictiveOutlierExplanationBenchmark.src.configpkg import SettingsConfig, DatasetConfig
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Benchmark import Benchmark
 from PredictiveOutlierExplanationBenchmark.src.utils import utils
-from PredictiveOutlierExplanationBenchmark.src.pipeline.Detection import detect_outliers
+from PredictiveOutlierExplanationBenchmark.src.pipeline.Detection import evaluate_detectors
 from PredictiveOutlierExplanationBenchmark.src.utils.Logger import Logger
 from PredictiveOutlierExplanationBenchmark.src.utils.ResultsWriter import ResultsWriter
 
@@ -17,7 +17,7 @@ class NormalPipeline:
         datasets_for_cv = {}
         datasets_for_cv['original'] = {0: self.original_dataset}
         datasets_for_cv['detected'] = {}
-        dataset_with_detected_outliers, detectors_info, threshold = detect_outliers(self.original_dataset)
+        dataset_with_detected_outliers, detectors_info, threshold = evaluate_detectors(self.original_dataset)
         pseudo_samples_array = SettingsConfig.get_pseudo_samples_array()
         if pseudo_samples_array is not None:
             assert SettingsConfig.is_classification_task(), "Pseudo samples are allowed only in classification task"
