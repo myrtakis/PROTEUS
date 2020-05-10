@@ -18,11 +18,14 @@ class Transformer:
         num_of_original_samples = dataset.get_X().shape[0]
         pseudo_samples_indices = np.arange(num_of_original_samples, num_of_original_samples + total_pseudo_samples)
         new_df = dataset.get_X().copy()
+        indexes = new_df.index
+        new_df = new_df.reset_index(drop=True)
         for outlier in dataset.get_outlier_indices():
-            o_sample = new_df.iloc[outlier, :].values
+            outlier_row_pos = np.where(indexes == outlier)[0]
+            o_sample = new_df.iloc[outlier_row_pos, :].values
             for ps_sample in range(pseudo_samples_per_outlier):
                 pseudo_sample = o_sample + Transformer.__gaussian_noise(dataset)
-                new_df = new_df.append(pd.Series(pseudo_sample, index=new_df.columns), ignore_index=True)
+                new_df = new_df.append(pd.Series(pseudo_sample[0], index=new_df.columns), ignore_index=True)
         pseudo_samples_df = new_df.iloc[pseudo_samples_indices, :]
         assert pseudo_samples_df.shape[0] == total_pseudo_samples
         pseudo_samples_scores = detector.predict(pseudo_samples_df)
