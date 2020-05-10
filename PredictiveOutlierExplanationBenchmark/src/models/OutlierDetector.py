@@ -86,5 +86,6 @@ class Detector:
     # Util Functions
 
     def __convert_output_to_float_type(self, scores):
-        return [float(x) for x in scores]
+        if scores is not None:
+            return [float(x) for x in scores]
 

@@ -12,7 +12,7 @@ class ResultsWriter:
     __pseudo_samples_dirs_dict = {}
     __original_data = None
 
-    def __init__(self, pseudo_samples):
+    def __init__(self, pseudo_samples, results_folder=None):
         self.__pseudo_samples = pseudo_samples
         self.__pseudo_samples_key = 'pseudo_samples_' + str(pseudo_samples)
         self.__benchmark_dict = None
@@ -22,7 +22,7 @@ class ResultsWriter:
         self.__base_dir = None
         self.__final_dir = None
         self.__detector_info_path = None
-        self.__generate_dir()
+        self.__generate_dir(results_folder)
 
     def write_results(self, results, dataset_kind):
         if dataset_kind == 'original':
@@ -99,15 +99,16 @@ class ResultsWriter:
                     tmp_dict[k][f_id][ind_k] = [int(x) for x in ind_data]
         return tmp_dict
 
-    def __generate_dir(self):
+    def __generate_dir(self, results_dir=None):
         dataset_path = DatasetConfig.get_dataset_path()
         if dataset_path.startswith('..'):
             dataset_path = os.path.join(*Path(dataset_path).parts[1:])
         outlier_ratio_str = str(SettingsConfig.get_top_k_points_to_explain()).replace('.', '')
         base_name = os.path.splitext(os.path.basename(dataset_path))[0] + '_' + outlier_ratio_str
         dataset_path = dataset_path.replace(os.path.basename(dataset_path), '')
+        results_folder = results_dir if results_dir is not None else FileNames.default_folder
         self.__base_dir = Path(
-            FileNames.default_folder,
+            results_folder,
             SettingsConfig.get_task(),
             dataset_path,
             base_name)

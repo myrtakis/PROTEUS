@@ -267,9 +267,10 @@ class Benchmark:
                 fsel.set_time(round(end - start, 2))
                 assert len(fsel.get_features()) > 0
                 Logger.log('Run clf: ' + str(conf.get_clf().get_config()))
+                X_new = X.iloc[:, fsel.get_features()]
                 clf = Classifier(conf.get_clf().get_config())
                 start = time.time()
-                clf.train(X, Y)
+                clf.train(X_new, Y)
                 Logger.log('Classifier trained successfully')
                 end = time.time()
                 clf.set_time(round(end - start, 2))

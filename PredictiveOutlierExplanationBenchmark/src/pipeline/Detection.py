@@ -32,6 +32,10 @@ def select_best_detector(detectors_arr, dataset):
             max_perf = perf_value
             best_detector = det
     print('Best detector:', best_detector.get_id(), 'with auc score', max_perf)
+    desc_ordered_indices = np.argsort(best_detector.get_scores_in_train())[::-1]
+    topk_points = floor(SettingsConfig.get_top_k_points_to_explain() * dataset.get_X().shape[0])
+    true_outliers = set(desc_ordered_indices[:topk_points]).intersection(dataset.get_outlier_indices())
+    print('True outliers found for threshold', SettingsConfig.get_top_k_points_to_explain(), ':', true_outliers)
     detectors_info['best'] = best_detector
     return detectors_info
 
