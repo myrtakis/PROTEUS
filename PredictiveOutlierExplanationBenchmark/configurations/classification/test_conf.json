@@ -3,7 +3,7 @@
     "task": "classification",
     "kfolds": 5,
     "top_k_points_to_explain": 0.05,
-    "pseudo_samples_per_outlier": [0]
+    "pseudo_samples_per_outlier": [0, 1]
   },
 
   "dataset": {
