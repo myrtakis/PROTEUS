@@ -13,9 +13,13 @@ class PerfAnalysis:
 
     __markers = ['s', 'o', 'd', 'v', '^', '<', '>', 'x', '+']
 
-    def __init__(self, path_to_dir, metric_id):
+    def __init__(self, path_to_dir, metric_id, hold_out_effectiveness=False):
         self.path_to_dir = path_to_dir
         self.metric_id = metric_id
+        if hold_out_effectiveness:
+            self.effectiveness_key = 'hold_out_effectiveness'
+        else:
+            self.effectiveness_key = 'effectiveness'
         self.nav_files = None
 
     def analyze(self, original_data_analysis=False, real_data=False):
@@ -65,13 +69,15 @@ class PerfAnalysis:
 
     def __analysis_per_nav_file_synthetic_data(self, fs):
         rel_fratio_perfs_by_k = {}
+        rel_fratio_dims = {}
         for dim, nav_file in self.nav_files.items():
             original_dataset_path = nav_file[FileKeys.navigator_original_dataset_path]
             rel_fratio = self.__compute_rel_fratio(original_dataset_path, dim-2)
             ps_mger = PseudoSamplesMger(nav_file[FileKeys.navigator_pseudo_samples_key], self.metric_id, fs=fs)
             perf_per_k, best_model_ids = self.__calculate_performance_per_k(ps_mger)
             rel_fratio_perfs_by_k[rel_fratio] = perf_per_k
-        self.__plot_relf_ratio_to_perf(rel_fratio_perfs_by_k, fs)
+            rel_fratio_dims[rel_fratio] = dim - 2
+        self.__plot_relf_ratio_to_perf(rel_fratio_perfs_by_k, rel_fratio_dims, fs)
 
     def __analysis_per_nav_file_real_data(self, fs):
         for nav_file in self.nav_files:
@@ -84,7 +90,7 @@ class PerfAnalysis:
         perf_per_k = {}
         best_model_ids = set()
         for k, best_model in ps_mger.best_model_per_k.items():
-            perf_per_k[k] = best_model['effectiveness']
+            perf_per_k[k] = best_model[self.effectiveness_key]
             best_model_ids.add(best_model['feature_selection']['id'] + '_' + best_model['classifiers']['id'])
         return perf_per_k, best_model_ids
 
@@ -121,20 +127,22 @@ class PerfAnalysis:
         plt.show()
         plt.clf()
 
-    def __plot_relf_ratio_to_perf(self, rel_fratio_perfs_by_k, fs):
+    def __plot_relf_ratio_to_perf(self, rel_fratio_perfs_by_k,  rel_fratio_dims, fs):
         k_rel_fratio = {}
         for rel_fratio, data in rel_fratio_perfs_by_k.items():
             for k, perf in data.items():
                 k_rel_fratio.setdefault(k, {})
                 k_rel_fratio[k][rel_fratio] = perf
-        x_labels = [str(i) + '%' for i in rel_fratio_perfs_by_k.keys()]
+        x_labels = []
+        for rel_fratio in rel_fratio_perfs_by_k.keys():
+            x_labels.append(str(rel_fratio_dims[rel_fratio]) + '-d (' + str(rel_fratio) + '%)')
         i = 0
         for k, data in k_rel_fratio.items():
             plt.plot(range(len(data.keys())), list(data.values()), label='K = ' + str(k), marker=PerfAnalysis.__markers[i])
             i += 1
         plt.xticks(range(len(x_labels)), x_labels)
         plt.legend()
-        plt.xlabel('Relevant Feature Ratio')
+        plt.xlabel('Dataset Dimensionality (Relevant Feature Ratio %)')
         plt.ylabel(self.metric_id)
         title = 'Explanation of Decision Boundary' if fs is True else 'Learning of Decision Boundary'
         plt.title(title)

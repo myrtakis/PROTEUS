@@ -47,6 +47,17 @@ def get_best_model_perf_original_data(original_data_results_path, metric_id, fs)
         return best_model['effectiveness'], best_conf
 
 
+def get_best_detector_from_info_file(detectors_info_file_path, metric_id):
+    with open(detectors_info_file_path) as json_file:
+        max_perf = None
+        best_det = None
+        for det, data in json.load(json_file).items():
+            if max_perf is None or max_perf < data['effectiveness'][metric_id]:
+                max_perf = data['effectiveness'][metric_id]
+                best_det = det
+        return best_det, max_perf
+
+
 def get_best_model_features_original_data(original_data_results_path, metric_id):
     best_model_orig = Path(original_data_results_path, FileNames.best_model_fname)
     with open(best_model_orig) as json_file:
