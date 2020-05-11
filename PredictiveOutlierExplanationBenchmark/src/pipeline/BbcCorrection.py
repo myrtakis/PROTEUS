@@ -21,14 +21,17 @@ class BBC:
             b_prime = np.delete(ids, b)
             # the run_R parameter has effect when true only for roc auc metric as it will be calculated from Rfast package in R
             perfs = calculate_metric(self.y_true[b], self.out_of_sample_predictions[b, :], self.metric_id, run_R=True)
-            perfs = list(perfs[self.metric_id])
-            max_c = np.argmax(perfs)
-            best_test_perf = calculate_metric(self.y_true[b_prime], self.out_of_sample_predictions[b_prime, max_c],
-                                         self.metric_id, run_R=True)
-            out_perf[i] = best_test_perf[self.metric_id]
+            if isinstance(perfs[self.metric_id], int):
+                assert perfs[self.metric_id] == -1
+                out_perf[i] = -1
+            else:
+                perfs = list(perfs[self.metric_id])
+                max_c = np.argmax(perfs)
+                best_test_perf = calculate_metric(self.y_true[b_prime], self.out_of_sample_predictions[b_prime, max_c],
+                                             self.metric_id, run_R=True)
+                out_perf[i] = best_test_perf[self.metric_id]
         invalid_vals = np.where(out_perf == -1)[0]
         if len(invalid_vals) > 0:
-            print(' Warning:', len(invalid_vals), 'iters out of', BBC.__B, 'contained only one class and omitted',
-                  end='')
+            print('\nbWarning:', len(invalid_vals), 'iters out of', BBC.__B, 'contained only one class and omitted')
             out_perf = np.delete(out_perf, invalid_vals)
         return np.mean(out_perf)
