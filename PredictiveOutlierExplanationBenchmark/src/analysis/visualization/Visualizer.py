@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 from sklearn import manifold
 from sklearn.decomposition import PCA
-from PredictiveOutlierExplanationBenchmark.src.utils import utils
+from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions
 from PredictiveOutlierExplanationBenchmark.src.utils.pseudo_samples import PseudoSamplesMger
 from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import *
 import pandas as pd
@@ -48,7 +48,7 @@ class Visualizer:
                 continue
             self.read_original_dataset(nav_file)
             original_data = nav_file[FileKeys.navigator_original_data]
-            best_model = utils.get_best_model_original_data(original_data, self.metric_id, True)
+            best_model = helper_functions.get_best_model_original_data(original_data, self.metric_id, True)
             self.__viz_coordinator(parent_dir=None, df=self.original_dataset, features=best_model['feature_selection']['features'], keep_only_given_features=True)
             self.__viz_coordinator(parent_dir=None, df=self.original_dataset, features=np.arange(0, self.original_dataset.shape[1] - 2),
                                    keep_only_given_features=False)
@@ -73,7 +73,7 @@ class Visualizer:
 
     def __read_nav_files(self):
         nav_files = []
-        nav_files_paths = utils.get_files_recursively(self.path_to_dir, FileNames.navigator_fname)
+        nav_files_paths = helper_functions.get_files_recursively(self.path_to_dir, FileNames.navigator_fname)
         for f in nav_files_paths:
             with open(f) as json_file:
                 nav_files.append(json.load(json_file))

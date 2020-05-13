@@ -80,6 +80,23 @@ def add_datasets_with_pseudo_samples(dataset_detected_outliers, detector, thresh
     return datasets_with_pseudo_samples
 
 
+def sort_files_by_dim(nav_files):
+    nav_files_sort_by_dim = {}
+    for nfile in nav_files:
+        data_dim = pd.read_csv(nfile[FileKeys.navigator_original_dataset_path]).shape[1]
+        nav_files_sort_by_dim[data_dim] = nfile
+    return dict(sorted(nav_files_sort_by_dim.items()))
+
+
+def read_nav_files(path_to_dir):
+    nav_files = []
+    nav_files_paths = get_files_recursively(path_to_dir, FileNames.navigator_fname)
+    for f in nav_files_paths:
+        with open(f) as json_file:
+            nav_files.append(json.load(json_file))
+    return nav_files
+
+
 def fs_key(fs):
     if fs is True:
         return "fs"

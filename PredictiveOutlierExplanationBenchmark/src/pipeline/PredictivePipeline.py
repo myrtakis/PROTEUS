@@ -4,7 +4,7 @@ from PredictiveOutlierExplanationBenchmark.src.configpkg import SettingsConfig
 from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import Dataset
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Benchmark import Benchmark, DatasetConfig
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Detection import evaluate_detectors, detect
-from PredictiveOutlierExplanationBenchmark.src.utils import utils, metrics
+from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions, metrics
 from PredictiveOutlierExplanationBenchmark.src.utils.Logger import Logger
 from PredictiveOutlierExplanationBenchmark.src.utils.ResultsWriter import ResultsWriter
 
@@ -29,9 +29,9 @@ class PredictivePipeline:
         datasets_for_cv = {}
         if pseudo_samples_array is not None:
             assert SettingsConfig.is_classification_task(), "Pseudo samples are allowed only in classification task"
-            datasets_for_cv.update(utils.add_datasets_with_pseudo_samples(train_data_with_detected_outliers,
-                                                                          detectors_info['best'],
-                                                                          threshold, pseudo_samples_array))
+            datasets_for_cv.update(helper_functions.add_datasets_with_pseudo_samples(train_data_with_detected_outliers,
+                                                                                     detectors_info['best'],
+                                                                                     threshold, pseudo_samples_array))
 
         print()
         print('Running Dataset:', DatasetConfig.get_dataset_path())

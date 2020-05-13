@@ -2,7 +2,8 @@ from PredictiveOutlierExplanationBenchmark.src.analysis.visualization.Visualizer
 
 
 if __name__ == '__main__':
-    hics_p = '../results/classification/datasets/synthetic/hics/group_g1'
-    path_real = '../results/classification/datasets/real/arrhythmia_005'
-    viz_proc = Visualizer(path_real, 'roc_auc').visualize(dims=None, original_data_viz=False)
+    # hics_p = '../results/classification/datasets/synthetic/hics/group_g1'
+    # Visualizer(hics_p, 'roc_auc').visualize(dims=100, original_data_viz=False)
+    path_real = '../results/classification/datasets/real/arrhythmia_015'
+    Visualizer(path_real, 'roc_auc').visualize(dims=None, original_data_viz=False)
     pass

@@ -1,11 +1,12 @@
-from PredictiveOutlierExplanationBenchmark.src.utils import utils
+from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions
 from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import *
 import json
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-from PredictiveOutlierExplanationBenchmark.src.utils.utils import get_best_detector_from_info_file
+from PredictiveOutlierExplanationBenchmark.src.utils.helper_functions import get_best_detector_from_info_file, \
+    read_nav_files, sort_files_by_dim
 
 
 class DetectorAnalysis:
@@ -18,7 +19,7 @@ class DetectorAnalysis:
         self.nav_files = None
 
     def analyze(self, real_data=False):
-        self.nav_files = self.__read_nav_files()
+        self.nav_files = read_nav_files(self.path_to_dir)
         if real_data:
             self.__analyze_real_data()
         else:
@@ -26,7 +27,7 @@ class DetectorAnalysis:
 
     def analyze_hold_out_effectiveness(self):
         print('Hold out effectiveness')
-        self.nav_files = self.__read_nav_files()
+        self.nav_files = read_nav_files(self.path_to_dir)
         for nav_file in self.nav_files:
             detectors_info_file = nav_file[FileKeys.navigator_detector_info_path]
             original_dataset = nav_file[FileKeys.navigator_original_dataset_path]
@@ -41,7 +42,7 @@ class DetectorAnalysis:
         print(det_perfs)
 
     def __analyze_synthetic_data(self):
-        self.nav_files = self.__sort_files_by_dim()
+        self.nav_files = sort_files_by_dim(self.nav_files)
         det_perfs, rel_fratio_dims = self.__detectors_perfs_synthetic_data()
         self.__plot_detectors_perfs(det_perfs, rel_fratio_dims)
 
@@ -90,20 +91,6 @@ class DetectorAnalysis:
         return det_perfs
 
     def __compute_rel_fratio(self, original_dataset_path, dim):
-        optimal_features = utils.extract_optimal_features(original_dataset_path)
+        optimal_features = helper_functions.extract_optimal_features(original_dataset_path)
         return round((len(optimal_features) / dim) * 100)
 
-    def __sort_files_by_dim(self):
-        nav_files_sort_by_dim = {}
-        for nfile in self.nav_files:
-            data_dim = pd.read_csv(nfile[FileKeys.navigator_original_dataset_path]).shape[1]
-            nav_files_sort_by_dim[data_dim] = nfile
-        return dict(sorted(nav_files_sort_by_dim.items()))
-
-    def __read_nav_files(self):
-        nav_files = []
-        nav_files_paths = utils.get_files_recursively(self.path_to_dir, FileNames.navigator_fname)
-        for f in nav_files_paths:
-            with open(f) as json_file:
-                nav_files.append(json.load(json_file))
-        return nav_files

@@ -1,12 +1,14 @@
 from pathlib import Path
 
-from PredictiveOutlierExplanationBenchmark.src.utils import utils
+from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions
 from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import *
 from PredictiveOutlierExplanationBenchmark.src.utils.pseudo_samples import PseudoSamplesMger
 import json
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+
+from PredictiveOutlierExplanationBenchmark.src.utils.helper_functions import read_nav_files, sort_files_by_dim
 
 
 class PerfAnalysis:
@@ -23,14 +25,14 @@ class PerfAnalysis:
         self.nav_files = None
 
     def analyze(self, original_data_analysis=False, real_data=False):
-        self.nav_files = self.__read_nav_files()
+        self.nav_files = read_nav_files(self.path_to_dir)
         if real_data:
             self.__analyze_real_datasets(original_data_analysis)
         else:
             self.__analyze_synthetic_datasets(original_data_analysis)
 
     def __analyze_synthetic_datasets(self, original_data_analysis=False):
-        self.nav_files = self.__sort_files_by_dim()
+        self.nav_files = sort_files_by_dim(self.nav_files)
         if original_data_analysis:
             print('performance on original data without feature selection')
             self.__analysis_of_original_synthetic_data(fs=False)
@@ -58,13 +60,13 @@ class PerfAnalysis:
             original_dataset_path = nav_file[FileKeys.navigator_original_dataset_path]
             rel_fratio = self.__compute_rel_fratio(original_dataset_path, dim - 2)
             original_data = nav_file[FileKeys.navigator_original_data]
-            rel_fratio_perfs_by_orig[rel_fratio] = utils.get_best_model_perf_original_data(original_data, self.metric_id, fs)
+            rel_fratio_perfs_by_orig[rel_fratio] = helper_functions.get_best_model_perf_original_data(original_data, self.metric_id, fs)
         print(rel_fratio_perfs_by_orig)
 
     def __analysis_of_original_real_data(self, fs):
         for nav_file in self.nav_files:
             original_data = nav_file[FileKeys.navigator_original_data]
-            best_model_perf, best_conf = utils.get_best_model_perf_original_data(original_data, self.metric_id, fs)
+            best_model_perf, best_conf = helper_functions.get_best_model_perf_original_data(original_data, self.metric_id, fs)
             print(best_model_perf, best_conf)
 
     def __analysis_per_nav_file_synthetic_data(self, fs):
@@ -94,23 +96,8 @@ class PerfAnalysis:
             best_model_ids.add(best_model['feature_selection']['id'] + '_' + best_model['classifiers']['id'])
         return perf_per_k, best_model_ids
 
-    def __sort_files_by_dim(self):
-        nav_files_sort_by_dim = {}
-        for nfile in self.nav_files:
-            data_dim = pd.read_csv(nfile[FileKeys.navigator_original_dataset_path]).shape[1]
-            nav_files_sort_by_dim[data_dim] = nfile
-        return dict(sorted(nav_files_sort_by_dim.items()))
-
-    def __read_nav_files(self):
-        nav_files = []
-        nav_files_paths = utils.get_files_recursively(self.path_to_dir, FileNames.navigator_fname)
-        for f in nav_files_paths:
-            with open(f) as json_file:
-                nav_files.append(json.load(json_file))
-        return nav_files
-
     def __compute_rel_fratio(self, original_dataset_path, dim):
-        optimal_features = utils.extract_optimal_features(original_dataset_path)
+        optimal_features = helper_functions.extract_optimal_features(original_dataset_path)
         return round((len(optimal_features) / dim) * 100)
 
     def __plot_relf_ratio_to_perf_orig(self, rel_fratio_perfs_orig, fs):

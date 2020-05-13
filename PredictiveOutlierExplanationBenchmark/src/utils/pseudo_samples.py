@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import *
-from PredictiveOutlierExplanationBenchmark.src.utils.utils import fs_key
+from PredictiveOutlierExplanationBenchmark.src.utils.helper_functions import fs_key
 
 
 class PseudoSamplesMger:
