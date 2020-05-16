@@ -54,11 +54,10 @@ class PseudoSamplesAnalysis:
 
 
 if __name__ == '__main__':
-    path_synth = '../results/classification/datasets/synthetic/hics/group_g1'
-    path = '../results/classification/datasets/real/arrhythmia_015'
-    path_synth_pred = '../results_predictive/classification/datasets/synthetic/hics/group_g1'
-    path = '../results_predictive/classification/datasets/real/arrhythmia_015'
-
-    PseudoSamplesAnalysis(path_synth).analyze()
+    # path_synth = '../results/classification/datasets/synthetic/hics/group_g1'
+    # path = '../results/classification/datasets/real/arrhythmia_015'
+    # path_synth_pred = '../results_predictive/classification/datasets/synthetic/hics/group_g1'
+    # path = '../results_predictive/classification/datasets/real/arrhythmia_015'
+    # PseudoSamplesAnalysis(path_synth).analyze()
 
     PseudoSamplesAnalysis(path_synth_pred).analyze()

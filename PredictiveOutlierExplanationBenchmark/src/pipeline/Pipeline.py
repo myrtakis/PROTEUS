@@ -18,6 +18,6 @@ class Pipeline:
                                    DatasetConfig.get_subspace_column_name())
 
         if Pipeline.__RUN_NORMAL_PIPELINE:
-            NormalPipeline(save_dir, original_dataset).run()
+            NormalPipeline(save_dir, original_dataset, oversampling_method='random').run()
         else:
-            PredictivePipeline(save_dir, original_dataset).run()
+            PredictivePipeline(save_dir, original_dataset, oversampling_method='random').run()

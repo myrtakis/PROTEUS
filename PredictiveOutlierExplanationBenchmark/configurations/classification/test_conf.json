@@ -1,9 +1,9 @@
 {
   "settings": {
     "task": "classification",
-    "kfolds": 5,
-    "top_k_points_to_explain": 0.05,
-    "pseudo_samples_per_outlier": [0, 1]
+    "kfolds": 10,
+    "top_k_points_to_explain": 0.01,
+    "pseudo_samples_per_outlier": [3, 10]
   },
 
   "dataset": {
@@ -45,14 +45,14 @@
       "id": "ses",
       "params": {
         "max_k": [2, 3],
-        "alpha": [0.1]
+        "alpha": [0.05]
        }
     },
     {
       "id": "fbed",
       "params": {
-        "K": [0, 1, 3],
-        "threshold": [0.1]
+        "K": [0],
+        "threshold": [0.05, 0.1]
       }
     },
     {
@@ -67,7 +67,7 @@
     {
       "id": "rf",
       "params": {
-        "n_estimators": [100],
+        "n_estimators": [100, 500],
         "min_samples_leaf": [1, 2],
         "criterion": ["entropy"]
       }

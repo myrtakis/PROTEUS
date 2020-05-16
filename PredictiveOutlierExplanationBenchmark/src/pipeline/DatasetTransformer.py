@@ -2,15 +2,72 @@ from PredictiveOutlierExplanationBenchmark.src.configpkg.SettingsConfig import S
 from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import Dataset
 import numpy as np
 import pandas as pd
+from sklearn.neighbors import NearestNeighbors
 
 
 class Transformer:
 
-    def __init__(self):
-        pass
+    def __init__(self, method):
+        self.method = method
+
+    def transform(self, dataset, pseudo_samples_per_outlier, detector, threshold):
+        if self.method == 'random':
+            return Transformer.__add_pseudo_samples_random(dataset, pseudo_samples_per_outlier, detector, threshold)
+        elif self.method == 'explore':
+            return Transformer.__add_pseudo_samples_explore(dataset, pseudo_samples_per_outlier, detector, threshold)
+        else:
+            assert False, 'Method ' + self.method + ' is unknown'
 
     @staticmethod
-    def add_pseudo_samples_naive(dataset, pseudo_samples_per_outlier, detector, threshold):
+    def __add_pseudo_samples_explore(dataset, pseudo_samples_per_outlier, detector, threshold):
+        new_df = dataset.get_X().copy()
+        indexes = new_df.index
+        inlier_inds = Transformer.__get_curr_inlier_inds(dataset.get_inlier_indices(), indexes)
+        new_df = new_df.reset_index(drop=True)
+        pseudo_sample_labels_global = []
+        for outlier in dataset.get_outlier_indices():
+            print('\rAdding,', pseudo_samples_per_outlier, 'pseudo samples for outlier', outlier, end='')
+            outlier_row_pos = np.where(indexes == outlier)[0]
+            o_sample = new_df.iloc[outlier_row_pos, :]
+            closest_inlier = Transformer.nearest_inlier_of(outlier_row_pos, inlier_inds, new_df)
+            start_point = o_sample
+            end_point = new_df.iloc[closest_inlier, :]
+            pseudo_samples = []
+            pseudo_samples_labels = []
+            while len(pseudo_samples) <= pseudo_samples_per_outlier:
+                new_point = (start_point + end_point) / 2
+                label = Transformer.label_of_new_point(new_point, detector, threshold)
+                pseudo_samples_labels.append(label)
+                pseudo_samples.append(new_point)
+                if label == 1:
+                    start_point = new_point
+                else:
+                    end_point = new_point
+            pseudo_sample_labels_global.extend(pseudo_samples_labels)
+            new_df = new_df.append(pseudo_samples, ignore_index=True)
+        pseudo_samples_indices = np.arange(dataset.get_X().shape[0], new_df.shape[0])
+        new_dataset = Transformer.__dataset_with_anomaly_column(dataset, new_df, pseudo_sample_labels_global,
+                                                                pseudo_samples_indices)
+        print()
+        return new_dataset
+
+    @staticmethod
+    def label_of_new_point(point, detector, threshold):
+        new_point_score = detector.predict(point) * -1
+        return int(new_point_score > threshold)
+
+    @staticmethod
+    def nearest_inlier_of(outlier, inliers_ind, points):
+        merged = np.append(inliers_ind, outlier)
+        points = points.iloc[merged, :]
+        true_points_inds = points.index
+        knn = NearestNeighbors(n_neighbors=2).fit(points)
+        distances, indices = knn.kneighbors(points.values)
+        nneighbor = indices[-1, 1] if indices[-1, 1] != len(merged) else indices[-1, 0]
+        return true_points_inds[nneighbor]
+
+    @staticmethod
+    def __add_pseudo_samples_random(dataset, pseudo_samples_per_outlier, detector, threshold):
         assert pseudo_samples_per_outlier >= 0, "Pseudo samples number should be greater than 0"
         if pseudo_samples_per_outlier == 0:
             return dataset
@@ -40,6 +97,13 @@ class Transformer:
         for i, (mu, sigma) in enumerate(zip(dataset.get_mean_per_column(), dataset.get_std_per_column())):
             noise[i] = np.random.normal(mu, sigma)
         return noise
+
+    @staticmethod
+    def __get_curr_inlier_inds(true_inlier_inds, curr_inds):
+        inlier_inds = []
+        for true_inlier_ind in true_inlier_inds:
+            inlier_inds.append(np.where(curr_inds == true_inlier_ind)[0])
+        return inlier_inds
 
     @staticmethod
     def __dataset_with_anomaly_column(dataset, new_df, new_anomaly_data, pseudo_samples_indices):

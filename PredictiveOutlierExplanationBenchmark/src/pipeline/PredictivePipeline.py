@@ -13,9 +13,11 @@ class PredictivePipeline:
 
     __HOLD_OUD_PERCENTAGE = 0.5
 
-    def __init__(self, save_dir, original_dataset):
+    def __init__(self, save_dir, original_dataset, oversampling_method):
         self.save_dir = save_dir
         self.original_dataset = original_dataset
+        self.oversampling_method = oversampling_method
+        self.results_dir = '../results_predictive/' + oversampling_method + '_oversampling'
 
     def run(self):
         print('Predictive pipeline\n')
@@ -29,7 +31,8 @@ class PredictivePipeline:
         datasets_for_cv = {}
         if pseudo_samples_array is not None:
             assert SettingsConfig.is_classification_task(), "Pseudo samples are allowed only in classification task"
-            datasets_for_cv.update(helper_functions.add_datasets_with_pseudo_samples(train_data_with_detected_outliers,
+            datasets_for_cv.update(helper_functions.add_datasets_with_pseudo_samples(self.oversampling_method,
+                                                                                     train_data_with_detected_outliers,
                                                                                      detectors_info['best'],
                                                                                      threshold, pseudo_samples_array))
 
@@ -39,7 +42,7 @@ class PredictivePipeline:
 
         for pseudo_samples, dataset in datasets_for_cv.items():
             Logger.initialize(pseudo_samples)
-            rw = ResultsWriter(pseudo_samples, '../results_predictive')
+            rw = ResultsWriter(pseudo_samples, self.results_dir)
             rw.write_dataset(dataset, 'detected')
             results = Benchmark.run('detected', pseudo_samples, dataset)
             results = self.__test_best_model_in_hold_out(results, test_data_with_detected_outliers)
