@@ -122,14 +122,16 @@ class PerfAnalysis:
                 k_rel_fratio[k][rel_fratio] = perf
         x_labels = []
         for rel_fratio in rel_fratio_perfs_by_k.keys():
-            x_labels.append(str(rel_fratio_dims[rel_fratio]) + '-d (' + str(rel_fratio) + '%)')
+            # x_labels.append(str(rel_fratio_dims[rel_fratio]) + '-d (' + str(rel_fratio) + '%)')
+            x_labels.append(str(rel_fratio_dims[rel_fratio]) + '-d')
         i = 0
         for k, data in k_rel_fratio.items():
             plt.plot(range(len(data.keys())), list(data.values()), label='K = ' + str(k), marker=PerfAnalysis.__markers[i])
             i += 1
         plt.xticks(range(len(x_labels)), x_labels)
         plt.legend()
-        plt.xlabel('Dataset Dimensionality (Relevant Feature Ratio %)')
+       # plt.xlabel('Dataset Dimensionality (Relevant Feature Ratio %)')
+        plt.xlabel('Dataset Dimensionality')
         plt.ylabel(self.metric_id)
         title = 'Explanation of Decision Boundary' if fs is True else 'Learning of Decision Boundary'
         plt.title(title)

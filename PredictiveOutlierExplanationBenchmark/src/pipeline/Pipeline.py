@@ -6,7 +6,7 @@ from PredictiveOutlierExplanationBenchmark.src.pipeline.PredictivePipeline impor
 
 class Pipeline:
 
-    __RUN_NORMAL_PIPELINE = False
+    __RUN_NORMAL_PIPELINE = True
 
     def __init__(self):
         pass

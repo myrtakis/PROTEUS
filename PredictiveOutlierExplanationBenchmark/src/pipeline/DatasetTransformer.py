@@ -26,7 +26,7 @@ class Transformer:
         new_df = new_df.reset_index(drop=True)
         pseudo_sample_labels_global = []
         for outlier in dataset.get_outlier_indices():
-            print('\rAdding,', pseudo_samples_per_outlier, 'pseudo samples for outlier', outlier, end='')
+            # print('\rAdding', pseudo_samples_per_outlier, 'pseudo samples for outlier', outlier, end='')
             outlier_row_pos = np.where(indexes == outlier)[0]
             o_sample = new_df.iloc[outlier_row_pos, :]
             closest_inlier = Transformer.nearest_inlier_of(outlier_row_pos, inlier_inds, new_df)
@@ -48,7 +48,7 @@ class Transformer:
         pseudo_samples_indices = np.arange(dataset.get_X().shape[0], new_df.shape[0])
         new_dataset = Transformer.__dataset_with_anomaly_column(dataset, new_df, pseudo_sample_labels_global,
                                                                 pseudo_samples_indices)
-        print()
+        # print()
         return new_dataset
 
     @staticmethod
