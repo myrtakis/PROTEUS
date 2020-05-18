@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from PredictiveOutlierExplanationBenchmark.src.utils.helper_functions import read_nav_files, sort_files_by_dim
-
+import os
 
 class PerfAnalysis:
 
@@ -44,6 +44,7 @@ class PerfAnalysis:
         self.__analysis_per_nav_file_synthetic_data(fs=True)
 
     def __analyze_real_datasets(self, original_data_analysis=False):
+        self.nav_files = sort_files_by_dim(self.nav_files)
         if original_data_analysis:
             print('performance on original data without feature selection')
             self.__analysis_of_original_real_data(fs=False)
@@ -82,11 +83,20 @@ class PerfAnalysis:
         self.__plot_relf_ratio_to_perf(rel_fratio_perfs_by_k, rel_fratio_dims, fs)
 
     def __analysis_per_nav_file_real_data(self, fs):
-        for nav_file in self.nav_files:
+        perf_by_dim = {}
+        names_by_dim = {}
+        for dim, nav_file in self.nav_files.items():
+            original_file_path = nav_file[FileKeys.navigator_original_dataset_path]
+            dataset_name = os.path.splitext(os.path.basename(original_file_path))[0]
+            names_by_dim[dim] = dataset_name
             ps_mger = PseudoSamplesMger(nav_file[FileKeys.navigator_pseudo_samples_key], self.metric_id, fs=fs)
             perf_per_k, best_model_ids = self.__calculate_performance_per_k(ps_mger)
-            print(perf_per_k)
-        # self.__plot_relf_ratio_to_perf(rel_fratio_perfs_by_k, fs)
+            for k, perf in perf_per_k.items():
+                perf_by_dim.setdefault(k, {})
+                perf_by_dim[k][dim-1] = perf
+        for k, data in perf_by_dim.items():
+            perf_by_dim[k] = dict(sorted(data.items()))
+        self.__plot_real_data_by_dim(perf_by_dim, names_by_dim, fs)
 
     def __calculate_performance_per_k(self, ps_mger):
         perf_per_k = {}
@@ -106,6 +116,23 @@ class PerfAnalysis:
         plt.xticks(range(len(x_labels)), x_labels)
         plt.legend()
         plt.xlabel('Relevant Feature Ratio')
+        plt.ylabel(self.metric_id)
+        title = 'Explanation of Decision Boundary' if fs is True else 'Learning of Decision Boundary'
+        plt.title(title)
+        plt.ylim((0, 1.05))
+        plt.yticks(np.arange(0, 1.1, 0.1))
+        plt.show()
+        plt.clf()
+
+    def __plot_real_data_by_dim(self, perf_by_dim, names_by_dim, fs):
+        x_labels = [n + ' (' + str(d) + '-d)' for d, n in names_by_dim.items()]
+        i = 0
+        for k, perfs in perf_by_dim.items():
+            plt.plot(range(len(perfs.keys())), list(perfs.values()), label='K = ' + str(k), marker=PerfAnalysis.__markers[i])
+            i += 1
+        plt.xticks(range(len(x_labels)), x_labels, rotation=45)
+        plt.legend()
+        plt.xlabel('Datasets (dimensions)')
         plt.ylabel(self.metric_id)
         title = 'Explanation of Decision Boundary' if fs is True else 'Learning of Decision Boundary'
         plt.title(title)
