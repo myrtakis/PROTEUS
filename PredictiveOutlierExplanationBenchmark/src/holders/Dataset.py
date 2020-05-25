@@ -15,7 +15,7 @@ class Dataset:
         self.__subspaces = None
         self.__outlier_indices = None
         self.__inlier_indices = None
-        self.__pseudo_sample_indices = None
+        self.__pseudo_sample_indices_per_outlier = None
         self.__setup_dataset(dataset)
 
     def __setup_dataset(self, dataset):
@@ -58,8 +58,9 @@ class Dataset:
     def __set_scores(self):
         self.__scores = self.__df[self.__anomaly_column]
 
-    def set_pseudo_samples_indices(self, ps_indices):
-        self.__pseudo_sample_indices = ps_indices
+    def set_pseudo_samples_indices_per_outlier(self, ps_indices_per_outlier):
+        assert ps_indices_per_outlier is not None and isinstance(ps_indices_per_outlier, dict)
+        self.__pseudo_sample_indices_per_outlier = ps_indices_per_outlier
 
     # Getter Functions
 
@@ -104,5 +105,14 @@ class Dataset:
         else:
             return None
 
-    def get_pseudo_sample_indices(self):
-        return self.__pseudo_sample_indices
+    def get_pseudo_sample_indices_per_outlier(self):
+        return self.__pseudo_sample_indices_per_outlier
+
+    def contains_pseudo_samples(self):
+        return self.__pseudo_sample_indices_per_outlier is not None
+
+    def last_original_sample_index(self):
+        if self.__pseudo_sample_indices_per_outlier is not None:
+            return min(min(self.__pseudo_sample_indices_per_outlier.values()))
+        else:
+            return None

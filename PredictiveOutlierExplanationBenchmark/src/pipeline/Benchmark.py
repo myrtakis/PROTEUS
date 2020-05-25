@@ -27,20 +27,20 @@ class Benchmark:
 
         Logger.log('==================\nPseudo Samples: ' + str(pseudo_samples))
 
-        kfolds = min(SettingsConfig.get_kfolds(), Benchmark.__get_rarest_class_count(dataset.get_Y()))
+        kfolds = min(SettingsConfig.get_kfolds(), Benchmark.__get_rarest_class_count(dataset))
         assert kfolds > 1, kfolds
         skf = StratifiedKFold(n_splits=kfolds, shuffle=True, random_state=0)
+        folds_inds = Benchmark.__indices_in_folds(dataset, skf)
 
-        no_fs_dict = Benchmark.__cross_validation(dataset.get_X(), dataset.get_Y(), skf, knowledge_discovery=False)
+        no_fs_dict = Benchmark.__cross_validation(dataset.get_X(), dataset.get_Y(), folds_inds, knowledge_discovery=False)
         no_fs_dict['best_model_trained_per_metric'] = Benchmark.__remove_bias(no_fs_dict)
 
-        fs_dict = Benchmark.__cross_validation(dataset.get_X(), dataset.get_Y(), skf, knowledge_discovery=True)
+        fs_dict = Benchmark.__cross_validation(dataset.get_X(), dataset.get_Y(), folds_inds, knowledge_discovery=True)
         fs_dict['best_model_trained_per_metric'] = Benchmark.__remove_bias(fs_dict)
         return Benchmark.__make_results(no_fs_dict, fs_dict)
 
     @ staticmethod
-    def __cross_validation(X, Y, skf, knowledge_discovery):
-        folds_inds = Benchmark.__indices_in_folds(X, Y, skf)
+    def __cross_validation(X, Y, folds_inds, knowledge_discovery):
         folds = len(folds_inds.keys())
         true_labels, folds_true_labels = Benchmark.__folds_true_labels(Y, folds_inds)
         fsel_conf_combs, classifiers_conf_combs = generate_param_combs()
@@ -164,13 +164,35 @@ class Benchmark:
                 assert fsel_arr[i] == fsel_arr[j]
 
     @ staticmethod
-    def __indices_in_folds(X, Y, skf):
+    def __indices_in_folds(dataset, skf):
         folds_inds = {}
         fold_id = 1
-        for train_index, test_index in skf.split(X, Y):
-            folds_inds[fold_id] = {'train_indices': train_index, 'test_indices': test_index}
+        if dataset.contains_pseudo_samples():
+            X = dataset.get_X()[:dataset.last_original_sample_index()]
+            Y = dataset.get_Y()[:dataset.last_original_sample_index()]
+        else:
+            X = dataset.get_X()
+            Y = dataset.get_Y()
+        for train_inds, test_inds in skf.split(X, Y):
+            if dataset.contains_pseudo_samples():
+                ps_indices_per_outlier = dataset.get_pseudo_sample_indices_per_outlier()
+                train_inds = Benchmark.__add_pseudo_samples_inds(ps_indices_per_outlier, train_inds)
+                test_inds = Benchmark.__add_pseudo_samples_inds(ps_indices_per_outlier, test_inds)
+            folds_inds[fold_id] = {'train_indices': train_inds, 'test_indices': test_inds}
             fold_id += 1
         return folds_inds
+
+    @staticmethod
+    def __add_pseudo_samples_inds(pseudo_samples_inds_per_outlier, inds):
+        assert pseudo_samples_inds_per_outlier is not None
+        common_inds = set(pseudo_samples_inds_per_outlier.keys()).intersection(inds)
+        assert len(common_inds) > 0
+        for ind in common_inds:
+            ps_samples_range = pseudo_samples_inds_per_outlier[ind]
+            ps_samples_inds = np.arange(ps_samples_range[0], ps_samples_range[1])
+            inds = np.concatenate((inds, ps_samples_inds))
+        return inds
+
 
     @ staticmethod
     def __folds_true_labels(Y, folds_inds):
@@ -303,8 +325,14 @@ class Benchmark:
               'was', round(elapsed_time, 2), 'secs', end='')
 
     @staticmethod
-    def __get_rarest_class_count(Y):
-        return int(min(collections.Counter(Y).values()))
+    def __get_rarest_class_count(dataset):
+        if not dataset.contains_pseudo_samples():
+            assert dataset.get_pseudo_sample_indices_per_outlier is None
+            return int(min(collections.Counter(dataset.get_Y()).values()))
+        else:
+            assert dataset.last_original_sample_index is not None
+            assert dataset.get_pseudo_sample_indices_per_outlier is not None
+            return int(min(collections.Counter(dataset.get_Y()[:dataset.last_original_sample_index()]).values()))
 
     @staticmethod
     def __make_results(no_fs_dict, fs_dict):

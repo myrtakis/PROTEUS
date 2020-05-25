@@ -8,6 +8,9 @@ from PredictiveOutlierExplanationBenchmark.src.utils.ResultsWriter import Result
 
 
 class NormalPipeline:
+
+    __RUN_ORIGINAL = False
+
     def __init__(self, save_dir, original_dataset, oversampling_method):
         self.save_dir = save_dir
         self.original_dataset = original_dataset
@@ -17,7 +20,8 @@ class NormalPipeline:
     def run(self):
         print('Normal pipeline\n')
         datasets_for_cv = {}
-        datasets_for_cv['original'] = {0: self.original_dataset}
+        if NormalPipeline.__RUN_ORIGINAL:
+            datasets_for_cv['original'] = {0: self.original_dataset}
         datasets_for_cv['detected'] = {}
         dataset_with_detected_outliers, detectors_info, threshold = evaluate_detectors(self.original_dataset)
         pseudo_samples_array = SettingsConfig.get_pseudo_samples_array()
