@@ -6,9 +6,9 @@ from PredictiveOutlierExplanationBenchmark.src.analysis.PerformanceAnalysis impo
 
 
 if __name__ == '__main__':
-    # path = '../results/classification/datasets/synthetic/hics/group_g1'
     # path = '../results_predictive/classification/datasets/real/arrhythmia_015'
-    path = '../results_predictive/classification/datasets/synthetic/hics/group_g1'
+    path = '../results/random_oversampling/classification/datasets/synthetic/hics/group_g1'
+    # path = '../results_predictive/random_oversampling/classification/datasets/synthetic/hics/group_g1'
     # path = '../results/classification/datasets/real/arrhythmia_015'
     metric_id = 'roc_auc'
     # RelFeaturesRatio(path, metric_id).analyze()

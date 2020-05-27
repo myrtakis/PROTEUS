@@ -32,6 +32,6 @@ class BBC:
                 out_perf[i] = best_test_perf[self.metric_id]
         invalid_vals = np.where(out_perf == -1)[0]
         if len(invalid_vals) > 0:
-            print('\nbWarning:', len(invalid_vals), 'iters out of', BBC.__B, 'contained only one class and omitted')
+            print('\nWarning:', len(invalid_vals), 'iters out of', BBC.__B, 'contained only one class and omitted')
             out_perf = np.delete(out_perf, invalid_vals)
         return np.mean(out_perf)
