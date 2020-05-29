@@ -54,10 +54,11 @@ class ResultsWriter:
         self.__dataset_path = os.path.join(self.__final_dir, self.__pseudo_samples_key + '_data.csv')
         dataset.get_df().to_csv(self.__dataset_path, index=False)
 
-        pseudo_samples_info_path = Path(self.__final_dir, FileNames.pseudo_samples_info)
-        ps_info = dict((int(o), list(range(ps_range[0], ps_range[1]))) for o, ps_range in dataset.get_pseudo_sample_indices_per_outlier().items())
-        with open(pseudo_samples_info_path, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(ps_info, indent=4, separators=(',', ': '), ensure_ascii=False))
+        if dataset.get_pseudo_sample_indices_per_outlier() is not None:
+            pseudo_samples_info_path = Path(self.__final_dir, FileNames.pseudo_samples_info)
+            ps_info = dict((int(o), list(range(ps_range[0], ps_range[1]))) for o, ps_range in dataset.get_pseudo_sample_indices_per_outlier().items())
+            with open(pseudo_samples_info_path, 'w', encoding='utf-8') as f:
+                f.write(json.dumps(ps_info, indent=4, separators=(',', ': '), ensure_ascii=False))
 
         self.__update_pseudo_samples_dir()
 
