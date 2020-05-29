@@ -6,9 +6,12 @@ import numpy as np
 from PredictiveOutlierExplanationBenchmark.src.utils.metrics import calculate_roc_auc
 
 
-def evaluate_detectors(dataset):
+def evaluate_detectors(dataset, detector_id=None):
     detectors_arr = Detector.init_detectors()
-    detectors_info = select_best_detector(detectors_arr, dataset)
+    if detector_id is not None:
+        detectors_info = select_detector(detectors_arr, dataset, detector_id)
+    else:
+        detectors_info = select_detector(detectors_arr, dataset)
     if SettingsConfig.is_classification_task():
         new_dataset, threshold = create_dataset_classification(dataset, detectors_info['best'].get_scores_in_train())
         return new_dataset, detectors_info, threshold
@@ -17,7 +20,7 @@ def evaluate_detectors(dataset):
         return new_dataset, detectors_info, threshold
 
 
-def select_best_detector(detectors_arr, dataset):
+def select_detector(detectors_arr, dataset, detector_id_to_select=None):
     best_detector = None
     max_perf = None
     detectors_info = {'info': {}, 'best': None}
@@ -31,12 +34,17 @@ def select_best_detector(detectors_arr, dataset):
         if max_perf is None or perf_value > max_perf:
             max_perf = perf_value
             best_detector = det
-    print('Best detector:', best_detector.get_id(), 'with auc score', max_perf)
-    desc_ordered_indices = np.argsort(best_detector.get_scores_in_train())[::-1]
+
+    if detector_id_to_select is None:
+        selected_detector = best_detector
+    else:
+        selected_detector = detectors_info['info'][detector_id_to_select]
+    print('Selected detector:', selected_detector.get_id(), 'with auc score', selected_detector.get_effectiveness())
+    desc_ordered_indices = np.argsort(selected_detector.get_scores_in_train())[::-1]
     topk_points = floor(SettingsConfig.get_top_k_points_to_explain() * dataset.get_X().shape[0])
     true_outliers = set(desc_ordered_indices[:topk_points]).intersection(dataset.get_outlier_indices())
     print('True outliers found for threshold', SettingsConfig.get_top_k_points_to_explain(), ':', true_outliers)
-    detectors_info['best'] = best_detector
+    detectors_info['best'] = selected_detector
     return detectors_info
 
 
