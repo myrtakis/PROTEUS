@@ -327,11 +327,11 @@ class Benchmark:
     @staticmethod
     def __get_rarest_class_count(dataset):
         if not dataset.contains_pseudo_samples():
-            assert dataset.get_pseudo_sample_indices_per_outlier is None
+            assert dataset.get_pseudo_sample_indices_per_outlier() is None
             return int(min(collections.Counter(dataset.get_Y()).values()))
         else:
-            assert dataset.last_original_sample_index is not None
-            assert dataset.get_pseudo_sample_indices_per_outlier is not None
+            assert dataset.last_original_sample_index() is not None
+            assert dataset.get_pseudo_sample_indices_per_outlier() is not None
             return int(min(collections.Counter(dataset.get_Y()[:dataset.last_original_sample_index()]).values()))
 
     @staticmethod
