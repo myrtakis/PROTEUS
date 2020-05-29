@@ -1,4 +1,6 @@
 import gc
+from pathlib import Path
+
 from PredictiveOutlierExplanationBenchmark.src.configpkg import SettingsConfig, DatasetConfig
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Benchmark import Benchmark
 from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions
@@ -11,11 +13,15 @@ class NormalPipeline:
 
     __RUN_ORIGINAL = False
 
-    def __init__(self, save_dir, original_dataset, oversampling_method):
+    def __init__(self, save_dir, original_dataset, oversampling_method, detector=None):
         self.save_dir = save_dir
         self.original_dataset = original_dataset
         self.oversampling_method = oversampling_method
-        self.results_dir = '../results/' + self.oversampling_method + '_oversampling'
+        if detector is None:
+            self.results_dir = Path('..', 'results_normal', oversampling_method + '_oversampling', 'best')
+        else:
+            self.results_dir = Path('..', 'results_normal', oversampling_method + '_oversampling', detector)
+        self.detector = detector
 
     def run(self):
         print('Normal pipeline\n')
@@ -23,7 +29,7 @@ class NormalPipeline:
         if NormalPipeline.__RUN_ORIGINAL:
             datasets_for_cv['original'] = {0: self.original_dataset}
         datasets_for_cv['detected'] = {}
-        dataset_with_detected_outliers, detectors_info, threshold = evaluate_detectors(self.original_dataset)
+        dataset_with_detected_outliers, detectors_info, threshold = evaluate_detectors(self.original_dataset, self.detector)
         pseudo_samples_array = SettingsConfig.get_pseudo_samples_array()
         if pseudo_samples_array is not None:
             assert SettingsConfig.is_classification_task(), "Pseudo samples are allowed only in classification task"

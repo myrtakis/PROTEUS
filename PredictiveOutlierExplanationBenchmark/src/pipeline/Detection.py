@@ -6,12 +6,9 @@ import numpy as np
 from PredictiveOutlierExplanationBenchmark.src.utils.metrics import calculate_roc_auc
 
 
-def evaluate_detectors(dataset, detector_id=None):
+def evaluate_detectors(dataset, detector_id):
     detectors_arr = Detector.init_detectors()
-    if detector_id is not None:
-        detectors_info = select_detector(detectors_arr, dataset, detector_id)
-    else:
-        detectors_info = select_detector(detectors_arr, dataset)
+    detectors_info = select_detector(detectors_arr, dataset, detector_id)
     if SettingsConfig.is_classification_task():
         new_dataset, threshold = create_dataset_classification(dataset, detectors_info['best'].get_scores_in_train())
         return new_dataset, detectors_info, threshold
@@ -20,7 +17,7 @@ def evaluate_detectors(dataset, detector_id=None):
         return new_dataset, detectors_info, threshold
 
 
-def select_detector(detectors_arr, dataset, detector_id_to_select=None):
+def select_detector(detectors_arr, dataset, detector_id_to_select):
     best_detector = None
     max_perf = None
     detectors_info = {'info': {}, 'best': None}
