@@ -7,24 +7,29 @@ from PredictiveOutlierExplanationBenchmark.src.pipeline.Detection import evaluat
 from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions, metrics
 from PredictiveOutlierExplanationBenchmark.src.utils.Logger import Logger
 from PredictiveOutlierExplanationBenchmark.src.utils.ResultsWriter import ResultsWriter
+from pathlib import Path
 
 
 class PredictivePipeline:
 
     __HOLD_OUD_PERCENTAGE = 0.5
 
-    def __init__(self, save_dir, original_dataset, oversampling_method):
+    def __init__(self, save_dir, original_dataset, oversampling_method, detector=None):
         self.save_dir = save_dir
         self.original_dataset = original_dataset
         self.oversampling_method = oversampling_method
-        self.results_dir = '../results_predictive/' + oversampling_method + '_oversampling'
+        if detector is None:
+            self.results_dir = Path('..', 'results_predictive', oversampling_method + '_oversampling', 'best')
+        else:
+            self.results_dir = Path('..', 'results_predictive', oversampling_method + '_oversampling', detector)
+        self.detector = detector
 
     def run(self):
         print('Predictive pipeline\n')
         train_inds, test_inds = self.__train_test_inds()
         original_dataset_train = self.__train_data(train_inds)
         original_dataset_test = self.__test_data(test_inds)
-        train_data_with_detected_outliers, detectors_info, threshold = evaluate_detectors(original_dataset_train)
+        train_data_with_detected_outliers, detectors_info, threshold = evaluate_detectors(original_dataset_train, self.detector)
         detectors_info, test_data_labels = self.__run_detector_in_hold_out(detectors_info, original_dataset_test)
         test_data_with_detected_outliers = self.__generate_test_dataset(test_data_labels, original_dataset_test)
         pseudo_samples_array = SettingsConfig.get_pseudo_samples_array()
@@ -44,6 +49,7 @@ class PredictivePipeline:
             Logger.initialize(pseudo_samples)
             rw = ResultsWriter(pseudo_samples, self.results_dir)
             rw.write_dataset(dataset, 'detected')
+            rw.write_hold_out_dataset(test_data_with_detected_outliers)
             results = Benchmark.run('detected', pseudo_samples, dataset)
             results = self.__test_best_model_in_hold_out(results, test_data_with_detected_outliers)
             rw.write_results(results, 'detected')

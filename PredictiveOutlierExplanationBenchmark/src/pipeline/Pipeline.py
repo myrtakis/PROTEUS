@@ -7,6 +7,8 @@ from PredictiveOutlierExplanationBenchmark.src.pipeline.PredictivePipeline impor
 class Pipeline:
 
     __RUN_NORMAL_PIPELINE = False
+    __DETECTOR_ID = 'lof'  # put None to choose the best detector
+    __OVERSAMPLING_METHOD = 'random'
 
     def __init__(self):
         pass
@@ -18,6 +20,6 @@ class Pipeline:
                                    DatasetConfig.get_subspace_column_name())
 
         if Pipeline.__RUN_NORMAL_PIPELINE:
-            NormalPipeline(save_dir, original_dataset, oversampling_method='random').run()
+            NormalPipeline(save_dir, original_dataset, Pipeline.__OVERSAMPLING_METHOD, Pipeline.__DETECTOR_ID).run()
         else:
-            PredictivePipeline(save_dir, original_dataset, oversampling_method='random').run()
+            PredictivePipeline(save_dir, original_dataset, Pipeline.__OVERSAMPLING_METHOD, Pipeline.__DETECTOR_ID).run()

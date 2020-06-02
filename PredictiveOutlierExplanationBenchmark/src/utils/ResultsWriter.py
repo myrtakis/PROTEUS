@@ -19,6 +19,7 @@ class ResultsWriter:
         self.__best_model_dict = None
         self.__train_test_indices_dict = None
         self.__dataset_path = None
+        self.__hold_out_dataset_path = None
         self.__base_dir = None
         self.__final_dir = None
         self.__detector_info_path = None
@@ -49,8 +50,22 @@ class ResultsWriter:
     def write_dataset(self, dataset, dataset_kind):
         if dataset_kind == 'original':
             return
+
         self.__dataset_path = os.path.join(self.__final_dir, self.__pseudo_samples_key + '_data.csv')
         dataset.get_df().to_csv(self.__dataset_path, index=False)
+
+        if dataset.get_pseudo_sample_indices_per_outlier() is not None:
+            pseudo_samples_info_path = Path(self.__final_dir, FileNames.pseudo_samples_info)
+            ps_info = dict((int(o), list(range(ps_range[0], ps_range[1]))) for o, ps_range in dataset.get_pseudo_sample_indices_per_outlier().items())
+            with open(pseudo_samples_info_path, 'w', encoding='utf-8') as f:
+                f.write(json.dumps(ps_info, indent=4, separators=(',', ': '), ensure_ascii=False))
+
+        self.__update_pseudo_samples_dir()
+
+    def write_hold_out_dataset(self, hold_out_dataset):
+        self.__hold_out_dataset_path = Path(self.__final_dir, self.__pseudo_samples_key + '_hold_out_data.csv')
+        hold_out_dataset.get_df().to_csv(self.__hold_out_dataset_path, index=False)
+
         self.__update_pseudo_samples_dir()
 
     def create_navigator_file(self):
@@ -119,7 +134,8 @@ class ResultsWriter:
         ResultsWriter.__pseudo_samples_dirs_dict[self.__pseudo_samples_key] = {
             FileKeys.navigator_pseudo_samples_num_key: self.__pseudo_samples,
             FileKeys.navigator_pseudo_sample_dir_key: self.__final_dir,
-            FileKeys.navigator_pseudo_samples_data_path: self.__dataset_path
+            FileKeys.navigator_pseudo_samples_data_path: self.__dataset_path,
+            FileKeys.navigator_pseudo_samples_hold_out_data_key: str(self.__hold_out_dataset_path)
         }
 
     def get_base_dir(self):
