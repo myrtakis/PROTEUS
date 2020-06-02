@@ -1,15 +1,15 @@
 from pathlib import Path
-
 from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions
 from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import *
 from PredictiveOutlierExplanationBenchmark.src.utils.pseudo_samples import PseudoSamplesMger
 import json
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
 import numpy as np
-
 from PredictiveOutlierExplanationBenchmark.src.utils.helper_functions import read_nav_files, sort_files_by_dim
 import os
+
 
 class PerfAnalysis:
 
@@ -18,6 +18,7 @@ class PerfAnalysis:
     def __init__(self, path_to_dir, metric_id, hold_out_effectiveness=False):
         self.path_to_dir = path_to_dir
         self.metric_id = metric_id
+        self.hold_out = hold_out_effectiveness
         if hold_out_effectiveness:
             self.effectiveness_key = 'hold_out_effectiveness'
         else:
@@ -73,38 +74,46 @@ class PerfAnalysis:
     def __analysis_per_nav_file_synthetic_data(self, fs):
         rel_fratio_perfs_by_k = {}
         rel_fratio_dims = {}
+        rel_fratio_best_models_per_k = {}
         for dim, nav_file in self.nav_files.items():
             original_dataset_path = nav_file[FileKeys.navigator_original_dataset_path]
             rel_fratio = self.__compute_rel_fratio(original_dataset_path, dim-2)
             ps_mger = PseudoSamplesMger(nav_file[FileKeys.navigator_pseudo_samples_key], self.metric_id, fs=fs)
             perf_per_k, best_model_ids = self.__calculate_performance_per_k(ps_mger)
             rel_fratio_perfs_by_k[rel_fratio] = perf_per_k
+            rel_fratio_best_models_per_k[rel_fratio] = best_model_ids
             rel_fratio_dims[rel_fratio] = dim - 2
-        self.__plot_relf_ratio_to_perf(rel_fratio_perfs_by_k, rel_fratio_dims, fs)
+        self.__create_table_synth_data(rel_fratio_perfs_by_k, rel_fratio_dims, rel_fratio_best_models_per_k, fs)
+        # self.__plot_relf_ratio_to_perf(rel_fratio_perfs_by_k, rel_fratio_dims, fs)
 
     def __analysis_per_nav_file_real_data(self, fs):
         perf_by_dim = {}
+        best_models_per_k = {}
         names_by_dim = {}
         for dim, nav_file in self.nav_files.items():
             original_file_path = nav_file[FileKeys.navigator_original_dataset_path]
             dataset_name = os.path.splitext(os.path.basename(original_file_path))[0]
-            names_by_dim[dim] = dataset_name
+            names_by_dim[dim-1] = dataset_name
             ps_mger = PseudoSamplesMger(nav_file[FileKeys.navigator_pseudo_samples_key], self.metric_id, fs=fs)
             perf_per_k, best_model_ids = self.__calculate_performance_per_k(ps_mger)
+            best_models_per_k[dim-1] = best_model_ids
             for k, perf in perf_per_k.items():
                 perf_by_dim.setdefault(k, {})
                 perf_by_dim[k][dim-1] = perf
         for k, data in perf_by_dim.items():
             perf_by_dim[k] = dict(sorted(data.items()))
-        self.__plot_real_data_by_dim(perf_by_dim, names_by_dim, fs)
+        self.__create_table_real_data(perf_by_dim, best_models_per_k, names_by_dim, fs)
+        # self.__plot_real_data_by_dim(perf_by_dim, names_by_dim, fs)
 
     def __calculate_performance_per_k(self, ps_mger):
         perf_per_k = {}
-        best_model_ids = set()
+        best_model_per_k = {}
         for k, best_model in ps_mger.best_model_per_k.items():
             perf_per_k[k] = best_model[self.effectiveness_key]
-            best_model_ids.add(best_model['feature_selection']['id'] + '_' + best_model['classifiers']['id'])
-        return perf_per_k, best_model_ids
+            fsel_id = '' if best_model['feature_selection']['id'] == 'none' else best_model['feature_selection']['id']
+            sep = ', ' if len(fsel_id) > 0 else ''
+            best_model_per_k[k] = fsel_id + sep + best_model['classifiers']['id']
+        return perf_per_k, best_model_per_k
 
     def __compute_rel_fratio(self, original_dataset_path, dim):
         optimal_features = helper_functions.extract_optimal_features(original_dataset_path)
@@ -166,3 +175,69 @@ class PerfAnalysis:
         plt.yticks(np.arange(0, 1.1, 0.1))
         plt.show()
         plt.clf()
+
+    def __create_table_synth_data(self, rel_fratio_perfs_by_k,  rel_fratio_dims, best_models_per_k, fs):
+        k_perf = {}
+        cols = []
+        for rel_fratio, data in rel_fratio_perfs_by_k.items():
+            cols.append('HiCS \n (' + str(rel_fratio_dims[rel_fratio]) + '-d)')
+            for k, perf in data.items():
+                k_perf.setdefault(k, [])
+                val = str(perf // 0.01 / 100) + ' \n ' + best_models_per_k[rel_fratio][k]
+                k_perf[k].append(val)
+        indexes = ['K = ' + str(k) for k in k_perf.keys()]
+        perfs = list(k_perf.values())
+        df = pd.DataFrame(perfs, columns=cols, index=indexes)
+        title = 'Explanation of Decision Boundary' if fs is True else 'Learning of Decision Boundary'
+        title += ' (Hold Out)' if self.hold_out else ' (Train)'
+
+        fig, ax = plt.subplots(nrows=1, ncols=1)
+
+        table = ax.table(cellText=df.values, colLabels=df.columns,
+                         loc='top', rowLabels=df.index,
+                         cellLoc='center', bbox=[0.15, 0.45, 0.8, 0.5])
+
+        table.scale(0.8, 2.5)
+
+        for (row, col), cell in table.get_celld().items():
+            if (row == 0) or (col == -1):
+                cell.set_text_props(fontproperties=FontProperties(weight='bold'))
+
+
+        ax.set_title(title)
+        ax.axis('off')
+        plt.ylim((1, len(k_perf)))
+        plt.show()
+
+    def __create_table_real_data(self, perf_by_dim, best_models_per_k, names_by_dim, fs):
+        k_perf = {}
+        cols = []
+        for k, data in perf_by_dim.items():
+            k_perf.setdefault(k, [])
+            for dim, perf in data.items():
+                if len(cols) < len(data):
+                    cols.append(names_by_dim[dim] + ' \n (' + str(dim) + '-d)')
+                val = str(perf // 0.01 / 100) + ' \n ' + best_models_per_k[dim][k]
+                k_perf[k].append(val)
+        indexes = ['K = ' + str(k) for k in k_perf.keys()]
+        perfs = list(k_perf.values())
+        df = pd.DataFrame(perfs, columns=cols, index=indexes)
+        title = 'Explanation of Decision Boundary' if fs is True else 'Learning of Decision Boundary'
+        title += ' (Hold Out)' if self.hold_out else ' (Train)'
+
+        fig, ax = plt.subplots(nrows=1, ncols=1)
+
+        table = ax.table(cellText=df.values, colLabels=df.columns,
+                         loc='top', rowLabels=df.index,
+                         cellLoc='center', bbox=[0.15, 0.45, 0.8, 0.5])
+
+        table.scale(0.8, 2.5)
+
+        for (row, col), cell in table.get_celld().items():
+            if (row == 0) or (col == -1):
+                cell.set_text_props(fontproperties=FontProperties(weight='bold'))
+
+        ax.set_title(title)
+        ax.axis('off')
+        plt.ylim((1, len(k_perf)))
+        plt.show()

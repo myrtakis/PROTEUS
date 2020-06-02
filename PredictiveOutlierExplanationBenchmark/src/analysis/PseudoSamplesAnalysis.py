@@ -37,7 +37,7 @@ class PseudoSamplesAnalysis:
                                                                                         last_original_point_ind)
         dims_dets = []
         for k in self.nav_files:
-            dims_dets.append(str(k-2) + '-d (' + best_dets[k] + ')')
+            dims_dets.append(str(k-2) + '-d') # (' + best_dets[k] + ')')
 
         self.__plot_info_as_table(dims_dets, ps_samples_outlier_ratio_per_k)
 
@@ -96,6 +96,8 @@ class PseudoSamplesAnalysis:
                          loc='center', rowLabels=df.index,
                          cellLoc='center')
 
+        table.scale(0.8, 2.5)
+
         for (row, col), cell in table.get_celld().items():
             if (row == 0) or (col == -1):
                 cell.set_text_props(fontproperties=FontProperties(weight='bold'))
@@ -103,8 +105,8 @@ class PseudoSamplesAnalysis:
         plt.show()
 
 if __name__ == '__main__':
-    # path = '../results/random_oversampling/classification/datasets/synthetic/hics/group_g1'
-    path = '../results_predictive/random_oversampling/classification/datasets/synthetic/hics/group_g1'
+    path = '../results_normal/random_oversampling/iforest/classification/datasets/synthetic/hics/group_g1'
+    # path = '../results_predictive/random_oversampling/iforest/classification/datasets/synthetic/hics/group_g1'
     # path = '../results/classification/datasets/real/arrhythmia_015'
     # path_synth_pred = '../results_predictive/classification/datasets/synthetic/hics/group_g1'
     # path = '../results_predictive/classification/datasets/real/arrhythmia_015'
