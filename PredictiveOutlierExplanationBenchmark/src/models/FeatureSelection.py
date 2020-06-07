@@ -5,9 +5,9 @@ from PredictiveOutlierExplanationBenchmark.src.configpkg.FeatureSelectionConfig 
 class FeatureSelection:
 
     __algorithms = {
-        "none": AllFeatures,
-        "ses": SES,
-        "lasso": LASSO,
+        'none': None,
+        'ses': SES,
+        'lasso': LASSO,
         'fbed': FBED
     }
 
@@ -20,8 +20,10 @@ class FeatureSelection:
         self.__feature_selection_obj = feature_selection_obj
         self.__id = feature_selection_obj[FeatureSelectionConfig.id_key()]
         self.__params = feature_selection_obj[FeatureSelectionConfig.params_key()]
+        self.__full_selector = self.__id == 'none'
         self.__features = None
         self.__equivalent_features = None
+        self.__initial_features_num = None
         self.__time = None
 
     def __str__(self):
@@ -41,10 +43,12 @@ class FeatureSelection:
         return True
 
     def run(self, X_train, Y_train):
-        fsel = FeatureSelection.__algorithms[self.__id]
-        self.__features, self.__equivalent_features = fsel(self.__params).run(X_train, Y_train)
-        self.__convert_features_to_int_type()
-        self.__convert_equiv_features_to_int_type()
+        self.__initial_features_num = X_train.shape[1]
+        if not self.__full_selector:
+            fsel = FeatureSelection.__algorithms[self.__id]
+            self.__features, self.__equivalent_features = fsel(self.__params).run(X_train, Y_train)
+            self.__convert_features_to_int_type()
+            self.__convert_equiv_features_to_int_type()
         return self
 
     def set_time(self, time):
@@ -55,7 +59,11 @@ class FeatureSelection:
         self.__features = features
 
     def get_features(self):
-        return self.__features
+        if self.__full_selector:
+            assert self.__initial_features_num > 0
+            return list(range(self.__initial_features_num))
+        else:
+            return self.__features
 
     def get_equivalent_predictive_features(self):
         return self.__equivalent_features
@@ -74,7 +82,7 @@ class FeatureSelection:
 
     def to_dict(self):
         fsel_as_dict = self.__feature_selection_obj
-        fsel_as_dict[FeatureSelection.FEATURES_KEY] = list(self.__features)
+        fsel_as_dict[FeatureSelection.FEATURES_KEY] = list(self.get_features())
         if self.__equivalent_features is not None:
             fsel_as_dict[FeatureSelection.EQUIVALENT_FEATURES_KEY] = list(self.__equivalent_features)
         else:

@@ -1,5 +1,7 @@
 class FileNames:
     default_folder = '../results'
+    predictions_folder = 'predictions'
+    indices_folder = 'indices'
     navigator_fname = 'navigator.json'
     detector_info_fname = 'detectors_info.json'
     train_test_indices_fname = 'train_test_indices.json'

@@ -97,6 +97,18 @@ def read_nav_files(path_to_dir):
     return nav_files
 
 
+def __convert_array_to_int_type(array):
+    if array is None:
+        return None
+    return [int(x) for x in array]
+
+
+def __convert_array_to_float_type(array):
+    if array is None:
+        return None
+    return [float(x) for x in array]
+
+
 def fs_key(fs):
     if fs is True:
         return "fs"

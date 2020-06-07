@@ -140,3 +140,6 @@ class ResultsWriter:
 
     def get_base_dir(self):
         return self.__base_dir
+
+    def get_final_dir(self):
+        return self.__final_dir

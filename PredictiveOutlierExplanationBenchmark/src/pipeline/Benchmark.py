@@ -11,17 +11,23 @@ import collections
 import pandas as pd
 from PredictiveOutlierExplanationBenchmark.src.pipeline.ModelConfigsGen import generate_param_combs
 from PredictiveOutlierExplanationBenchmark.src.pipeline.BbcCorrection import BBC
+from pathlib import Path
+from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import FileNames
+import json
 
 
 class Benchmark:
     __fsel_key = FeatureSelectionConfig.feature_selection_key()
     __clf_key = ClassifiersConfig.classifier_key()
     __MAX_FEATURES = 10
+    __REPETITIONS = 2
+    __output_dir = None
 
     __select_features_by_topk = True
 
     @staticmethod
-    def run(dataset_kind, pseudo_samples, dataset):
+    def run(dataset_kind, pseudo_samples, dataset, output_dir):
+        Benchmark.__output_dir = output_dir
         print('----------\n')
         print('Kind of dataset:', dataset_kind, ', Pseudo samples:', pseudo_samples)
 
@@ -29,42 +35,78 @@ class Benchmark:
 
         kfolds = min(SettingsConfig.get_kfolds(), Benchmark.__get_rarest_class_count(dataset))
         assert kfolds > 1, kfolds
-        skf = StratifiedKFold(n_splits=kfolds, shuffle=True, random_state=0)
-        folds_inds = Benchmark.__indices_in_folds(dataset, skf)
 
-        no_fs_dict = Benchmark.__cross_validation(dataset.get_X(), dataset.get_Y(), folds_inds, knowledge_discovery=False)
-        no_fs_dict['best_model_trained_per_metric'] = Benchmark.__remove_bias(no_fs_dict)
+        conf_perfs_total = {'no_fs': {}, 'fs': {}}
+        conf_info_total = {'no_fs': {}, 'fs': {}}
+        indices_per_rep = {}
 
-        fs_dict = Benchmark.__cross_validation(dataset.get_X(), dataset.get_Y(), folds_inds, knowledge_discovery=True)
-        fs_dict['best_model_trained_per_metric'] = Benchmark.__remove_bias(fs_dict)
-        return Benchmark.__make_results(no_fs_dict, fs_dict)
+        for r in range(Benchmark.__REPETITIONS):
+            skf = StratifiedKFold(n_splits=kfolds, shuffle=True)
+            folds_inds = Benchmark.__indices_in_folds(dataset, skf)
+            inds_test_ordered = Benchmark.__merge_inds(folds_inds)
+
+            indices_per_rep[r] = inds_test_ordered
+
+            ind_folder = Path(Benchmark.__output_dir, FileNames.indices_folder)
+            ind_folder.mkdir(parents=True, exist_ok=True)
+            with open(Path(ind_folder, 'repetition' + str(r) + '.json'), 'w', encoding='utf-8') as f:
+                f.write(json.dumps(inds_test_ordered.tolist(), indent=4, separators=(',', ': '), ensure_ascii=False))
+
+            cv_data = Benchmark.__cross_validation(dataset.get_X(), dataset.get_Y(), folds_inds, False, r)
+            conf_perfs_total['no_fs'] = Benchmark.__update_perfs(conf_perfs_total['no_fs'], cv_data['conf_perfs'])
+            if len(conf_info_total['no_fs']) == 0:
+                conf_info_total['no_fs'] = cv_data['conf_info']
+
+            # no_fs_dict['best_model_trained_per_metric'] = Benchmark.__remove_bias(no_fs_dict)
+
+            cv_data = Benchmark.__cross_validation(dataset.get_X(), dataset.get_Y(), folds_inds, True, r)
+            conf_perfs_total['fs'] = Benchmark.__update_perfs(conf_perfs_total['fs'], cv_data['conf_perfs'])
+            if len(conf_info_total['fs']) == 0:
+                conf_info_total['fs'] = cv_data['conf_info']
+            # fs_dict['best_model_trained_per_metric'] = Benchmark.__remove_bias(fs_dict)
+
+        best_models_perfs = {
+            'no_fs': Benchmark.__select_best_model_per_metric(conf_perfs_total['no_fs']),
+            'fs': Benchmark.__select_best_model_per_metric(conf_perfs_total['fs'])
+        }
+
+        print()
+
+        # TODO After the reps, we need to:
+        #   (iii)   train the best model in all data
+        #   (iv)    remove the bias from pooled predictions
+
+        # return Benchmark.__make_results(no_fs_dict, fs_dict)
 
     @ staticmethod
-    def __cross_validation(X, Y, folds_inds, knowledge_discovery):
-        folds = len(folds_inds.keys())
-        true_labels, folds_true_labels = Benchmark.__folds_true_labels(Y, folds_inds)
+    def __cross_validation(X, Y, folds_inds, knowledge_discovery, repetition):
+        true_labels, true_labels_per_fold = Benchmark.__folds_true_labels(Y, folds_inds)
         fsel_conf_combs, classifiers_conf_combs = generate_param_combs()
         fsel_in_folds = Benchmark.__run_feature_selection(X, Y, folds_inds, fsel_conf_combs, knowledge_discovery)
-        conf_data_in_folds = Benchmark.__run_classifiers(X, Y, folds_inds, classifiers_conf_combs,
-                                                         fsel_in_folds, knowledge_discovery)
-        print('Run Classifiers completed')
+        conf_info, predictions = Benchmark.__run_classifiers(X, Y, folds_inds, classifiers_conf_combs,
+                                                                      fsel_in_folds, knowledge_discovery)
+        print('Run Classifiers: completed')
 
-        conf_perfs = Benchmark.__compute_confs_perf_per_metric(conf_data_in_folds, folds_true_labels, folds)
-        best_model_per_metric = Benchmark.__select_best_model_per_metric(conf_perfs)
-        best_model_trained_per_metric = Benchmark.__train_best_model_in_all_data(best_model_per_metric,
-                                                                                 conf_data_in_folds, X, Y, knowledge_discovery)
-        Logger.log('Best model trained successfully')
-        predictions_merged = Benchmark.__merge_predictions_from_folds(conf_data_in_folds, folds)
+        conf_perfs, conf_preds = Benchmark.__compute_confs_perf_per_metric_pooled(predictions, true_labels, true_labels_per_fold.keys())
+
+        pred_folder = Path(Benchmark.__output_dir, FileNames.predictions_folder)
+        pred_folder.mkdir(parents=True, exist_ok=True)
+        conf_preds = dict([(conf_id, preds.tolist()) for conf_id, preds in conf_preds.items()])
+        with open(Path(pred_folder, 'repetition' + str(repetition) + '.json'), 'w', encoding='utf-8') as f:
+            f.write(json.dumps(conf_preds, indent=4, separators=(',', ': '), ensure_ascii=False))
+
         Logger.log('Predictions merged successfully')
         print()
-        return {'best_model_trained_per_metric': best_model_trained_per_metric,
-                'predictions_merged': predictions_merged, 'true_labels': true_labels,
-                'train_test_indices_folds': folds_inds,
-                'conf_data_in_folds': conf_data_in_folds}
+        return {
+            'conf_info': conf_info,
+            'conf_perfs': conf_perfs,
+            'predictions': conf_preds
+        }
 
     @ staticmethod
     def __run_classifiers(X, Y, folds_inds, clf_conf_combs, fsel_in_folds, knowledge_discovery):
-        conf_data_in_folds = {}
+        conf_info = {}
+        predictions = {}
         elapsed_time = 0.0
         total_combs = len(fsel_in_folds[next(iter(fsel_in_folds))]) * len(clf_conf_combs) if knowledge_discovery is True else len(clf_conf_combs)
         Logger.log('===========\nRun Classifiers\n')
@@ -85,19 +127,20 @@ class Benchmark:
                 X_test_new = X_test.iloc[:, fsel.get_features()]
                 assert 0 < len(fsel.get_features()) == X_test_new.shape[1]
                 for clf_conf in clf_conf_combs:
-                    conf_data_in_folds.setdefault(conf_id, {})
+                    predictions.setdefault(conf_id, {})
                     classifier = Classifier(clf_conf)
                     Logger.log('Train and predict clf ' + str(conf_id) + '/' + str(total_combs) + ': ' + str(
                         classifier.to_dict()))
                     Benchmark.__console_log(fold_id, conf_id+1, total_combs, fsel, classifier, elapsed_time)
-                    classifier.train(X_train_new, Y_train).predict_proba(X_test_new)
+                    predictions_proba = classifier.train(X_train_new, Y_train).predict_proba(X_test_new)
+                    predictions[conf_id][fold_id] = predictions_proba
                     Logger.log('Classifier train and predict completed')
                     Logger.log(classifier.to_dict())
-                    conf_data_in_folds[conf_id][fold_id] = ModelConf(fsel, classifier, conf_id)
+                    conf_info[conf_id]= ModelConf(fsel, classifier, conf_id)
                     conf_id += 1
             elapsed_time = time.time() - start
         print()
-        return conf_data_in_folds
+        return conf_info, predictions
 
     @ staticmethod
     def __run_feature_selection(X, Y, folds_inds, fsel_conf_combs, knowledge_discovery):
@@ -242,6 +285,13 @@ class Benchmark:
         return conf_data_predictions_mrg
 
     @staticmethod
+    def __merge_inds(folds_inds):
+        inds = np.array([], dtype=int)
+        for f_id in folds_inds:
+            inds = np.concatenate((inds, folds_inds[f_id]['test_indices']))
+        return inds
+
+    @staticmethod
     def __compute_confs_perf_per_metric(conf_data_in_folds, folds_true_labels, folds):
         conf_perfs = {}
         for c_id, c_data in conf_data_in_folds.items():
@@ -256,6 +306,22 @@ class Benchmark:
             for c_id, perf in m_data.items():
                 conf_perfs[m_id][c_id] /= folds
         return conf_perfs
+
+    @staticmethod
+    def __compute_confs_perf_per_metric_pooled(predictions, true_labels, folds_keys):
+        conf_perfs = {}
+        conf_preds = {}
+        for f_id in folds_keys:
+            for conf_id in predictions:
+                conf_preds.setdefault(conf_id, np.array([], dtype=float))
+                conf_preds[conf_id] = np.concatenate((conf_preds[conf_id], predictions[conf_id][f_id]))
+        for conf_id, preds in conf_preds.items():
+            metrics_dict = calculate_all_metrics(true_labels, preds)
+            for m_id, val in metrics_dict.items():
+                conf_perfs.setdefault(m_id, {})
+                conf_perfs[m_id].setdefault(conf_id, 0.0)
+                conf_perfs[m_id][conf_id] += val
+        return conf_perfs, conf_preds
 
     @staticmethod
     def __select_best_model_per_metric(conf_perfs_per_metric):
@@ -300,6 +366,18 @@ class Benchmark:
                 Logger.log('Classifier trained successfully')
         print()
         return best_model_per_metric
+
+    @staticmethod
+    def __update_perfs(old_perfs, new_perfs):
+        for m_id, metric_perfs in new_perfs.items():
+            for conf_id in metric_perfs:
+                old_perf = 0.0 if len(old_perfs) == 0 else old_perfs[m_id][conf_id]
+                new_perfs[m_id][conf_id] += old_perf
+        return new_perfs
+
+    # @staticmethod
+    # def __avg_perfs(conf_info, repetitions):
+    #     for conf_id
 
     @staticmethod
     def __omit_fsel(fsel_conf, knowledge_discovery):

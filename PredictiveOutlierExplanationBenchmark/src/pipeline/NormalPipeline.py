@@ -46,7 +46,7 @@ class NormalPipeline:
                 Logger.initialize(pseudo_samples)
                 rw = ResultsWriter(pseudo_samples, self.results_dir)
                 rw.write_dataset(dataset, dataset_kind)
-                results = Benchmark.run(dataset_kind, pseudo_samples, dataset)
+                results = Benchmark.run(dataset_kind, pseudo_samples, dataset, rw.get_final_dir())
                 rw.write_results(results, dataset_kind)
                 del results
                 gc.collect()

@@ -50,7 +50,7 @@ class PredictivePipeline:
             rw = ResultsWriter(pseudo_samples, self.results_dir)
             rw.write_dataset(dataset, 'detected')
             rw.write_hold_out_dataset(test_data_with_detected_outliers)
-            results = Benchmark.run('detected', pseudo_samples, dataset)
+            results = Benchmark.run('detected', pseudo_samples, dataset, rw.get_final_dir())
             results = self.__test_best_model_in_hold_out(results, test_data_with_detected_outliers)
             rw.write_results(results, 'detected')
             del results
