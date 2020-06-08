@@ -61,6 +61,7 @@ class ModelConf:
 
     def to_dict(self):
         return {
+            **{'id': self.__conf_id},
             **{'effectiveness': self.get_effectiveness()},
             **{'hold_out_effectiveness': self.get_hold_out_effectiveness()},
             **{FeatureSelectionConfig.feature_selection_key(): self.get_fsel().to_dict()},

@@ -38,39 +38,52 @@ class Benchmark:
 
         conf_perfs_total = {'no_fs': {}, 'fs': {}}
         conf_info_total = {'no_fs': {}, 'fs': {}}
-        indices_per_rep = {}
+        predictions_total = {'no_fs': [], 'fs': []}
 
         for r in range(Benchmark.__REPETITIONS):
             skf = StratifiedKFold(n_splits=kfolds, shuffle=True)
             folds_inds = Benchmark.__indices_in_folds(dataset, skf)
             inds_test_ordered = Benchmark.__merge_inds(folds_inds)
 
-            indices_per_rep[r] = inds_test_ordered
-
             ind_folder = Path(Benchmark.__output_dir, FileNames.indices_folder)
             ind_folder.mkdir(parents=True, exist_ok=True)
             with open(Path(ind_folder, 'repetition' + str(r) + '.json'), 'w', encoding='utf-8') as f:
-                f.write(json.dumps(inds_test_ordered.tolist(), indent=4, separators=(',', ': '), ensure_ascii=False))
+                f.write(json.dumps(Benchmark.__folds_inds_to_list(folds_inds), indent=4, separators=(',', ': '), ensure_ascii=False))
 
             cv_data = Benchmark.__cross_validation(dataset.get_X(), dataset.get_Y(), folds_inds, False, r)
             conf_perfs_total['no_fs'] = Benchmark.__update_perfs(conf_perfs_total['no_fs'], cv_data['conf_perfs'])
+            predictions_total['no_fs'].append(Benchmark.__order_predictions(cv_data['predictions'], inds_test_ordered))
             if len(conf_info_total['no_fs']) == 0:
                 conf_info_total['no_fs'] = cv_data['conf_info']
 
-            # no_fs_dict['best_model_trained_per_metric'] = Benchmark.__remove_bias(no_fs_dict)
-
             cv_data = Benchmark.__cross_validation(dataset.get_X(), dataset.get_Y(), folds_inds, True, r)
             conf_perfs_total['fs'] = Benchmark.__update_perfs(conf_perfs_total['fs'], cv_data['conf_perfs'])
+            predictions_total['fs'].append(Benchmark.__order_predictions(cv_data['predictions'], inds_test_ordered))
             if len(conf_info_total['fs']) == 0:
                 conf_info_total['fs'] = cv_data['conf_info']
-            # fs_dict['best_model_trained_per_metric'] = Benchmark.__remove_bias(fs_dict)
 
         best_models_perfs = {
             'no_fs': Benchmark.__select_best_model_per_metric(conf_perfs_total['no_fs']),
             'fs': Benchmark.__select_best_model_per_metric(conf_perfs_total['fs'])
         }
 
+        best_models_trained = {
+            'no_fs': Benchmark.__train_best_model_in_all_data(best_models_perfs['no_fs'], conf_info_total['no_fs'],
+                                                              dataset.get_X(), dataset.get_Y(), False),
+            'fs': Benchmark.__train_best_model_in_all_data(best_models_perfs['fs'], conf_info_total['fs'],
+                                                           dataset.get_X(), dataset.get_Y(), True)
+        }
+
+        # Performance Estimation
+
+        best_models_trained = {
+            'no_fs': Benchmark.__remove_bias(predictions_total['no_fs'], dataset.get_Y(), best_models_trained['no_fs']),
+            'fs': Benchmark.__remove_bias(predictions_total['fs'], dataset.get_Y(), best_models_trained['fs'])
+        }
+
+
         print()
+
 
         # TODO After the reps, we need to:
         #   (iii)   train the best model in all data
@@ -340,8 +353,8 @@ class Benchmark:
     def __train_best_model_in_all_data(best_model_per_metric, conf_data_in_folds, X, Y, knowledge_discovery):
         Logger.log('\n****Inside the training of best model in all data')
         for m_id, m_data in best_model_per_metric.items():
-            for best_c_id, c_data in m_data.items():
-                conf = conf_data_in_folds[best_c_id][1]  # simply take the configuration of the 1st fold (starting by 1) which is the same for every fold
+            for best_c_id in m_data:
+                conf = conf_data_in_folds[best_c_id]
                 Logger.log('Metric: ' + m_id)
                 print('\rMetric', m_id, ': Training in all data the', conf.get_fsel().get_config(), '>', conf.get_clf().get_config(), end='')
                 Logger.log('Run fsel: ' + str(conf.get_fsel().get_config()))
@@ -362,7 +375,7 @@ class Benchmark:
                 Logger.log('Classifier trained successfully')
                 end = time.time()
                 clf.set_time(round(end - start, 2))
-                best_model_per_metric[m_id] = ModelConf(fsel, clf, -1)
+                best_model_per_metric[m_id] = ModelConf(fsel, clf, conf.get_conf_id())
                 Logger.log('Classifier trained successfully')
         print()
         return best_model_per_metric
@@ -375,9 +388,16 @@ class Benchmark:
                 new_perfs[m_id][conf_id] += old_perf
         return new_perfs
 
-    # @staticmethod
-    # def __avg_perfs(conf_info, repetitions):
-    #     for conf_id
+    @staticmethod
+    def __order_predictions(predictions, indices):
+        return pd.DataFrame(predictions, index=indices).sort_index().values
+
+    @staticmethod
+    def __folds_inds_to_list(folds_inds):
+        for f_id, data in folds_inds.items():
+            for ind_type, inds in data.items():
+                folds_inds[f_id][ind_type] = inds.tolist()
+        return folds_inds
 
     @staticmethod
     def __omit_fsel(fsel_conf, knowledge_discovery):
@@ -388,13 +408,13 @@ class Benchmark:
         return False
 
     @staticmethod
-    def __remove_bias(data_dict):
-        for m_id in data_dict['best_model_trained_per_metric']:
-            preds = pd.DataFrame(data_dict['predictions_merged']).values
-            correct_perf = BBC(data_dict['true_labels'], preds, m_id).correct_bias()
-            data_dict['best_model_trained_per_metric'][m_id].set_effectiveness(correct_perf, m_id, -1)
+    def __remove_bias(predictions, true_labels, best_models):
         print()
-        return data_dict['best_model_trained_per_metric']
+        for m_id in best_models:
+            correct_perf = BBC(true_labels, predictions, m_id).correct_bias()
+            best_models[m_id].set_effectiveness(correct_perf, m_id, best_models[m_id].get_conf_id())
+        print()
+        return best_models
 
     @staticmethod
     def __console_log(fold_id, conf_id, total_confs, fsel, classifier, elapsed_time):
