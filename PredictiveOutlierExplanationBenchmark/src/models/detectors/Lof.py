@@ -1,10 +1,12 @@
 from sklearn.neighbors import LocalOutlierFactor
 import numpy as np
+from PredictiveOutlierExplanationBenchmark.src.models.detectors.base import BaseDetector
 
 
-class Lof:
+class Lof(BaseDetector):
 
     def __init__(self):
+        super().__init__()
         self.__clf = None
 
     def train(self, X_train, params):
@@ -16,3 +18,4 @@ class Lof:
 
     def predict_scores(self, new_samples):
         return np.array(self.__clf.score_samples(new_samples)) * -1
+

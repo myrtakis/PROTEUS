@@ -1,1 +1,2 @@
-from PredictiveOutlierExplanationBenchmark.src.models.detectors import *
+from PredictiveOutlierExplanationBenchmark.src.models.detectors.Lof import Lof
+from PredictiveOutlierExplanationBenchmark.src.models.detectors.iForest import iForest
