@@ -1,11 +1,13 @@
 import warnings
 from sklearn.ensemble import IsolationForest
 import numpy as np
+from PredictiveOutlierExplanationBenchmark.src.models.detectors.base import BaseDetector
 
 
-class iForest:
+class iForest(BaseDetector):
 
     def __init__(self):
+        super().__init__()
         self.__clf = None
         self.__X_train = None
         self.__train_repetitions = 10
@@ -41,3 +43,5 @@ class iForest:
         predictions = predictions.T
         return np.average(predictions, axis=1)
 
+    def is_explainable_detector(self):
+        return False

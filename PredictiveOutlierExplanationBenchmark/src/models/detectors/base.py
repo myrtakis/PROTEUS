@@ -19,6 +19,10 @@ class BaseDetector(abc.ABC):
     def predict_scores(self, new_samples):
         pass
 
-    def get_explanation(self):
+    def get_explanation(self, outlier_ids):
         """If the detector is explainable return the explanation"""
         return None
+
+    @abc.abstractmethod
+    def is_explainable_detector(self):
+        return False

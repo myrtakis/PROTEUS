@@ -19,3 +19,5 @@ class Lof(BaseDetector):
     def predict_scores(self, new_samples):
         return np.array(self.__clf.score_samples(new_samples)) * -1
 
+    def is_explainable_detector(self):
+        return False
