@@ -1,3 +1,5 @@
+from collections import OrderedDict
+import pandas as pd
 import shap
 import numpy as np
 
@@ -10,9 +12,8 @@ class SHAP:
         self.predict_func = detector_predict_func
 
     def run(self):
-        local_explanations = {}
-        for o in self.dataset.get_outlier_indices():
-            outlier_point = self.dataset.get_X().iloc[o, :]
-            det_shap_vals = shap.KernelExplainer(self.predict_func, np.array([outlier_point]))
-            local_explanations[o] = det_shap_vals.shap_values(np.array([outlier_point]))
-        print(local_explanations)
+        outlier_inds = self.dataset.get_outlier_indices()
+        outliers = self.dataset.get_X().iloc[outlier_inds, :]
+        det_shap_vals = shap.KernelExplainer(self.predict_func, outliers)
+        local_explanations = det_shap_vals.shap_values(outliers)
+        return pd.DataFrame(local_explanations, index=outlier_inds, columns=np.arange(self.dataset.get_X().shape[1]))
