@@ -3,6 +3,7 @@ from pathlib import Path
 
 from PredictiveOutlierExplanationBenchmark.src.configpkg import SettingsConfig, DatasetConfig
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Benchmark import Benchmark
+from PredictiveOutlierExplanationBenchmark.src.pipeline.automl.automl_processor import AutoML
 from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Detection import evaluate_detectors
 from PredictiveOutlierExplanationBenchmark.src.utils.Logger import Logger
@@ -46,7 +47,8 @@ class NormalPipeline:
                 Logger.initialize(pseudo_samples)
                 rw = ResultsWriter(pseudo_samples, self.results_dir)
                 rw.write_dataset(dataset, dataset_kind)
-                results = Benchmark.run(dataset_kind, pseudo_samples, dataset, rw.get_final_dir())
+                # results = Benchmark.run(dataset_kind, pseudo_samples, dataset, rw.get_final_dir())
+                results = AutoML().run(dataset, rw.get_final_dir())
                 rw.write_results(results, dataset_kind)
                 del results
                 gc.collect()

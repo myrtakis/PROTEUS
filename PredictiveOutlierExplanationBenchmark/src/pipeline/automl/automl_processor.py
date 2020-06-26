@@ -4,27 +4,39 @@ from pathlib import Path
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
 from collections import OrderedDict
-from PredictiveOutlierExplanationBenchmark.src.configpkg import SettingsConfig
+from PredictiveOutlierExplanationBenchmark.src.configpkg import SettingsConfig, ConfigMger, DatasetConfig
+from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import Dataset
+from PredictiveOutlierExplanationBenchmark.src.pipeline.automl.cv_feature_selection import CV_Fselection
 from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import FileNames
+from PredictiveOutlierExplanationBenchmark.src.pipeline.ModelConfigsGen import generate_param_combs
+from PredictiveOutlierExplanationBenchmark.src.models.FeatureSelection import FeatureSelection
+
 
 
 class AutoML:
 
-    __MAX_FEATURES = 10
     __REPETITIONS = 2
 
     def __init__(self):
         self.__output_dir = None
 
-    def load_from_navigator_file(self, navigator_file):
-        pass
+    def run_with_explanation(self, config_file_path, folds_inds, dataset_path, explanation):
+        fsel = FeatureSelection({'id': 'explanation', 'params': None})
+        fsel.set_features(explanation)
+        ConfigMger.setup_configs(config_file_path)
+        dataset = Dataset(dataset_path, DatasetConfig.get_anomaly_column_name(),
+                          DatasetConfig.get_subspace_column_name())
+        _, classifiers_conf_combs = generate_param_combs()
 
     def run(self, dataset, output_dir):
         self.__output_dir = output_dir
         kfolds = min(SettingsConfig.get_kfolds(), AutoML.__get_rarest_class_count(dataset))
         assert kfolds > 1, kfolds
         reps_fold_inds, reps_test_inds_merged = self.__create_folds_in_reps(kfolds, dataset, True)
-
+        fsel_conf_combs, classifiers_conf_combs = generate_param_combs()
+        no_fs = CV_Fselection(knowledge_discovery=False, fsel_configs=fsel_conf_combs)
+        fs = CV_Fselection(knowledge_discovery=True, fsel_configs=fsel_conf_combs)
+        print()
 
 
     @staticmethod
