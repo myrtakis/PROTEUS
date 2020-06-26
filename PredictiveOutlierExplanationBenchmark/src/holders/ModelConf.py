@@ -14,6 +14,7 @@ class ModelConf:
         self.__metric_id = None
         self.__effectiveness = None
         self.__hold_out_effectiveness = None
+        self.__confidence_intervals = None
 
     def set_effectiveness(self, value, metric_id, conf_id):
         assert value is not None
@@ -34,6 +35,14 @@ class ModelConf:
             value = float(list(value.values())[0])
         self.__hold_out_effectiveness = value
 
+    def set_confidence_intervals(self, ci, conf_id):
+        assert self.__conf_id == conf_id, str(self.__conf_id) + ' ' + str(conf_id)
+        assert ci is not None and len(ci) == 2
+        import numpy as np
+        if isinstance(ci, np.ndarray):
+            ci = ci.tolist()
+        self.__confidence_intervals = ci
+
     def get_fsel(self):
         assert self.__fsel is not None
         return self.__fsel
@@ -53,6 +62,9 @@ class ModelConf:
     def get_effectiveness(self):
         return self.__effectiveness
 
+    def get_confidence_intervals(self):
+        return self.__confidence_intervals
+
     def get_hold_out_effectiveness(self):
         return self.__hold_out_effectiveness
 
@@ -63,6 +75,7 @@ class ModelConf:
         return {
             **{'id': self.__conf_id},
             **{'effectiveness': self.get_effectiveness()},
+            **{'confidence_intervals': self.__confidence_intervals},
             **{'hold_out_effectiveness': self.get_hold_out_effectiveness()},
             **{FeatureSelectionConfig.feature_selection_key(): self.get_fsel().to_dict()},
             **{ClassifiersConfig.classifier_key(): self.get_clf().to_dict()}

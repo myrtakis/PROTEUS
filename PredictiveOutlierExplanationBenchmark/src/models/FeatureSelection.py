@@ -6,6 +6,7 @@ class FeatureSelection:
 
     __algorithms = {
         'none': None,
+        'explanation': None,
         'ses': SES,
         'lasso': LASSO,
         'fbed': FBED
@@ -21,6 +22,7 @@ class FeatureSelection:
         self.__id = feature_selection_obj[FeatureSelectionConfig.id_key()]
         self.__params = feature_selection_obj[FeatureSelectionConfig.params_key()]
         self.__full_selector = self.__id == 'none'
+        self.__is_explanation = self.__id == 'explanation'
         self.__features = None
         self.__equivalent_features = None
         self.__initial_features_num = None
@@ -44,7 +46,7 @@ class FeatureSelection:
 
     def run(self, X_train, Y_train):
         self.__initial_features_num = X_train.shape[1]
-        if not self.__full_selector:
+        if not self.__full_selector or self.__is_explanation:
             fsel = FeatureSelection.__algorithms[self.__id]
             self.__features, self.__equivalent_features = fsel(self.__params).run(X_train, Y_train)
             self.__convert_features_to_int_type()

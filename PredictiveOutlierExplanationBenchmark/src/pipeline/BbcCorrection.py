@@ -24,16 +24,22 @@ class BBC:
             b_prime = np.delete(ids, b)
             # the run_R parameter has effect when true only for roc auc metric as it will be calculated from Rfast package in R
             perfs = {}
+            bootstrap_is_valid = True
             for preds in self.out_of_sample_predictions:
-                curr_perf = np.array(calculate_metric(self.y_true[b], preds[b, :], self.metric_id, run_R=True)[self.metric_id])
+                curr_perf = calculate_metric(self.y_true[b], preds[b, :], self.metric_id, run_R=True)[self.metric_id]
+                if isinstance(curr_perf, int):
+                    assert curr_perf == -1
+                    bootstrap_is_valid = False
+                    break
+                curr_perf = np.array(curr_perf)
                 if len(perfs) == 0:
                     perfs[self.metric_id] = curr_perf
                 else:
                     perfs[self.metric_id] += curr_perf
-            if isinstance(perfs[self.metric_id], int):
-                assert perfs[self.metric_id] == -1
+            if not bootstrap_is_valid:
                 out_perf[i] = -1
             else:
+                print('\n****PRINTING***\n', perfs)
                 perfs = list(perfs[self.metric_id])
                 max_c = np.argmax(perfs)
                 best_test_perf = {}
@@ -48,4 +54,7 @@ class BBC:
         if len(invalid_vals) > 0:
             print('\nWarning:', len(invalid_vals), 'iters out of', BBC.__B, 'contained only one class and omitted')
             out_perf = np.delete(out_perf, invalid_vals)
-        return np.mean(out_perf)
+        conf = 0.95
+        a = 0.5 * (1-conf)
+        ci = np.quantile(a=out_perf, q=[a, 1-a])
+        return np.mean(out_perf), ci

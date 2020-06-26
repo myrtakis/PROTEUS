@@ -14,6 +14,7 @@ from PredictiveOutlierExplanationBenchmark.src.pipeline.BbcCorrection import BBC
 from pathlib import Path
 from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import FileNames
 import json
+from collections import OrderedDict
 
 
 class Benchmark:
@@ -84,11 +85,6 @@ class Benchmark:
 
         print()
 
-
-        # TODO After the reps, we need to:
-        #   (iii)   train the best model in all data
-        #   (iv)    remove the bias from pooled predictions
-
         # return Benchmark.__make_results(no_fs_dict, fs_dict)
 
     @ staticmethod
@@ -100,13 +96,18 @@ class Benchmark:
                                                                       fsel_in_folds, knowledge_discovery)
         print('Run Classifiers: completed')
 
-        conf_perfs, conf_preds = Benchmark.__compute_confs_perf_per_metric_pooled(predictions, true_labels, true_labels_per_fold.keys())
 
-        pred_folder = Path(Benchmark.__output_dir, FileNames.predictions_folder)
-        pred_folder.mkdir(parents=True, exist_ok=True)
-        conf_preds = dict([(conf_id, preds.tolist()) for conf_id, preds in conf_preds.items()])
-        with open(Path(pred_folder, 'repetition' + str(repetition) + '.json'), 'w', encoding='utf-8') as f:
-            f.write(json.dumps(conf_preds, indent=4, separators=(',', ': '), ensure_ascii=False))
+        conf_perfs, conf_preds = Benchmark.__compute_confs_perf_per_metric_pooled(predictions, true_labels_per_fold)
+
+        Benchmark.__save(conf_perfs, [Benchmark.__output_dir, FileNames.configurations_folder,
+                                     FileNames.configurations_perfs_folder], repetition)
+
+        Benchmark.__save(conf_preds, [Benchmark.__output_dir, FileNames.predictions_folder], repetition,
+                         lambda o: o.tolist() if isinstance(o, np.ndarray) else o)
+
+        Benchmark.__save(conf_info, [Benchmark.__output_dir, FileNames.configurations_folder,
+                                     FileNames.configurations_info_folder],
+                         repetition, lambda o: o.to_dict() if isinstance(o, ModelConf) else o)
 
         Logger.log('Predictions merged successfully')
         print()
@@ -115,6 +116,14 @@ class Benchmark:
             'conf_perfs': conf_perfs,
             'predictions': conf_preds
         }
+
+    @staticmethod
+    def __save(data, folders_array, repetition, func=lambda o: o):
+        path_to_folder = Path(*folders_array)
+        path_to_folder.mkdir(parents=True, exist_ok=True)
+        output_file = Path(path_to_folder, 'repetition' + str(repetition) + '.json')
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(data, default=func, indent=4, separators=(',', ': '), ensure_ascii=False))
 
     @ staticmethod
     def __run_classifiers(X, Y, folds_inds, clf_conf_combs, fsel_in_folds, knowledge_discovery):
@@ -157,7 +166,7 @@ class Benchmark:
 
     @ staticmethod
     def __run_feature_selection(X, Y, folds_inds, fsel_conf_combs, knowledge_discovery):
-        fsel_fold_dict = {}
+        fsel_fold_dict = OrderedDict()
         for fold_id, inds in folds_inds.items():
             train_inds = inds['train_indices']
             test_inds = inds['test_indices']
@@ -221,7 +230,7 @@ class Benchmark:
 
     @ staticmethod
     def __indices_in_folds(dataset, skf):
-        folds_inds = {}
+        folds_inds = OrderedDict()
         fold_id = 1
         if dataset.contains_pseudo_samples():
             X = dataset.get_X()[:dataset.last_original_sample_index()]
@@ -321,10 +330,12 @@ class Benchmark:
         return conf_perfs
 
     @staticmethod
-    def __compute_confs_perf_per_metric_pooled(predictions, true_labels, folds_keys):
+    def __compute_confs_perf_per_metric_pooled(predictions, true_labels_per_fold):
         conf_perfs = {}
         conf_preds = {}
-        for f_id in folds_keys:
+        true_labels = np.array([], dtype=int)
+        for f_id in true_labels_per_fold:
+            true_labels = np.concatenate((true_labels, true_labels_per_fold[f_id]))
             for conf_id in predictions:
                 conf_preds.setdefault(conf_id, np.array([], dtype=float))
                 conf_preds[conf_id] = np.concatenate((conf_preds[conf_id], predictions[conf_id][f_id]))
@@ -411,8 +422,9 @@ class Benchmark:
     def __remove_bias(predictions, true_labels, best_models):
         print()
         for m_id in best_models:
-            correct_perf = BBC(true_labels, predictions, m_id).correct_bias()
-            best_models[m_id].set_effectiveness(correct_perf, m_id, best_models[m_id].get_conf_id())
+            perf, ci = BBC(true_labels, predictions, m_id).correct_bias()
+            best_models[m_id].set_effectiveness(perf, m_id, best_models[m_id].get_conf_id())
+            best_models[m_id].set_confidence_intervals(ci, best_models[m_id].get_conf_id())
         print()
         return best_models
 
