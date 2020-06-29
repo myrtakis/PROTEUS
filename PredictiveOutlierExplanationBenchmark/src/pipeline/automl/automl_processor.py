@@ -1,21 +1,20 @@
 import collections
-import json
-from pathlib import Path
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
 from collections import OrderedDict
+from PredictiveOutlierExplanationBenchmark.src.pipeline.BbcCorrection import BBC
+from PredictiveOutlierExplanationBenchmark.src.pipeline.automl.automl_utils import save
 from PredictiveOutlierExplanationBenchmark.src.configpkg import SettingsConfig, ConfigMger, DatasetConfig
 from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import Dataset
+from PredictiveOutlierExplanationBenchmark.src.pipeline.automl.cv_classification import CV_Classification
 from PredictiveOutlierExplanationBenchmark.src.pipeline.automl.cv_feature_selection import CV_Fselection
 from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import FileNames
 from PredictiveOutlierExplanationBenchmark.src.pipeline.ModelConfigsGen import generate_param_combs
 from PredictiveOutlierExplanationBenchmark.src.models.FeatureSelection import FeatureSelection
-
+import PredictiveOutlierExplanationBenchmark.src.pipeline.automl.automl_constants as automlconsts
 
 
 class AutoML:
-
-    __REPETITIONS = 2
 
     def __init__(self):
         self.__output_dir = None
@@ -28,15 +27,20 @@ class AutoML:
                           DatasetConfig.get_subspace_column_name())
         _, classifiers_conf_combs = generate_param_combs()
 
-    def run(self, dataset, output_dir):
+    def run(self, dataset, output_dir, knowledge_discovery):
         self.__output_dir = output_dir
         kfolds = min(SettingsConfig.get_kfolds(), AutoML.__get_rarest_class_count(dataset))
         assert kfolds > 1, kfolds
-        reps_fold_inds, reps_test_inds_merged = self.__create_folds_in_reps(kfolds, dataset, True)
+        reps_fold_inds = self.__create_folds_in_reps(kfolds, dataset, True)
         fsel_conf_combs, classifiers_conf_combs = generate_param_combs()
-        no_fs = CV_Fselection(knowledge_discovery=False, fsel_configs=fsel_conf_combs)
-        fs = CV_Fselection(knowledge_discovery=True, fsel_configs=fsel_conf_combs)
+        selected_features = CV_Fselection(knowledge_discovery, fsel_conf_combs, kfolds).run(reps_fold_inds, dataset)
+        best_model_trained, predictions_ordered = \
+            CV_Classification(knowledge_discovery, classifiers_conf_combs, kfolds, output_dir, False).\
+            run(reps_fold_inds, selected_features, dataset)
+        best_model_trained = AutoML.__remove_bias(predictions_ordered, dataset.get_Y(), best_model_trained)
         print()
+        return best_model_trained
+
 
 
     @staticmethod
@@ -49,17 +53,15 @@ class AutoML:
             assert dataset.get_pseudo_sample_indices_per_outlier() is not None
             return int(min(collections.Counter(dataset.get_Y()[:dataset.last_original_sample_index()]).values()))
 
-    def __create_folds_in_reps(self, kfolds, dataset, save):
+    def __create_folds_in_reps(self, kfolds, dataset, save_option):
         reps_folds_inds = OrderedDict()
-        reps_test_inds_merged = OrderedDict()
-        for r in range(AutoML.__REPETITIONS):
+        for r in range(automlconsts.REPETITIONS):
             skf = StratifiedKFold(n_splits=kfolds, shuffle=True)
             folds_inds = AutoML.__indices_in_folds(dataset, skf)
             reps_folds_inds[r] = folds_inds
-            reps_test_inds_merged[r] = AutoML.__merge_inds(folds_inds)
-            if save:
-                AutoML.__save(folds_inds, [self.__output_dir, FileNames.indices_folder], r,
-                              lambda o: o.tolist() if isinstance(o, np.ndarray) else o)
+            if save_option:
+                save(folds_inds, [self.__output_dir, FileNames.indices_folder], r,
+                     lambda o: o.tolist() if isinstance(o, np.ndarray) else o)
         return reps_folds_inds
 
     @ staticmethod
@@ -82,11 +84,12 @@ class AutoML:
         return folds_inds
 
     @staticmethod
-    def __merge_inds(folds_inds):
-        inds = np.array([], dtype=int)
-        for f_id in folds_inds:
-            inds = np.concatenate((inds, folds_inds[f_id]['test_indices']))
-        return inds
+    def __remove_bias(predictions, true_labels, best_models):
+        for m_id in best_models:
+            perf, ci = BBC(true_labels, predictions, m_id).correct_bias()
+            best_models[m_id].set_effectiveness(perf, m_id, best_models[m_id].get_conf_id())
+            best_models[m_id].set_confidence_intervals(ci, best_models[m_id].get_conf_id())
+        return best_models
 
     @staticmethod
     def __add_pseudo_samples_inds(pseudo_samples_inds_per_outlier, inds):
@@ -98,11 +101,3 @@ class AutoML:
             ps_samples_inds = np.arange(ps_samples_range[0], ps_samples_range[1])
             inds = np.concatenate((inds, ps_samples_inds))
         return inds
-
-    @staticmethod
-    def __save(data, folders_array, repetition, func=lambda o: o):
-        path_to_folder = Path(*folders_array)
-        path_to_folder.mkdir(parents=True, exist_ok=True)
-        output_file = Path(path_to_folder, 'repetition' + str(repetition) + '.json')
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(data, default=func, indent=4, separators=(',', ': '), ensure_ascii=False))

@@ -47,10 +47,14 @@ class NormalPipeline:
                 Logger.initialize(pseudo_samples)
                 rw = ResultsWriter(pseudo_samples, self.results_dir)
                 rw.write_dataset(dataset, dataset_kind)
+                print('Running dataset with pseudo samples: ', pseudo_samples)
                 # results = Benchmark.run(dataset_kind, pseudo_samples, dataset, rw.get_final_dir())
-                results = AutoML().run(dataset, rw.get_final_dir())
+                best_trained_model_nofs = AutoML().run(dataset, rw.get_final_dir(), False)
+
+                best_trained_model_fs = AutoML().run(dataset, rw.get_final_dir(), True)
                 rw.write_results(results, dataset_kind)
-                del results
+                del best_trained_model_nofs
+                del best_trained_model_fs
                 gc.collect()
-        rw.write_detector_info_file(detectors_info['info'])
+        rw.write_detector_info_file(detectors_info['best'])
         rw.create_navigator_file()

@@ -39,7 +39,6 @@ class BBC:
             if not bootstrap_is_valid:
                 out_perf[i] = -1
             else:
-                print('\n****PRINTING***\n', perfs)
                 perfs = list(perfs[self.metric_id])
                 max_c = np.argmax(perfs)
                 best_test_perf = {}

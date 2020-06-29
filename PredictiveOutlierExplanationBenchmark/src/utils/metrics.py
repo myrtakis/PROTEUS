@@ -18,9 +18,11 @@ def metric_names():
     return [_ROC_AUC, _PRECISION_OUTLIERS, _RECALL_OUTLIERS, _F1_SCORE_OUTLIERS]
 
 
-def calculate_all_metrics(y_true, y_pred, run_R=False):
+def calculate_all_metrics(y_true, y_pred, metrics_to_calculate=None, run_R=False):
     perfs = {}
     for m in metric_names():
+        if metrics_to_calculate is not None and m not in metrics_to_calculate:
+            continue
         perfs.update(calculate_metric(y_true, y_pred, m, run_R))
     return perfs
 

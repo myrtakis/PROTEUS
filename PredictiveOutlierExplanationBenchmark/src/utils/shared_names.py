@@ -8,7 +8,7 @@ class FileNames:
     navigator_fname = 'navigator.json'
     detector_info_fname = 'detectors_info.json'
     train_test_indices_fname = 'train_test_indices.json'
-    pseudo_samples_info = 'pseudo_samples_info.json'
+    pseudo_samples_info = 'pseudo_samples_inds.json'
     best_models_bench_fname = 'models_benchmark.json'
     best_model_fname = 'best_model.json'
 
