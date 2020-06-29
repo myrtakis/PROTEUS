@@ -1,8 +1,6 @@
 import gc
 from pathlib import Path
-
 from PredictiveOutlierExplanationBenchmark.src.configpkg import SettingsConfig, DatasetConfig
-from PredictiveOutlierExplanationBenchmark.src.pipeline.Benchmark import Benchmark
 from PredictiveOutlierExplanationBenchmark.src.pipeline.automl.automl_processor import AutoML
 from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Detection import evaluate_detectors
@@ -40,21 +38,23 @@ class NormalPipeline:
                                                                                                  threshold, pseudo_samples_array))
 
         print('Running Dataset:', DatasetConfig.get_dataset_path())
-        rw = None
-
+        if detectors_info['best'].get_detector().is_explainable():
+            print('Computing the explanation for', detectors_info['best'].get_id())
+            detectors_info['best'].get_detector().\
+                calculate_explanation(dataset_with_detected_outliers.get_outlier_indices())
+        ResultsWriter.setup_writer(self.results_dir)
+        ResultsWriter.write_detector_info_file(detectors_info['best'])
         for dataset_kind, data in datasets_for_cv.items():
             for pseudo_samples, dataset in data.items():
                 Logger.initialize(pseudo_samples)
-                rw = ResultsWriter(pseudo_samples, self.results_dir)
+                rw = ResultsWriter(pseudo_samples)
                 rw.write_dataset(dataset, dataset_kind)
-                print('Running dataset with pseudo samples: ', pseudo_samples)
-                # results = Benchmark.run(dataset_kind, pseudo_samples, dataset, rw.get_final_dir())
+                print('----------\nRunning dataset with pseudo samples: ', pseudo_samples)
                 best_trained_model_nofs = AutoML().run(dataset, rw.get_final_dir(), False)
-
                 best_trained_model_fs = AutoML().run(dataset, rw.get_final_dir(), True)
+                results = {'no_fs': best_trained_model_nofs, 'fs': best_trained_model_fs}
                 rw.write_results(results, dataset_kind)
+                ResultsWriter.flush_navigator_file()
                 del best_trained_model_nofs
                 del best_trained_model_fs
                 gc.collect()
-        rw.write_detector_info_file(detectors_info['best'])
-        rw.create_navigator_file()

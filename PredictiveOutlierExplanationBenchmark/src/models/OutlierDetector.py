@@ -1,15 +1,17 @@
 from PredictiveOutlierExplanationBenchmark.src.models.detectors.iForest import iForest
 from PredictiveOutlierExplanationBenchmark.src.models.detectors.Lof import Lof
 from PredictiveOutlierExplanationBenchmark.src.models.detectors.Sod import Sod
+from PredictiveOutlierExplanationBenchmark.src.models.detectors.Loda import LODA
 from PredictiveOutlierExplanationBenchmark.src.configpkg.DetectorsConfig import DetectorConfig
 
 
 class Detector:
 
     __detectors_map = {
-            'lof': Lof,
-            'iforest': iForest,
-            'sod': Sod
+        'lof': Lof,
+        'iforest': iForest,
+        'sod': Sod,
+        'loda': LODA
         }
 
     @staticmethod
@@ -55,6 +57,9 @@ class Detector:
     def predict(self, X_test):
         return self.__detector.predict_scores(X_test)
 
+    def get_detector(self):
+        return self.__detector
+
     def get_effectiveness(self):
         return self.__effectiveness
 
@@ -80,6 +85,7 @@ class Detector:
                     'hold_out_effectiveness': self.__hold_out_effectiveness,
                     'scores_in_hold_out': self.__convert_output_to_float_type(self.__scores_in_hold_out),
                     'scores_in_train': self.__convert_output_to_float_type(self.__scores_in_train),
+                    'explanation': str(None) if not self.__detector.is_explainable() else self.__detector.get_explanation()
                 }
         }
 

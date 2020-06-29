@@ -16,10 +16,11 @@ class FileNames:
 class FileKeys:
     navigator_conf_path = 'config_path'
     navigator_original_dataset_path = 'original_dataset_path'
-    navigator_original_data = 'original_data'
+    navigator_original_data_results = 'original_data_results'
     navigator_pseudo_samples_key = 'pseudo_samples'
     navigator_pseudo_samples_hold_out_data_key = 'hold_out_dataset_path'
     navigator_pseudo_sample_dir_key = 'dir'
     navigator_pseudo_samples_data_path = 'dataset_path'
     navigator_pseudo_samples_num_key = 'pseudo_samples_num'
+    navigator_pseudo_samples_inds = 'pseudo_samples_inds_info'
     navigator_detector_info_path = 'detector_info'

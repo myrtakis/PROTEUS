@@ -7,7 +7,7 @@ from PredictiveOutlierExplanationBenchmark.src.pipeline.PredictivePipeline impor
 class Pipeline:
 
     __RUN_NORMAL_PIPELINE = True
-    __DETECTOR_ID = 'lof'  # put None to choose the best detector
+    __DETECTOR_ID = 'loda'  # put None to choose the best detector
     __OVERSAMPLING_METHOD = 'random'
 
     def __init__(self):

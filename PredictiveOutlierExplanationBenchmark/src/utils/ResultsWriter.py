@@ -1,6 +1,4 @@
 from PredictiveOutlierExplanationBenchmark.src.configpkg import *
-from PredictiveOutlierExplanationBenchmark.src.models.Classifier import Classifier
-from PredictiveOutlierExplanationBenchmark.src.models.FeatureSelection import FeatureSelection
 from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import FileKeys, FileNames
 import json
 from pathlib import Path
@@ -9,112 +7,92 @@ import os
 
 class ResultsWriter:
 
-    __pseudo_samples_dirs_dict = {}
-    __original_data = None
+    __base_dir = None
+    __navigator_file_dict = None
+    __navigator_file_path = None
 
-    def __init__(self, pseudo_samples, results_folder=None):
+    def __init__(self, pseudo_samples):
+        assert ResultsWriter.__base_dir is not None
+        assert ResultsWriter.__navigator_file_dict is not None
         self.__pseudo_samples = pseudo_samples
         self.__pseudo_samples_key = 'pseudo_samples_' + str(pseudo_samples)
-        self.__benchmark_dict = None
-        self.__best_model_dict = None
-        self.__train_test_indices_dict = None
-        self.__dataset_path = None
-        self.__hold_out_dataset_path = None
-        self.__base_dir = None
         self.__final_dir = None
-        self.__detector_info_path = None
-        self.__generate_dir(results_folder)
+        self.__generate_final_dir()
+        self.__update_pseudo_samples_dir(FileKeys.navigator_pseudo_samples_num_key, pseudo_samples)
+        self.__update_pseudo_samples_dir(FileKeys.navigator_pseudo_sample_dir_key, self.__final_dir)
 
     def write_results(self, results, dataset_kind):
         if dataset_kind == 'original':
-            ResultsWriter.__original_data = Path(self.__base_dir, dataset_kind)
-            ResultsWriter.__original_data.mkdir(parents=True, exist_ok=True)
-            output_dir = ResultsWriter.__original_data
+            original_data_res_path = Path(ResultsWriter.__base_dir, dataset_kind)
+            original_data_res_path.mkdir(parents=True, exist_ok=True)
+            output_dir = original_data_res_path
+            self.__update_and_flush_navigator_file(FileKeys.navigator_original_data_results, original_data_res_path)
         else:
             output_dir = self.__final_dir
-        self.__prepare_results(results)
-        with open(os.path.join(output_dir, FileNames.best_models_bench_fname), 'w', encoding='utf-8') as f:
-            f.write(json.dumps(self.__benchmark_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
+        best_models_dict = ResultsWriter.__prepare_results(results)
         with open(os.path.join(output_dir, FileNames.best_model_fname), 'w', encoding='utf-8') as f:
-            f.write(json.dumps(self.__best_model_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
-        with open(os.path.join(output_dir, FileNames.train_test_indices_fname), 'w', encoding='utf-8') as f:
-            f.write(json.dumps(self.__train_test_indices_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
-        if dataset_kind == 'detected':
-            self.__update_pseudo_samples_dir()
+            f.write(json.dumps(best_models_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
 
-    def __prepare_results(self, results):
-        self.__benchmark_dict = self.__prepare_benchmark_dict(results)
-        self.__best_model_dict = self.__prepare_best_models_dict(results)
-        self.__train_test_indices_dict = self.__prepare_train_tets_indices_dict(results)
+    @staticmethod
+    def __prepare_results(results):
+        tmp_dict = {'no_fs': {}, 'fs': {}}
+        for k in tmp_dict.keys():
+            for m_id, m_data in results[k].items():
+                tmp_dict[k][m_id] = m_data.to_dict()
+        return tmp_dict
 
     def write_dataset(self, dataset, dataset_kind):
         if dataset_kind == 'original':
             return
+        dataset_path = os.path.join(self.__final_dir, self.__pseudo_samples_key + '_data.csv')
+        dataset.get_df().to_csv(dataset_path, index=False)
+        self.__update_pseudo_samples_dir(FileKeys.navigator_pseudo_samples_data_path, dataset_path)
 
-        self.__dataset_path = os.path.join(self.__final_dir, self.__pseudo_samples_key + '_data.csv')
-        dataset.get_df().to_csv(self.__dataset_path, index=False)
-
+        pseudo_samples_info_path = Path(self.__final_dir, FileNames.pseudo_samples_info)
         if dataset.get_pseudo_sample_indices_per_outlier() is not None:
-            pseudo_samples_info_path = Path(self.__final_dir, FileNames.pseudo_samples_info)
-            ps_info = dict((int(o), list(range(ps_range[0], ps_range[1]))) for o, ps_range in dataset.get_pseudo_sample_indices_per_outlier().items())
+            ps_info = dict((int(o), list(range(ps_range[0], ps_range[1]))) for o, ps_range in
+                           dataset.get_pseudo_sample_indices_per_outlier().items())
             with open(pseudo_samples_info_path, 'w', encoding='utf-8') as f:
                 f.write(json.dumps(ps_info, indent=4, separators=(',', ': '), ensure_ascii=False))
-
-        self.__update_pseudo_samples_dir()
+        self.__update_pseudo_samples_dir(FileKeys.navigator_pseudo_samples_inds, pseudo_samples_info_path)
 
     def write_hold_out_dataset(self, hold_out_dataset):
-        self.__hold_out_dataset_path = Path(self.__final_dir, self.__pseudo_samples_key + '_hold_out_data.csv')
-        hold_out_dataset.get_df().to_csv(self.__hold_out_dataset_path, index=False)
+        hold_out_dataset_path = Path(self.__final_dir, self.__pseudo_samples_key + '_hold_out_data.csv')
+        hold_out_dataset.get_df().to_csv(hold_out_dataset_path, index=False)
+        self.__update_pseudo_samples_dir(FileKeys.navigator_pseudo_samples_hold_out_data_key, hold_out_dataset_path)
 
-        self.__update_pseudo_samples_dir()
+    @staticmethod
+    def write_detector_info_file(best_detector):
+        detector_info_path = Path(ResultsWriter.__base_dir, FileNames.detector_info_fname)
+        with open(detector_info_path, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(best_detector.to_dict(), indent=4, separators=(',', ': '), ensure_ascii=False))
+        ResultsWriter.__update_and_flush_navigator_file(FileKeys.navigator_detector_info_path,
+                                                        detector_info_path)
 
-    def create_navigator_file(self):
-        assert self.__base_dir is not None
-        navigator_dict = {
+    @staticmethod
+    def setup_writer(results_dir):
+        ResultsWriter.__setup_base_dir(results_dir).mkdir(parents=True, exist_ok=True)
+        ResultsWriter.__setup_navigator_file()
+
+    @staticmethod
+    def __setup_navigator_file():
+        if ResultsWriter.__navigator_file_dict is not None:
+            return
+        ResultsWriter.__navigator_file_path = Path(ResultsWriter.__base_dir, FileNames.navigator_fname)
+        if ResultsWriter.__navigator_file_path.exists() and not ResultsWriter.__nav_file_is_empty():
+            with open(ResultsWriter.__navigator_file_path) as json_file:
+                ResultsWriter.__navigator_file_dict = json.load(json_file)
+            return
+        ResultsWriter.__navigator_file_dict = {
             FileKeys.navigator_conf_path: ConfigMger.get_config_path(),
             FileKeys.navigator_original_dataset_path: DatasetConfig.get_dataset_path(),
-            FileKeys.navigator_detector_info_path: self.__detector_info_path,
-            FileKeys.navigator_original_data: str(ResultsWriter.__original_data),
-            FileKeys.navigator_pseudo_samples_key: ResultsWriter.__pseudo_samples_dirs_dict
+            FileKeys.navigator_detector_info_path: None,
+            FileKeys.navigator_original_data_results: None,
+            FileKeys.navigator_pseudo_samples_key: {}
         }
-        with open(os.path.join(self.__base_dir, FileNames.navigator_fname), 'w', encoding='utf-8') as f:
-            f.write(json.dumps(navigator_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
-        ResultsWriter.__pseudo_samples_dirs_dict = {}  # Reset pseudo sample info after navigator file is written
 
-    def write_detector_info_file(self, detectors_info):
-        self.__detector_info_path = os.path.join(self.__base_dir, FileNames.detector_info_fname)
-        det_dict = {}
-        for det_id, det_val in detectors_info.items():
-            det_dict.update(det_val.to_dict())
-        with open(self.__detector_info_path, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(det_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
-
-    def __prepare_best_models_dict(self, results):
-        tmp_dict = {'no_fs': {}, 'fs': {}}
-        for k in tmp_dict.keys():
-            for m_id, m_data in results[k]['best_model_trained_per_metric'].items():
-                tmp_dict[k][m_id] = m_data.to_dict()
-        return tmp_dict
-
-    def __prepare_benchmark_dict(self, results):
-        tmp_dict = {'no_fs': {}, 'fs': {}}
-        for k in tmp_dict.keys():
-            for c_id, c_data in results[k]['conf_data_in_folds'].items():
-                for f_id, f_data in c_data.items():
-                    tmp_dict[k].setdefault(c_id, {})
-                    tmp_dict[k][c_id][f_id] = f_data.to_dict()
-        return tmp_dict
-
-    def __prepare_train_tets_indices_dict(self, results):
-        tmp_dict = {'no_fs': {}, 'fs': {}}
-        for k in tmp_dict.keys():
-            for f_id, f_data in results[k]['train_test_indices_folds'].items():
-                tmp_dict[k].setdefault(f_id, {})
-                for ind_k, ind_data in f_data.items():
-                    tmp_dict[k][f_id][ind_k] = [int(x) for x in ind_data]
-        return tmp_dict
-
-    def __generate_dir(self, results_dir=None):
+    @staticmethod
+    def __setup_base_dir(results_dir):
         dataset_path = DatasetConfig.get_dataset_path()
         if dataset_path.startswith('..'):
             dataset_path = os.path.join(*Path(dataset_path).parts[1:])
@@ -122,24 +100,49 @@ class ResultsWriter:
         base_name = os.path.splitext(os.path.basename(dataset_path))[0] + '_' + outlier_ratio_str
         dataset_path = dataset_path.replace(os.path.basename(dataset_path), '')
         results_folder = results_dir if results_dir is not None else FileNames.default_folder
-        self.__base_dir = Path(
+        ResultsWriter.__base_dir = Path(
             results_folder,
             SettingsConfig.get_task(),
             dataset_path,
             base_name)
-        self.__final_dir = os.path.join(self.__base_dir, self.__pseudo_samples_key)
+        return ResultsWriter.__base_dir
+
+    @staticmethod
+    def __update_and_flush_navigator_file(key, val):
+        ResultsWriter.__navigator_file_dict[key] = val
+        ResultsWriter.flush_navigator_file()
+
+    def __generate_final_dir(self):
+        self.__final_dir = os.path.join(ResultsWriter.__base_dir, self.__pseudo_samples_key)
         Path(self.__final_dir).mkdir(parents=True, exist_ok=True)
 
-    def __update_pseudo_samples_dir(self):
-        ResultsWriter.__pseudo_samples_dirs_dict[self.__pseudo_samples_key] = {
-            FileKeys.navigator_pseudo_samples_num_key: self.__pseudo_samples,
-            FileKeys.navigator_pseudo_sample_dir_key: self.__final_dir,
-            FileKeys.navigator_pseudo_samples_data_path: self.__dataset_path,
-            FileKeys.navigator_pseudo_samples_hold_out_data_key: str(self.__hold_out_dataset_path)
-        }
+    @staticmethod
+    def flush_navigator_file():
+        print(ResultsWriter.__navigator_file_dict)
+        with open(os.path.join(ResultsWriter.__navigator_file_path), 'w', encoding='utf-8') as f:
+            f.write(json.dumps(ResultsWriter.__navigator_file_dict, indent=4, separators=(',', ': '),
+                               default=ResultsWriter.json_type_transformer, ensure_ascii=False))
 
-    def get_base_dir(self):
-        return self.__base_dir
+    @staticmethod
+    def json_type_transformer(o):
+        if isinstance(o, Path):
+            return str(o)
+        else:
+            return o
+
+    def __update_pseudo_samples_dir(self, key, val):
+        if self.__pseudo_samples_key not in ResultsWriter.__navigator_file_dict[FileKeys.navigator_pseudo_samples_key]:
+            ResultsWriter.__navigator_file_dict[FileKeys.navigator_pseudo_samples_key][self.__pseudo_samples_key] = {}
+        ResultsWriter.__navigator_file_dict[FileKeys.navigator_pseudo_samples_key][self.__pseudo_samples_key][key] = val
+
+    @staticmethod
+    def __nav_file_is_empty():
+        return Path(ResultsWriter.__navigator_file_path).stat().st_size == 0
+
+    @staticmethod
+    def get_base_dir():
+        assert ResultsWriter.__base_dir is not None
+        return ResultsWriter.__base_dir
 
     def get_final_dir(self):
         return self.__final_dir

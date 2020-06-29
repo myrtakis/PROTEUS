@@ -3,7 +3,7 @@
     "task": "classification",
     "kfolds": 3,
     "top_k_points_to_explain": 0.01,
-    "pseudo_samples_per_outlier": [1]
+    "pseudo_samples_per_outlier": [0, 1]
   },
 
   "dataset": {
@@ -32,6 +32,12 @@
         "n_neighbors": 15,
         "ref_set": 10,
         "alpha": 0.8
+      }
+    },{
+      "id": "loda",
+      "params": {
+        "n_bins": 30,
+        "n_random_cuts": 100
       }
     }
   ],

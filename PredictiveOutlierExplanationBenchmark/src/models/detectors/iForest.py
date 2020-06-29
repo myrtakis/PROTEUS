@@ -43,5 +43,11 @@ class iForest(BaseDetector):
         predictions = predictions.T
         return np.average(predictions, axis=1)
 
-    def is_explainable_detector(self):
+    def get_explanation(self):
+        return None
+
+    def calculate_explanation(self, outlier_ids):
+        return None
+
+    def is_explainable(self):
         return False

@@ -16,6 +16,7 @@ class LODA(BaseDetector):
         self.random_cuts = None
         self.X = None
         self.isfitted = False
+        self.explanation = None
 
     def train(self, X_train, params):
         n_components = X_train.shape[1]
@@ -54,7 +55,7 @@ class LODA(BaseDetector):
         pred_scores = np.concatenate(pred_scores).ravel()
         return pred_scores / self.random_cuts
 
-    def get_explanation(self, outlier_ids):
+    def calculate_explanation(self, outlier_ids):
         assert self.isfitted
         features_importance = {}
         for o_id in outlier_ids:
@@ -69,6 +70,7 @@ class LODA(BaseDetector):
                 _, pval = ttest_ind(lp_scores, rp_scores)
                 features_importance[o_id][f_id] = pval
             features_importance[o_id] = OrderedDict(sorted(features_importance[o_id].items(), key=itemgetter(1)))
+        self.explanation = features_importance
         return features_importance
 
     def __partition_scores(self, partition, outlier):
@@ -90,5 +92,8 @@ class LODA(BaseDetector):
                 right_partition.append(i)
         return left_partition, right_partition
 
-    def is_explainable_detector(self):
+    def get_explanation(self):
+        return self.explanation
+
+    def is_explainable(self):
         return True
