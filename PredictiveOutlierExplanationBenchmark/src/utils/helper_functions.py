@@ -1,4 +1,5 @@
 import json
+from collections import OrderedDict
 from pathlib import Path
 
 from PredictiveOutlierExplanationBenchmark.src.pipeline.DatasetTransformer import Transformer
@@ -23,7 +24,7 @@ def extract_optimal_features(dataset_path):
     subspaces_as_str = set(df.loc[df['subspaces'] != '-', 'subspaces'].values)
     optimal_features = set()
     for s in subspaces_as_str:
-        optimal_features = optimal_features.union([int(f) for f in s[s.index('[')+1: s.index(']')].split()])
+        optimal_features = optimal_features.union([int(f) for f in s[s.index('[') + 1: s.index(']')].split()])
     return optimal_features
 
 
@@ -69,28 +70,36 @@ def get_best_model_features_original_data(original_data_results_path, metric_id)
         return features, best_conf
 
 
-def add_datasets_with_pseudo_samples(oversampling_method, dataset_detected_outliers, detector, threshold, pseudo_samples_arr):
+def add_datasets_with_pseudo_samples(oversampling_method, dataset_detected_outliers, detector, threshold,
+                                     pseudo_samples_arr):
     datasets_with_pseudo_samples = {}
     for ps_num in pseudo_samples_arr:
         if ps_num == 0:
             datasets_with_pseudo_samples[0] = dataset_detected_outliers
             continue
-        dataset = Transformer(method=oversampling_method).transform(dataset_detected_outliers, ps_num, detector, threshold)
+        dataset = Transformer(method=oversampling_method).transform(dataset_detected_outliers, ps_num, detector,
+                                                                    threshold)
         datasets_with_pseudo_samples[ps_num] = dataset
     return datasets_with_pseudo_samples
 
 
 def sort_files_by_dim(nav_files):
-    nav_files_sort_by_dim = {}
+    nav_files_sort_by_dim = OrderedDict()
     for nfile in nav_files:
         data_dim = pd.read_csv(nfile[FileKeys.navigator_original_dataset_path]).shape[1]
         nav_files_sort_by_dim[data_dim] = nfile
     return dict(sorted(nav_files_sort_by_dim.items()))
 
 
-def read_nav_files(path_to_dir):
+def read_nav_files(path_to_dir, path_must_have_word=None):
     nav_files = []
     nav_files_paths = get_files_recursively(path_to_dir, FileNames.navigator_fname)
+    tmp_nav_files = []
+    for f in nav_files_paths:
+        if path_must_have_word is not None and path_must_have_word in f:
+            tmp_nav_files.append(f)
+    if path_must_have_word is not None:
+        nav_files_paths = tmp_nav_files
     for f in nav_files_paths:
         with open(f) as json_file:
             nav_files.append(json.load(json_file))
