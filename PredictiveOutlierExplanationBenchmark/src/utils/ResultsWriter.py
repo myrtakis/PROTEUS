@@ -10,6 +10,7 @@ class ResultsWriter:
     __base_dir = None
     __navigator_file_dict = None
     __navigator_file_path = None
+    __results_initial_dir = None
 
     def __init__(self, pseudo_samples):
         assert ResultsWriter.__base_dir is not None
@@ -70,6 +71,15 @@ class ResultsWriter:
                                                         detector_info_path)
 
     @staticmethod
+    def write_baselines(explanations, start_dir):
+        baseline_dir = str(ResultsWriter.__base_dir).replace(str(ResultsWriter.__results_initial_dir), str(start_dir))
+        Path(baseline_dir).mkdir(parents=True, exist_ok=True)
+        baseline_file_path = Path(baseline_dir, FileNames.baselines_fname)
+        with open(baseline_file_path, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(explanations, indent=4, separators=(',', ': '), ensure_ascii=False))
+        ResultsWriter.__update_and_flush_navigator_file(FileKeys.navigator_baselines_dir_key, baseline_file_path)
+
+    @staticmethod
     def setup_writer(results_dir):
         ResultsWriter.__setup_base_dir(results_dir).mkdir(parents=True, exist_ok=True)
         ResultsWriter.__setup_navigator_file()
@@ -100,6 +110,7 @@ class ResultsWriter:
         base_name = os.path.splitext(os.path.basename(dataset_path))[0] + '_' + outlier_ratio_str
         dataset_path = dataset_path.replace(os.path.basename(dataset_path), '')
         results_folder = results_dir if results_dir is not None else FileNames.default_folder
+        ResultsWriter.__results_initial_dir = results_folder
         ResultsWriter.__base_dir = Path(
             results_folder,
             SettingsConfig.get_task(),
@@ -118,7 +129,6 @@ class ResultsWriter:
 
     @staticmethod
     def flush_navigator_file():
-        print(ResultsWriter.__navigator_file_dict)
         with open(os.path.join(ResultsWriter.__navigator_file_path), 'w', encoding='utf-8') as f:
             f.write(json.dumps(ResultsWriter.__navigator_file_dict, indent=4, separators=(',', ': '),
                                default=ResultsWriter.json_type_transformer, ensure_ascii=False))

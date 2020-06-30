@@ -41,8 +41,6 @@ class AutoML:
         print()
         return best_model_trained
 
-
-
     @staticmethod
     def __get_rarest_class_count(dataset):
         if not dataset.contains_pseudo_samples():

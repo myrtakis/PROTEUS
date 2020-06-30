@@ -1,5 +1,7 @@
 import gc
 from pathlib import Path
+
+from PredictiveOutlierExplanationBenchmark.src.baselines.posthoc_explanation_methods import ExplanationMethods
 from PredictiveOutlierExplanationBenchmark.src.configpkg import SettingsConfig, DatasetConfig
 from PredictiveOutlierExplanationBenchmark.src.pipeline.automl.automl_processor import AutoML
 from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions
@@ -16,10 +18,10 @@ class NormalPipeline:
         self.save_dir = save_dir
         self.original_dataset = original_dataset
         self.oversampling_method = oversampling_method
-        if detector is None:
-            self.results_dir = Path('..', 'results_normal', oversampling_method + '_oversampling', 'best')
-        else:
-            self.results_dir = Path('..', 'results_normal', oversampling_method + '_oversampling', detector)
+        detector = 'best_detector' if detector is None else detector
+        self.protean_results_dir = Path('..', 'results_normal', detector, 'protean',
+                                        oversampling_method + '_oversampling')
+        self.baselines_results_dir = Path('..', 'results_normal', detector, 'baselines')
         self.detector = detector
 
     def run(self):
@@ -36,14 +38,23 @@ class NormalPipeline:
                                                                                                  dataset_with_detected_outliers,
                                                                                                  detectors_info['best'],
                                                                                                  threshold, pseudo_samples_array))
-
         print('Running Dataset:', DatasetConfig.get_dataset_path())
         if detectors_info['best'].get_detector().is_explainable():
             print('Computing the explanation for', detectors_info['best'].get_id())
             detectors_info['best'].get_detector().\
                 calculate_explanation(dataset_with_detected_outliers.get_outlier_indices())
-        ResultsWriter.setup_writer(self.results_dir)
+
+        explanation_methods = ExplanationMethods(dataset_with_detected_outliers, detectors_info['best'])
+        explanations = explanation_methods.run_all_post_hoc_explanation_methods()
+
+        ResultsWriter.setup_writer(self.protean_results_dir)
         ResultsWriter.write_detector_info_file(detectors_info['best'])
+        ResultsWriter.write_baselines(explanations, self.baselines_results_dir)
+
+
+        exit()
+
+
         for dataset_kind, data in datasets_for_cv.items():
             for pseudo_samples, dataset in data.items():
                 Logger.initialize(pseudo_samples)
@@ -58,3 +69,4 @@ class NormalPipeline:
                 del best_trained_model_nofs
                 del best_trained_model_fs
                 gc.collect()
+

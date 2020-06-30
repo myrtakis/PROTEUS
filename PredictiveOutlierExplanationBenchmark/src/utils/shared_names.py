@@ -11,10 +11,12 @@ class FileNames:
     pseudo_samples_info = 'pseudo_samples_inds.json'
     best_models_bench_fname = 'models_benchmark.json'
     best_model_fname = 'best_model.json'
+    baselines_fname = 'baseline_explanations.json'
 
 
 class FileKeys:
     navigator_conf_path = 'config_path'
+    navigator_baselines_dir_key = 'baselines_dir'
     navigator_original_dataset_path = 'original_dataset_path'
     navigator_original_data_results = 'original_data_results'
     navigator_pseudo_samples_key = 'pseudo_samples'

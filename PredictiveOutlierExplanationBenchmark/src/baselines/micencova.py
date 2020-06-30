@@ -21,14 +21,6 @@ class CA_Lasso:
             inliers, kth_distance = self.inlier_undersampling(o)
             outliers = self.outlier_oversampling(o, inliers.shape[0], kth_distance)
             local_explanations[o] = self.local_explanation(inliers, outliers)
-        feature_scores = None
-        for o, expl in local_explanations.items():
-            if feature_scores is None:
-                feature_scores = expl
-            else:
-                feature_scores += expl
-        feature_scores /= len(local_explanations)
-        features_ranked = np.argsort(feature_scores)[::-1]
         return local_explanations
 
     def inlier_undersampling(self, outlier_ind):
