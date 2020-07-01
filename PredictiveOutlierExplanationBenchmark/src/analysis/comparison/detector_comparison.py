@@ -10,12 +10,13 @@ import json
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
 MAX_FEATURES = 10
 
 # conf = {'path': '../results_normal/lof', 'detector': 'lof', 'holdout': False, 'type': 'synthetic'}
-conf = {'path': '../results_normal/iforest', 'detector': 'lof', 'holdout': False, 'type': 'synthetic'}
-# conf = {'path': '../results_normal/lof', 'detector': 'lof', 'holdout': False, 'type': 'real'}
+# conf = {'path': '../results_normal/iforest', 'detector': 'iforest', 'holdout': False, 'type': 'synthetic'}
+conf = {'path': '../results_normal/lof', 'detector': 'lof', 'holdout': False, 'type': 'real'}
 
 
 def baseline_explanations(baseline_path):
@@ -30,10 +31,15 @@ def baseline_explanations(baseline_path):
 def compare_methods():
     nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
     explanation_perfs = []
-    dimensions = []
     methods = []
+    dataset_names = []
     for dim, nav_file in nav_files_json.items():
-        dimensions.append(dim-1-(conf['type'] == 'synthetic'))
+        real_dims = dim-1-(conf['type'] == 'synthetic')
+        dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path])
+        if conf['type'] == 'synthetic':
+            dataset_names.append('HiCS ' + str(real_dims) + '-d')
+        else:
+            dataset_names.append(dname + ' ' + str(real_dims) + '-d')
         ConfigMger.setup_configs(nav_file[FileKeys.navigator_conf_path])
         ps_mger = PseudoSamplesMger(nav_file[FileKeys.navigator_pseudo_samples_key], 'roc_auc', fs=True)
         detector = get_detector_model()
@@ -44,7 +50,7 @@ def compare_methods():
         if len(methods) == 0:
             methods = sorted(explanations.keys())
         explanation_perfs.append(auc_perfs_using_explanation(detector, dataset, explanations))
-    return pd.DataFrame(np.array(explanation_perfs).T, index=methods, columns=dimensions)
+    return pd.DataFrame(np.array(explanation_perfs).T, index=methods, columns=dataset_names)
 
 
 def auc_perfs_using_explanation(detector, dataset, explanations):
@@ -67,6 +73,10 @@ def get_detector_model():
     assert False
 
 
+def get_dataset_name(dataset_path):
+    return os.path.splitext(os.path.basename(dataset_path))[0]
+
+
 def get_dataset(ps_mger):
     dataset_path_det = ps_mger.get_dataset_path_of_k(0)
     return Dataset(dataset_path_det, DatasetConfig.get_anomaly_column_name(), DatasetConfig.get_subspace_column_name())
@@ -76,11 +86,9 @@ def visualize_results_as_table(perfomance_df):
     perfomance_df = perfomance_df.round(3)
     hold_out = 'yes' if conf['holdout'] else 'no'
     title = 'Explaining ' + conf['detector'].upper() + ' (hold out: ' + hold_out + ')'
-    if conf['type'] == 'synthetic':
-        col_names = ['HiCS ' + str(d) + '-d' for d in perfomance_df.columns]
     fig, ax = plt.subplots(nrows=1, ncols=1)
 
-    table = ax.table(cellText=perfomance_df.values, colLabels=col_names,
+    table = ax.table(cellText=perfomance_df.values, colLabels=perfomance_df.columns,
                      loc='top', rowLabels=perfomance_df.index,
                      cellLoc='center', bbox=[0.15, 0.45, 0.8, 0.5])
 

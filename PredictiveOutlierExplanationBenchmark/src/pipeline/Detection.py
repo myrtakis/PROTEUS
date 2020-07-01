@@ -7,17 +7,18 @@ from PredictiveOutlierExplanationBenchmark.src.utils.metrics import calculate_ro
 
 
 def evaluate_detectors(dataset, detector_id):
+    threshold_percentage = len(dataset.get_outlier_indices()) / dataset.get_X().shape[0]
     detectors_arr = Detector.init_detectors()
-    detectors_info = select_detector(detectors_arr, dataset, detector_id)
+    detectors_info = select_detector(detectors_arr, dataset, detector_id, threshold_percentage)
     if SettingsConfig.is_classification_task():
-        new_dataset, threshold = create_dataset_classification(dataset, detectors_info['best'].get_scores_in_train())
+        new_dataset, threshold = create_dataset_classification(dataset, detectors_info['best'].get_scores_in_train(), threshold_percentage)
         return new_dataset, detectors_info, threshold
     else:
         new_dataset, threshold = create_dataset_regression(dataset, detectors_info['best'].get_scores_in_train())
         return new_dataset, detectors_info, threshold
 
 
-def select_detector(detectors_arr, dataset, detector_id_to_select):
+def select_detector(detectors_arr, dataset, detector_id_to_select, threshold_percentage):
     best_detector = None
     max_perf = None
     detectors_info = {'info': {}, 'best': None}
@@ -38,7 +39,7 @@ def select_detector(detectors_arr, dataset, detector_id_to_select):
         selected_detector = detectors_info['info'][detector_id_to_select]
     print('Selected detector:', selected_detector.get_id(), 'with auc score', selected_detector.get_effectiveness())
     desc_ordered_indices = np.argsort(selected_detector.get_scores_in_train())[::-1]
-    topk_points = floor(SettingsConfig.get_top_k_points_to_explain() * dataset.get_X().shape[0])
+    topk_points = floor(threshold_percentage * dataset.get_X().shape[0])
     true_outliers = set(desc_ordered_indices[:topk_points]).intersection(dataset.get_outlier_indices())
     print('True outliers found for threshold', SettingsConfig.get_top_k_points_to_explain(), ':', true_outliers)
     detectors_info['best'] = selected_detector
@@ -46,18 +47,18 @@ def select_detector(detectors_arr, dataset, detector_id_to_select):
 
 
 def detect(detector, X, Y):
+    threshold_percentage = len(np.where(Y == 1)[0]) / X.shape[0]
     scores = detector.predict(X)
     desc_ordered_indices = np.argsort(scores)[::-1]
-    topk = floor(SettingsConfig.get_top_k_points_to_explain() * X.shape[0])
+    topk = floor(threshold_percentage * X.shape[0])
     topk_points = desc_ordered_indices[:topk]
     labels = np.zeros(X.shape[0], dtype=int)
     labels[topk_points] = 1
     return labels, scores, calculate_roc_auc(Y, labels)
 
 
-def create_dataset_classification(dataset, scores):
-    top_k_points = SettingsConfig.get_top_k_points_to_explain(),
-    top_k_points_to_keep = floor(top_k_points[0] * dataset.get_X().shape[0])
+def create_dataset_classification(dataset, scores, threshold_percentage):
+    top_k_points_to_keep = floor(threshold_percentage * dataset.get_X().shape[0])
     desc_ordered_indices = np.argsort(scores)[::-1]
     desc_ordered_outlier_indices = desc_ordered_indices[range(top_k_points_to_keep)]
     lowest_outlier_score = scores[desc_ordered_outlier_indices[-1]]
@@ -87,3 +88,4 @@ def create_dataset_regression(dataset, scores):
 def assess_detector(y_pred, y_true):
     assert SettingsConfig.is_classification_task()
     return calculate_roc_auc(y_true, y_pred)
+

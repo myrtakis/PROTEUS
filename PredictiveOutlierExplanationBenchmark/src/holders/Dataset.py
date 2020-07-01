@@ -5,7 +5,7 @@ import numpy as np
 
 class Dataset:
 
-    def __init__(self, dataset, anomaly_column, subspace_column):
+    def __init__(self, dataset, anomaly_column, subspace_column, reset_index=False):
         self.__anomaly_column = anomaly_column
         self.__subspace_column = subspace_column
         self.__task_is_classification = SettingsConfig.is_classification_task()
@@ -16,6 +16,7 @@ class Dataset:
         self.__outlier_indices = None
         self.__inlier_indices = None
         self.__pseudo_sample_indices_per_outlier = None
+        self.__reset_index = reset_index
         self.__setup_dataset(dataset)
 
     def __setup_dataset(self, dataset):
@@ -33,7 +34,9 @@ class Dataset:
 
     def __set_df(self, dataset):
         if isinstance(dataset, pd.DataFrame):
-            self.__df = dataset
+            self.__df = dataset.copy()
+            if self.__reset_index:
+                self.__df = self.__df.reset_index(drop=True)
         else:
             self.__df = pd.read_csv(dataset)
 

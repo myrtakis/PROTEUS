@@ -51,13 +51,8 @@ class NormalPipeline:
         ResultsWriter.write_detector_info_file(detectors_info['best'])
         ResultsWriter.write_baselines(explanations, self.baselines_results_dir)
 
-
-        exit()
-
-
         for dataset_kind, data in datasets_for_cv.items():
             for pseudo_samples, dataset in data.items():
-                Logger.initialize(pseudo_samples)
                 rw = ResultsWriter(pseudo_samples)
                 rw.write_dataset(dataset, dataset_kind)
                 print('----------\nRunning dataset with pseudo samples: ', pseudo_samples)
@@ -68,5 +63,6 @@ class NormalPipeline:
                 ResultsWriter.flush_navigator_file()
                 del best_trained_model_nofs
                 del best_trained_model_fs
+                del results
                 gc.collect()
 

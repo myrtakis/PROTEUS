@@ -1,9 +1,12 @@
 import gc
 from sklearn.model_selection import StratifiedShuffleSplit
+
+from PredictiveOutlierExplanationBenchmark.src.baselines.posthoc_explanation_methods import ExplanationMethods
 from PredictiveOutlierExplanationBenchmark.src.configpkg import SettingsConfig
 from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import Dataset
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Benchmark import Benchmark, DatasetConfig
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Detection import evaluate_detectors, detect
+from PredictiveOutlierExplanationBenchmark.src.pipeline.automl.automl_processor import AutoML
 from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions, metrics
 from PredictiveOutlierExplanationBenchmark.src.utils.Logger import Logger
 from PredictiveOutlierExplanationBenchmark.src.utils.ResultsWriter import ResultsWriter
@@ -12,16 +15,16 @@ from pathlib import Path
 
 class PredictivePipeline:
 
-    __HOLD_OUD_PERCENTAGE = 0.5
+    __HOLD_OUD_PERCENTAGE = 0.3
 
     def __init__(self, save_dir, original_dataset, oversampling_method, detector=None):
         self.save_dir = save_dir
         self.original_dataset = original_dataset
         self.oversampling_method = oversampling_method
-        if detector is None:
-            self.results_dir = Path('..', 'results_predictive', oversampling_method + '_oversampling', 'best')
-        else:
-            self.results_dir = Path('..', 'results_predictive', oversampling_method + '_oversampling', detector)
+        detector = 'best_detector' if detector is None else detector
+        self.protean_results_dir = Path('..', 'results_predictive', detector, 'protean',
+                                        oversampling_method + '_oversampling')
+        self.baselines_results_dir = Path('..', 'results_predictive', detector, 'baselines')
         self.detector = detector
 
     def run(self):
@@ -43,20 +46,33 @@ class PredictivePipeline:
 
         print()
         print('Running Dataset:', DatasetConfig.get_dataset_path())
-        rw = None
+        if detectors_info['best'].get_detector().is_explainable():
+            print('Computing the explanation for', detectors_info['best'].get_id())
+            detectors_info['best'].get_detector().\
+                calculate_explanation(train_data_with_detected_outliers.get_outlier_indices())
+
+        explanation_methods = ExplanationMethods(train_data_with_detected_outliers, detectors_info['best'])
+        explanations = explanation_methods.run_all_post_hoc_explanation_methods()
+
+        ResultsWriter.setup_writer(self.protean_results_dir)
+        ResultsWriter.write_detector_info_file(detectors_info['best'])
+        ResultsWriter.write_baselines(explanations, self.baselines_results_dir)
 
         for pseudo_samples, dataset in datasets_for_cv.items():
-            Logger.initialize(pseudo_samples)
-            rw = ResultsWriter(pseudo_samples, self.results_dir)
+            rw = ResultsWriter(pseudo_samples)
             rw.write_dataset(dataset, 'detected')
             rw.write_hold_out_dataset(test_data_with_detected_outliers)
-            results = Benchmark.run('detected', pseudo_samples, dataset, rw.get_final_dir())
+            best_trained_model_nofs = AutoML().run(dataset, rw.get_final_dir(), False)
+            best_trained_model_fs = AutoML().run(dataset, rw.get_final_dir(), True)
+            results = {'no_fs': best_trained_model_nofs, 'fs': best_trained_model_fs}
             results = self.__test_best_model_in_hold_out(results, test_data_with_detected_outliers)
             rw.write_results(results, 'detected')
+            ResultsWriter.flush_navigator_file()
+            del best_trained_model_nofs
+            del best_trained_model_fs
             del results
             gc.collect()
-        rw.write_detector_info_file(detectors_info['info'])
-        rw.create_navigator_file()
+
 
     def __generate_test_dataset(self, test_data_labels, original_dataset_test):
         anomaly_column = original_dataset_test.get_anomaly_column_name()
@@ -74,7 +90,7 @@ class PredictivePipeline:
 
     def __test_best_model_in_hold_out(self, results, test_data):
         for key, data in results.items():
-            for m_id, conf in data['best_model_trained_per_metric'].items():
+            for m_id, conf in data.items():
                 fsel = conf.get_fsel()
                 clf = conf.get_clf()
                 X_new = test_data.get_X().iloc[:, fsel.get_features()]
@@ -92,9 +108,9 @@ class PredictivePipeline:
     def __train_data(self, train_inds):
         return Dataset(self.original_dataset.get_df().iloc[train_inds, :],
                        self.original_dataset.get_anomaly_column_name(),
-                       self.original_dataset.get_subspace_column_name())
+                       self.original_dataset.get_subspace_column_name(), True)
 
     def __test_data(self, test_inds):
         return Dataset(self.original_dataset.get_df().iloc[test_inds, :],
                        self.original_dataset.get_anomaly_column_name(),
-                       self.original_dataset.get_subspace_column_name())
+                       self.original_dataset.get_subspace_column_name(), True)

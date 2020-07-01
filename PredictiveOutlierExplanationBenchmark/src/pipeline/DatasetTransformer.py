@@ -82,8 +82,10 @@ class Transformer:
             outlier_row_pos = np.where(indexes == outlier)[0][0]
             o_sample = new_df.iloc[outlier_row_pos, :].values
             start_ps_ind = new_df.shape[0]
+            # print(list(o_sample))
             for ps_sample in range(pseudo_samples_per_outlier):
-                pseudo_sample = o_sample + Transformer.__gaussian_noise(dataset)
+                pseudo_sample = o_sample + Transformer.__gaussian_noise(dataset, o_sample)
+                # print('ps', list(pseudo_sample))
                 new_df = new_df.append(pd.Series(pseudo_sample[0], index=new_df.columns), ignore_index=True)
             pseudo_samples_inds_per_outlier[outlier_row_pos] = (start_ps_ind, new_df.shape[0])
         pseudo_samples_df = new_df.iloc[pseudo_samples_indices, :]
@@ -95,9 +97,9 @@ class Transformer:
         return new_dataset
 
     @staticmethod
-    def __gaussian_noise(dataset):
+    def __gaussian_noise(dataset, o_sample):    # o_sample to be potentially used a the center of the distribution
         noise = np.zeros(dataset.get_X().shape[1])
-        for i, (mu, sigma) in enumerate(zip(dataset.get_mean_per_column(), dataset.get_std_per_column())):
+        for i, (mu, sigma) in enumerate(zip(noise, 0.1 * dataset.get_std_per_column())):
             noise[i] = np.random.normal(mu, sigma)
         return noise
 
