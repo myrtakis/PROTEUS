@@ -1,6 +1,5 @@
 import gc
 from sklearn.model_selection import StratifiedShuffleSplit
-
 from PredictiveOutlierExplanationBenchmark.src.baselines.posthoc_explanation_methods import ExplanationMethods
 from PredictiveOutlierExplanationBenchmark.src.configpkg import SettingsConfig
 from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import Dataset
@@ -8,7 +7,6 @@ from PredictiveOutlierExplanationBenchmark.src.pipeline.Benchmark import Benchma
 from PredictiveOutlierExplanationBenchmark.src.pipeline.Detection import evaluate_detectors, detect
 from PredictiveOutlierExplanationBenchmark.src.pipeline.automl.automl_processor import AutoML
 from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions, metrics
-from PredictiveOutlierExplanationBenchmark.src.utils.Logger import Logger
 from PredictiveOutlierExplanationBenchmark.src.utils.ResultsWriter import ResultsWriter
 from pathlib import Path
 
@@ -55,6 +53,7 @@ class PredictivePipeline:
         explanations = explanation_methods.run_all_post_hoc_explanation_methods()
 
         ResultsWriter.setup_writer(self.protean_results_dir)
+        ResultsWriter.write_train_hold_out_inds({'training_inds': train_inds.tolist(), 'holdout_inds': test_inds.tolist()})
         ResultsWriter.write_detector_info_file(detectors_info['best'])
         ResultsWriter.write_baselines(explanations, self.baselines_results_dir)
 
@@ -72,7 +71,6 @@ class PredictivePipeline:
             del best_trained_model_fs
             del results
             gc.collect()
-
 
     def __generate_test_dataset(self, test_data_labels, original_dataset_test):
         anomaly_column = original_dataset_test.get_anomaly_column_name()

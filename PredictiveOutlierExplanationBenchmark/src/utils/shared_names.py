@@ -8,17 +8,18 @@ class FileNames:
     navigator_fname = 'navigator.json'
     detector_info_fname = 'detectors_info.json'
     train_test_indices_fname = 'train_test_indices.json'
+    train_hold_out_indices_fname = 'train_holdout_inds.json'
     pseudo_samples_info = 'pseudo_samples_inds.json'
     best_models_bench_fname = 'models_benchmark.json'
     best_model_fname = 'best_model.json'
-    baselines_fname = 'baseline_explanations.json'
+    baselines_explanations_fname = 'baseline_explanations.json'
 
 
 class FileKeys:
     navigator_conf_path = 'config_path'
-    navigator_baselines_dir_key = 'baselines_dir'
     navigator_original_dataset_path = 'original_dataset_path'
     navigator_original_data_results = 'original_data_results'
+    navigator_train_hold_out_inds = 'train_holdout_inds'
     navigator_pseudo_samples_key = 'pseudo_samples'
     navigator_pseudo_samples_hold_out_data_key = 'hold_out_dataset_path'
     navigator_pseudo_sample_dir_key = 'dir'
@@ -26,3 +27,6 @@ class FileKeys:
     navigator_pseudo_samples_num_key = 'pseudo_samples_num'
     navigator_pseudo_samples_inds = 'pseudo_samples_inds_info'
     navigator_detector_info_path = 'detector_info'
+    navigator_baseline = 'baselines'
+    navigator_baselines_dir_key = 'baselines_dir'
+    navigator_baselines_explanations_path = 'explanations_path'

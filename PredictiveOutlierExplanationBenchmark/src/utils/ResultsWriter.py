@@ -57,6 +57,13 @@ class ResultsWriter:
                 f.write(json.dumps(ps_info, indent=4, separators=(',', ': '), ensure_ascii=False))
         self.__update_pseudo_samples_dir(FileKeys.navigator_pseudo_samples_inds, pseudo_samples_info_path)
 
+    @staticmethod
+    def write_train_hold_out_inds(inds):
+        train_hold_out_path = Path(ResultsWriter.__base_dir, FileNames.train_hold_out_indices_fname)
+        with open(train_hold_out_path, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(inds, indent=4, separators=(',', ': '), ensure_ascii=False))
+        ResultsWriter.__update_and_flush_navigator_file(FileKeys.navigator_train_hold_out_inds, train_hold_out_path )
+
     def write_hold_out_dataset(self, hold_out_dataset):
         hold_out_dataset_path = Path(self.__final_dir, self.__pseudo_samples_key + '_hold_out_data.csv')
         hold_out_dataset.get_df().to_csv(hold_out_dataset_path, index=False)
@@ -74,10 +81,10 @@ class ResultsWriter:
     def write_baselines(explanations, start_dir):
         baseline_dir = str(ResultsWriter.__base_dir).replace(str(ResultsWriter.__results_initial_dir), str(start_dir))
         Path(baseline_dir).mkdir(parents=True, exist_ok=True)
-        baseline_file_path = Path(baseline_dir, FileNames.baselines_fname)
+        baseline_file_path = Path(baseline_dir, FileNames.baselines_explanations_fname)
         with open(baseline_file_path, 'w', encoding='utf-8') as f:
             f.write(json.dumps(explanations, indent=4, separators=(',', ': '), ensure_ascii=False))
-        ResultsWriter.__update_and_flush_navigator_file(FileKeys.navigator_baselines_dir_key, baseline_file_path)
+        ResultsWriter.__update_and_flush_navigator_file(FileKeys.navigator_baselines_dir_key, baseline_dir)
 
     @staticmethod
     def setup_writer(results_dir):
@@ -98,6 +105,7 @@ class ResultsWriter:
             FileKeys.navigator_original_dataset_path: DatasetConfig.get_dataset_path(),
             FileKeys.navigator_detector_info_path: None,
             FileKeys.navigator_original_data_results: None,
+            FileKeys.navigator_train_hold_out_inds: None,
             FileKeys.navigator_pseudo_samples_key: {}
         }
 
