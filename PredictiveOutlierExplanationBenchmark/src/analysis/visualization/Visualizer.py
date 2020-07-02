@@ -61,7 +61,7 @@ class Visualizer:
             ps_mger = PseudoSamplesMger(nav_file[FileKeys.navigator_pseudo_samples_key], self.metric_id, fs=True)
             best_model, k = ps_mger.get_best_model()
             print('Best k', k)
-            dataset_path_of_best_k = ps_mger.get_dataset_path_of_k(k)
+            dataset_path_of_best_k = ps_mger.get_info_field_of_k(k)
             df = pd.read_csv(dataset_path_of_best_k)
             print('Explained Boundary')
             self.__viz_coordinator(parent_dir=None, df=df, features=best_model['feature_selection']['features'], keep_only_given_features=True)

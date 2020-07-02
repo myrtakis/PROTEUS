@@ -61,7 +61,7 @@ def get_detector_model():
 
 
 def get_dataset(ps_mger):
-    dataset_path_det = ps_mger.get_dataset_path_of_k(0)
+    dataset_path_det = ps_mger.get_info_field_of_k(0)
     return Dataset(dataset_path_det, DatasetConfig.get_anomaly_column_name(), DatasetConfig.get_subspace_column_name())
 
 

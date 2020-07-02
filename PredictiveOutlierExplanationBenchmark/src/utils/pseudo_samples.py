@@ -50,8 +50,8 @@ class PseudoSamplesMger:
     def list_k_confs(self):
         return self.k_configurations
 
-    def get_dataset_path_of_k(self, k):
+    def get_info_field_of_k(self, k, data_path_key):
         for key, data in self.pseudo_samples_raw.items():
             if data[FileKeys.navigator_pseudo_samples_num_key] == k:
-                return data[FileKeys.navigator_pseudo_samples_data_path]
+                return data[data_path_key]
 
