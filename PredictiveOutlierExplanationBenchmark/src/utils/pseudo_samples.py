@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
-from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import *
-from PredictiveOutlierExplanationBenchmark.src.utils.helper_functions import fs_key
+from utils.shared_names import *
+from utils.helper_functions import fs_key
 
 
 class PseudoSamplesMger:
@@ -11,6 +11,7 @@ class PseudoSamplesMger:
         self.metric_id = metric_id
         self.fs = fs
         self.best_model_per_k = {}
+        self.k_configurations = []
         self.best_k = None
         self.best_k_id = None
         self.__init_best_samples_best_models()
@@ -18,8 +19,10 @@ class PseudoSamplesMger:
     def __init_best_samples_best_models(self):
         for ps_samples, ps_data in self.pseudo_samples_raw.items():
             k = ps_data[FileKeys.navigator_pseudo_samples_num_key]
+            self.k_configurations.append(k)
             best_model = self.__get_best_model_from_dir(ps_data[FileKeys.navigator_pseudo_sample_dir_key])
             self.best_model_per_k[k] = best_model
+        assert len(self.k_configurations) == len(self.pseudo_samples_raw)
 
     def __get_best_model_from_dir(self, ps_dir):
         best_model_file = Path(ps_dir, FileNames.best_model_fname)
@@ -43,6 +46,9 @@ class PseudoSamplesMger:
     def sort_ps_samples_by_perf(self):
         # return something
         pass
+
+    def list_k_confs(self):
+        return self.k_configurations
 
     def get_dataset_path_of_k(self, k):
         for key, data in self.pseudo_samples_raw.items():

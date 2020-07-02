@@ -2,9 +2,9 @@ from pathlib import Path
 import json
 from sklearn import manifold
 from sklearn.decomposition import PCA
-from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions
-from PredictiveOutlierExplanationBenchmark.src.utils.pseudo_samples import PseudoSamplesMger
-from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import *
+from utils import helper_functions
+from utils.pseudo_samples import PseudoSamplesMger
+from utils.shared_names import *
 import pandas as pd
 import numpy as np
 import os

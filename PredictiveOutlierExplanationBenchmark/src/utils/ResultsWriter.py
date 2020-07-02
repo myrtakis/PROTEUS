@@ -1,5 +1,5 @@
-from PredictiveOutlierExplanationBenchmark.src.configpkg import *
-from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import FileKeys, FileNames
+from configpkg import *
+from utils.shared_names import FileKeys, FileNames
 import json
 from pathlib import Path
 import os

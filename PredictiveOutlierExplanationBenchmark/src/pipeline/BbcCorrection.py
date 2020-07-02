@@ -1,5 +1,5 @@
 import numpy as np
-from PredictiveOutlierExplanationBenchmark.src.utils.metrics import calculate_metric
+from utils.metrics import calculate_metric
 
 
 class BBC:

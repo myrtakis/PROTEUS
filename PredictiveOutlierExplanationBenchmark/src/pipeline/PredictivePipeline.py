@@ -1,13 +1,13 @@
 import gc
 from sklearn.model_selection import StratifiedShuffleSplit
-from PredictiveOutlierExplanationBenchmark.src.baselines.posthoc_explanation_methods import ExplanationMethods
-from PredictiveOutlierExplanationBenchmark.src.configpkg import SettingsConfig
-from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import Dataset
-from PredictiveOutlierExplanationBenchmark.src.pipeline.Benchmark import Benchmark, DatasetConfig
-from PredictiveOutlierExplanationBenchmark.src.pipeline.Detection import evaluate_detectors, detect
-from PredictiveOutlierExplanationBenchmark.src.pipeline.automl.automl_processor import AutoML
-from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions, metrics
-from PredictiveOutlierExplanationBenchmark.src.utils.ResultsWriter import ResultsWriter
+from baselines.posthoc_explanation_methods import ExplanationMethods
+from configpkg import SettingsConfig
+from holders.Dataset import Dataset
+from pipeline.Benchmark import Benchmark, DatasetConfig
+from pipeline.Detection import evaluate_detectors, detect
+from pipeline.automl.automl_processor import AutoML
+from utils import helper_functions, metrics
+from utils.ResultsWriter import ResultsWriter
 from pathlib import Path
 
 
@@ -68,8 +68,8 @@ class PredictivePipeline:
             rw = ResultsWriter(pseudo_samples)
             rw.write_dataset(dataset, 'detected')
             rw.write_hold_out_dataset(test_data_with_detected_outliers)
-            best_trained_model_nofs = AutoML().run(dataset, rw.get_final_dir(), False)
-            best_trained_model_fs = AutoML().run(dataset, rw.get_final_dir(), True)
+            best_trained_model_nofs = AutoML(rw.get_final_dir()).run(dataset, False)
+            best_trained_model_fs = AutoML(rw.get_final_dir()).run(dataset, True)
             results = {'no_fs': best_trained_model_nofs, 'fs': best_trained_model_fs}
             results = self.__test_best_model_in_hold_out(results, test_data_with_detected_outliers)
             rw.write_results(results, 'detected')

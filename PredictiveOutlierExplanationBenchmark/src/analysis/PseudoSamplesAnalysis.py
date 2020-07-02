@@ -4,8 +4,8 @@ from matplotlib.font_manager import FontProperties
 
 warnings.filterwarnings("ignore")
 
-from PredictiveOutlierExplanationBenchmark.src.utils.helper_functions import read_nav_files, sort_files_by_dim
-from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import FileKeys
+from utils.helper_functions import read_nav_files, sort_files_by_dim
+from utils.shared_names import FileKeys
 import pandas as pd
 import numpy as np
 import json

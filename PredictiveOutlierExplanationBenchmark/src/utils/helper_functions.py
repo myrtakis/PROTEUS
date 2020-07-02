@@ -2,8 +2,8 @@ import json
 from collections import OrderedDict
 from pathlib import Path
 
-from PredictiveOutlierExplanationBenchmark.src.pipeline.DatasetTransformer import Transformer
-from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import *
+from pipeline.DatasetTransformer import Transformer
+from utils.shared_names import *
 import pandas as pd
 import os
 

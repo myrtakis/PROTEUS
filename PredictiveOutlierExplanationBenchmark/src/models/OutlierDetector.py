@@ -1,8 +1,8 @@
-from PredictiveOutlierExplanationBenchmark.src.models.detectors.iForest import iForest
-from PredictiveOutlierExplanationBenchmark.src.models.detectors.Lof import Lof
-from PredictiveOutlierExplanationBenchmark.src.models.detectors.Sod import Sod
-from PredictiveOutlierExplanationBenchmark.src.models.detectors.Loda import LODA
-from PredictiveOutlierExplanationBenchmark.src.configpkg.DetectorsConfig import DetectorConfig
+from models.detectors.iForest import iForest
+from models.detectors.Lof import Lof
+from models.detectors.Sod import Sod
+from models.detectors.Loda import LODA
+from configpkg.DetectorsConfig import DetectorConfig
 
 
 class Detector:

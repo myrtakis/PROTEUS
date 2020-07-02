@@ -1,5 +1,5 @@
-from PredictiveOutlierExplanationBenchmark.src.configpkg.FeatureSelectionConfig import FeatureSelectionConfig
-from PredictiveOutlierExplanationBenchmark.src.configpkg.ClassifiersConfig import ClassifiersConfig
+from configpkg.FeatureSelectionConfig import FeatureSelectionConfig
+from configpkg.ClassifiersConfig import ClassifiersConfig
 
 
 class ModelConf:

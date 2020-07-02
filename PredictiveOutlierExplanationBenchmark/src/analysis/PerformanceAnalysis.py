@@ -1,13 +1,13 @@
 from pathlib import Path
-from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions
-from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import *
-from PredictiveOutlierExplanationBenchmark.src.utils.pseudo_samples import PseudoSamplesMger
+from utils import helper_functions
+from utils.shared_names import *
+from utils.pseudo_samples import PseudoSamplesMger
 import json
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 import numpy as np
-from PredictiveOutlierExplanationBenchmark.src.utils.helper_functions import read_nav_files, sort_files_by_dim
+from utils.helper_functions import read_nav_files, sort_files_by_dim
 import os
 
 

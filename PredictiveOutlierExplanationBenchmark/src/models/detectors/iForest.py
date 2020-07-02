@@ -1,7 +1,7 @@
 import warnings
 from sklearn.ensemble import IsolationForest
 import numpy as np
-from PredictiveOutlierExplanationBenchmark.src.models.detectors.base import BaseDetector
+from models.detectors.base import BaseDetector
 
 
 class iForest(BaseDetector):

@@ -1,31 +1,21 @@
 from matplotlib.font_manager import FontProperties
-from PredictiveOutlierExplanationBenchmark.src.configpkg import ConfigMger, DatasetConfig
-from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import Dataset
-from PredictiveOutlierExplanationBenchmark.src.models.OutlierDetector import Detector
-from PredictiveOutlierExplanationBenchmark.src.utils.helper_functions import read_nav_files, sort_files_by_dim
-from PredictiveOutlierExplanationBenchmark.src.utils.pseudo_samples import PseudoSamplesMger
-from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import FileKeys
+from configpkg import ConfigMger, DatasetConfig
+from holders.Dataset import Dataset
+from models.OutlierDetector import Detector
+from utils.helper_functions import read_nav_files, sort_files_by_dim
+from utils.pseudo_samples import PseudoSamplesMger
+from utils.shared_names import FileKeys
+from analysis.comparison.comparison_utils import load_baseline_explanations, get_dataset_name
 from sklearn.metrics import roc_auc_score
-import json
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import os
 
 MAX_FEATURES = 10
 
 # conf = {'path': '../results_normal/lof', 'detector': 'lof', 'holdout': False, 'type': 'synthetic'}
 # conf = {'path': '../results_normal/iforest', 'detector': 'iforest', 'holdout': False, 'type': 'synthetic'}
 conf = {'path': '../results_normal/lof', 'detector': 'lof', 'holdout': False, 'type': 'real'}
-
-
-def baseline_explanations(baseline_path):
-    baseline_explanations_dict = {}
-    with open(baseline_path) as json_file:
-        for method, data in json.load(json_file).items():
-            global_explanation_sorted = np.argsort(data['global_explanation'])[::-1]
-            baseline_explanations_dict[method] = list(global_explanation_sorted[0:MAX_FEATURES])
-    return baseline_explanations_dict
 
 
 def compare_methods():
@@ -35,18 +25,15 @@ def compare_methods():
     dataset_names = []
     for dim, nav_file in nav_files_json.items():
         real_dims = dim-1-(conf['type'] == 'synthetic')
-        dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path])
-        if conf['type'] == 'synthetic':
-            dataset_names.append('HiCS ' + str(real_dims) + '-d')
-        else:
-            dataset_names.append(dname + ' ' + str(real_dims) + '-d')
+        dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] == 'synthetic')
+        dataset_names.append(dname + ' ' + str(real_dims) + '-d')
         ConfigMger.setup_configs(nav_file[FileKeys.navigator_conf_path])
         ps_mger = PseudoSamplesMger(nav_file[FileKeys.navigator_pseudo_samples_key], 'roc_auc', fs=True)
         detector = get_detector_model()
         dataset = get_dataset(ps_mger)
         explanations = {}
         explanations.update(get_protean_features(ps_mger))
-        explanations.update(baseline_explanations(nav_file[FileKeys.navigator_baselines_dir_key]))
+        explanations.update(load_baseline_explanations(nav_file[FileKeys.navigator_baselines_dir_key], MAX_FEATURES))
         if len(methods) == 0:
             methods = sorted(explanations.keys())
         explanation_perfs.append(auc_perfs_using_explanation(detector, dataset, explanations))
@@ -71,10 +58,6 @@ def get_detector_model():
         if d.get_id() == conf['detector']:
             return d
     assert False
-
-
-def get_dataset_name(dataset_path):
-    return os.path.splitext(os.path.basename(dataset_path))[0]
 
 
 def get_dataset(ps_mger):

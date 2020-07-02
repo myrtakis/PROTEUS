@@ -1,7 +1,7 @@
-from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions
-from PredictiveOutlierExplanationBenchmark.src.utils.helper_functions import sort_files_by_dim, read_nav_files
-from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import *
-from PredictiveOutlierExplanationBenchmark.src.utils.pseudo_samples import PseudoSamplesMger
+from utils import helper_functions
+from utils.helper_functions import sort_files_by_dim, read_nav_files
+from utils.shared_names import *
+from utils.pseudo_samples import PseudoSamplesMger
 
 
 class RelFeaturesRatio:

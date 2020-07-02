@@ -1,3 +1,3 @@
-from PredictiveOutlierExplanationBenchmark.src.models.classifiers.SVM import SVM
-from PredictiveOutlierExplanationBenchmark.src.models.classifiers.RandomForest import RandomForest
-from PredictiveOutlierExplanationBenchmark.src.models.classifiers.KNN import KNN
+from models.classifiers.SVM import SVM
+from models.classifiers.RandomForest import RandomForest
+from models.classifiers.KNN import KNN

@@ -1,6 +1,6 @@
 from sklearn.neighbors import LocalOutlierFactor
 import numpy as np
-from PredictiveOutlierExplanationBenchmark.src.models.detectors.base import BaseDetector
+from models.detectors.base import BaseDetector
 
 
 class Lof(BaseDetector):

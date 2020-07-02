@@ -1,7 +1,7 @@
 import warnings
 warnings.filterwarnings("ignore")
-from PredictiveOutlierExplanationBenchmark.src.models.classifiers import *
-from PredictiveOutlierExplanationBenchmark.src.configpkg.ClassifiersConfig import ClassifiersConfig
+from models.classifiers import *
+from configpkg.ClassifiersConfig import ClassifiersConfig
 
 
 class Classifier:
@@ -31,7 +31,6 @@ class Classifier:
         return str(self.to_dict())
 
     def train(self, X_train, Y_train):
-        print(' Train', end='')
         clf = Classifier.__algorithms[self.__id]
         self.__model = clf(self.__params).train(X_train, Y_train)
         return self

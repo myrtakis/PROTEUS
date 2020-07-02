@@ -1,11 +1,11 @@
-from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions
-from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import *
+from utils import helper_functions
+from utils.shared_names import *
 import json
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-from PredictiveOutlierExplanationBenchmark.src.utils.helper_functions import get_best_detector_from_info_file, \
+from utils.helper_functions import get_best_detector_from_info_file, \
     read_nav_files, sort_files_by_dim
 
 

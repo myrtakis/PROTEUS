@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import numpy as np
-from PredictiveOutlierExplanationBenchmark.src.models.FeatureSelection import FeatureSelection
-import PredictiveOutlierExplanationBenchmark.src.pipeline.automl.automl_constants as automlconsts
+from models.FeatureSelection import FeatureSelection
+import pipeline.automl.automl_constants as automlconsts
 
 
 class CV_Fselection:
@@ -38,7 +38,7 @@ class CV_Fselection:
             conf_id = 0
             for fsel_conf in self.__fsel_configs:
                 if self.__knowledge_discovery is True:
-                    print('\rRepetition', rep+1, '> Fold', fold_id, '> Running fsel:', fsel_conf, end='')
+                    print('Repetition', rep+1, '> Fold', fold_id, '> Running fsel:', fsel_conf, end='\r')
                 fsel = FeatureSelection(fsel_conf)
                 fsel.run(X_train, Y_train)
                 if fsel_fold_array[conf_id] is None:

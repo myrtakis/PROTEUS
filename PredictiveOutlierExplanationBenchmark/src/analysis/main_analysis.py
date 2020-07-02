@@ -1,8 +1,8 @@
 import argparse
 
-from PredictiveOutlierExplanationBenchmark.src.analysis.DetectorsAnalysis import DetectorAnalysis
-from PredictiveOutlierExplanationBenchmark.src.analysis.RelFeaturesRatioAnalysis import RelFeaturesRatio
-from PredictiveOutlierExplanationBenchmark.src.analysis.PerformanceAnalysis import PerfAnalysis
+from analysis.DetectorsAnalysis import DetectorAnalysis
+from analysis.RelFeaturesRatioAnalysis import RelFeaturesRatio
+from analysis.PerformanceAnalysis import PerfAnalysis
 
 
 if __name__ == '__main__':

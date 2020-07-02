@@ -1,4 +1,4 @@
-from PredictiveOutlierExplanationBenchmark.src.analysis.visualization.Visualizer import Visualizer
+from analysis.visualization.Visualizer import Visualizer
 
 
 if __name__ == '__main__':

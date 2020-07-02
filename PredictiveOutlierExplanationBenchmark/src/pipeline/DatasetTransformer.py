@@ -1,5 +1,5 @@
-from PredictiveOutlierExplanationBenchmark.src.configpkg.SettingsConfig import SettingsConfig
-from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import Dataset
+from configpkg.SettingsConfig import SettingsConfig
+from holders.Dataset import Dataset
 import numpy as np
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors

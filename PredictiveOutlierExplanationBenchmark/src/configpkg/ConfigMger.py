@@ -1,9 +1,9 @@
 import json
-from PredictiveOutlierExplanationBenchmark.src.configpkg.SettingsConfig import SettingsConfig
-from PredictiveOutlierExplanationBenchmark.src.configpkg.DetectorsConfig import DetectorConfig
-from PredictiveOutlierExplanationBenchmark.src.configpkg.DatasetConfig import DatasetConfig
-from PredictiveOutlierExplanationBenchmark.src.configpkg.ClassifiersConfig import ClassifiersConfig
-from PredictiveOutlierExplanationBenchmark.src.configpkg.FeatureSelectionConfig import FeatureSelectionConfig
+from configpkg.SettingsConfig import SettingsConfig
+from configpkg.DetectorsConfig import DetectorConfig
+from configpkg.DatasetConfig import DatasetConfig
+from configpkg.ClassifiersConfig import ClassifiersConfig
+from configpkg.FeatureSelectionConfig import FeatureSelectionConfig
 
 
 class ConfigMger:

@@ -1,9 +1,9 @@
-from PredictiveOutlierExplanationBenchmark.src.models.OutlierDetector import Detector
-from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import Dataset
-from PredictiveOutlierExplanationBenchmark.src.configpkg.SettingsConfig import SettingsConfig
+from models.OutlierDetector import Detector
+from holders.Dataset import Dataset
+from configpkg.SettingsConfig import SettingsConfig
 from math import floor
 import numpy as np
-from PredictiveOutlierExplanationBenchmark.src.utils.metrics import calculate_roc_auc
+from utils.metrics import calculate_roc_auc
 
 
 def evaluate_detectors(dataset, detector_id):

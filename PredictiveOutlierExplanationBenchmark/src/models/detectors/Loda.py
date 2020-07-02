@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import pandas as pd
 import numpy as np
-from PredictiveOutlierExplanationBenchmark.src.models.detectors.base import BaseDetector
+from models.detectors.base import BaseDetector
 from scipy.stats import ttest_ind
 
 

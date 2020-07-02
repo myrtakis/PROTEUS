@@ -1,2 +1,2 @@
-from PredictiveOutlierExplanationBenchmark.src.models.FeatureSelection import FeatureSelection
-from PredictiveOutlierExplanationBenchmark.src.models.Classifier import Classifier
+from models.FeatureSelection import FeatureSelection
+from models.Classifier import Classifier

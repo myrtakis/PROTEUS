@@ -1,9 +1,9 @@
 import itertools
-from PredictiveOutlierExplanationBenchmark.src.configpkg.FeatureSelectionConfig import *
-from PredictiveOutlierExplanationBenchmark.src.configpkg.ClassifiersConfig import *
-from PredictiveOutlierExplanationBenchmark.src.holders.ModelConf import ModelConf
-from PredictiveOutlierExplanationBenchmark.src.models.FeatureSelection import FeatureSelection
-from PredictiveOutlierExplanationBenchmark.src.models.Classifier import Classifier
+from configpkg.FeatureSelectionConfig import *
+from configpkg.ClassifiersConfig import *
+from holders.ModelConf import ModelConf
+from models.FeatureSelection import FeatureSelection
+from models.Classifier import Classifier
 
 
 id_key = None

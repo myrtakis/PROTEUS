@@ -1,18 +1,18 @@
 from sklearn.model_selection import StratifiedKFold
-from PredictiveOutlierExplanationBenchmark.src.configpkg import *
-from PredictiveOutlierExplanationBenchmark.src.models.FeatureSelection import FeatureSelection
-from PredictiveOutlierExplanationBenchmark.src.models.Classifier import Classifier
-from PredictiveOutlierExplanationBenchmark.src.holders.ModelConf import ModelConf
+from configpkg import *
+from models.FeatureSelection import FeatureSelection
+from models.Classifier import Classifier
+from holders.ModelConf import ModelConf
 import time
 import numpy as np
-from PredictiveOutlierExplanationBenchmark.src.utils.Logger import Logger
-from PredictiveOutlierExplanationBenchmark.src.utils.metrics import calculate_all_metrics
+from utils.Logger import Logger
+from utils.metrics import calculate_all_metrics
 import collections
 import pandas as pd
-from PredictiveOutlierExplanationBenchmark.src.pipeline.ModelConfigsGen import generate_param_combs
-from PredictiveOutlierExplanationBenchmark.src.pipeline.BbcCorrection import BBC
+from pipeline.ModelConfigsGen import generate_param_combs
+from pipeline.BbcCorrection import BBC
 from pathlib import Path
-from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import FileNames
+from utils.shared_names import FileNames
 import json
 from collections import OrderedDict
 

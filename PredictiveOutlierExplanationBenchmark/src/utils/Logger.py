@@ -1,8 +1,8 @@
 import os
 from pathlib import Path
 
-from PredictiveOutlierExplanationBenchmark.src.configpkg import DatasetConfig, SettingsConfig
-from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import FileNames
+from configpkg import DatasetConfig, SettingsConfig
+from utils.shared_names import FileNames
 
 
 class Logger:

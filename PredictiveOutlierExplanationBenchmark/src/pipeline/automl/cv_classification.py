@@ -2,19 +2,18 @@ import time
 from collections import OrderedDict
 import numpy as np
 import pandas as pd
-from PredictiveOutlierExplanationBenchmark.src.pipeline.automl.automl_utils import save
-from PredictiveOutlierExplanationBenchmark.src.holders.ModelConf import ModelConf
-from PredictiveOutlierExplanationBenchmark.src.models import Classifier, FeatureSelection
-from PredictiveOutlierExplanationBenchmark.src.utils.metrics import calculate_all_metrics
-from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import FileNames
-import PredictiveOutlierExplanationBenchmark.src.pipeline.automl.automl_constants as automlconsts
+from pipeline.automl.automl_utils import save
+from holders.ModelConf import ModelConf
+from models import Classifier, FeatureSelection
+from utils.metrics import calculate_all_metrics
+from utils.shared_names import FileNames
+import pipeline.automl.automl_constants as automlconsts
 
 
 class CV_Classification:
 
-    def __init__(self, knowledge_discovery, clf_configs, kfolds, output_dir, is_explanation):
+    def __init__(self, knowledge_discovery, clf_configs, output_dir, is_explanation):
         self.__clf_configs = clf_configs
-        self.__kfolds = kfolds
         self.__output_dir = output_dir
         self.__knowledge_discovery = knowledge_discovery
         self.__is_explanation = is_explanation
@@ -85,8 +84,8 @@ class CV_Classification:
                 start = time.time()
                 conf = confs_info[best_c_id]
                 fsel = conf.get_fsel()
-                print('\rMetric', m_id, ': Training in all data the config', conf.get_fsel().get_id(), '>',
-                      conf.get_clf().get_id(), end='')
+                print('Metric', m_id, ': Training in all data the config', conf.get_fsel().get_id(), '>',
+                      conf.get_clf().get_id(), end='\r')
                 if not self.__is_explanation:
                     fsel = FeatureSelection(conf.get_fsel().get_config())
                     fsel.run(X, Y)
@@ -166,6 +165,6 @@ class CV_Classification:
 
     @staticmethod
     def __console_log(rep, fold_id, conf_id, total_confs, fsel, classifier, elapsed_time):
-        print('\rRepetition', rep+1, '> Fold', fold_id, ':', conf_id, '/', total_confs, fsel.get_id(), fsel.get_params(),
+        print('Repetition', rep+1, '> Fold', fold_id, ':', conf_id, '/', total_confs, fsel.get_id(), fsel.get_params(),
               '>', classifier.get_id(), classifier.get_params(), 'Time for fold', fold_id-1,
-              'was', round(elapsed_time, 2), 'secs', end='')
+              'was', round(elapsed_time, 2), 'secs', end='\r')

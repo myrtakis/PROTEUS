@@ -2,41 +2,42 @@ import collections
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
 from collections import OrderedDict
-from PredictiveOutlierExplanationBenchmark.src.pipeline.BbcCorrection import BBC
-from PredictiveOutlierExplanationBenchmark.src.pipeline.automl.automl_utils import save
-from PredictiveOutlierExplanationBenchmark.src.configpkg import SettingsConfig, ConfigMger, DatasetConfig
-from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import Dataset
-from PredictiveOutlierExplanationBenchmark.src.pipeline.automl.cv_classification import CV_Classification
-from PredictiveOutlierExplanationBenchmark.src.pipeline.automl.cv_feature_selection import CV_Fselection
-from PredictiveOutlierExplanationBenchmark.src.utils.shared_names import FileNames
-from PredictiveOutlierExplanationBenchmark.src.pipeline.ModelConfigsGen import generate_param_combs
-from PredictiveOutlierExplanationBenchmark.src.models.FeatureSelection import FeatureSelection
-import PredictiveOutlierExplanationBenchmark.src.pipeline.automl.automl_constants as automlconsts
+from pipeline.BbcCorrection import BBC
+from pipeline.automl.automl_utils import save
+from configpkg import SettingsConfig
+from pipeline.automl.cv_classification import CV_Classification
+from pipeline.automl.cv_feature_selection import CV_Fselection
+from utils.shared_names import FileNames
+from pipeline.ModelConfigsGen import generate_param_combs
+from models.FeatureSelection import FeatureSelection
+import pipeline.automl.automl_constants as automlconsts
 
 
 class AutoML:
 
-    def __init__(self):
-        self.__output_dir = None
+    def __init__(self, output_dir):
+        self.__output_dir = output_dir
 
-    def run_with_explanation(self, config_file_path, folds_inds, dataset_path, explanation):
+    def run_with_explanation(self, reps_fold_inds, dataset, explanation):
         fsel = FeatureSelection({'id': 'explanation', 'params': None})
         fsel.set_features(explanation)
-        ConfigMger.setup_configs(config_file_path)
-        dataset = Dataset(dataset_path, DatasetConfig.get_anomaly_column_name(),
-                          DatasetConfig.get_subspace_column_name())
         _, classifiers_conf_combs = generate_param_combs()
+        best_model_trained, predictions_ordered = \
+            CV_Classification(False, classifiers_conf_combs, self.__output_dir, False). \
+                run(reps_fold_inds, explanation, dataset)
+        best_model_trained = AutoML.__remove_bias(predictions_ordered, dataset.get_Y(), best_model_trained)
+        print()
+        return best_model_trained
 
-    def run(self, dataset, output_dir, knowledge_discovery):
-        self.__output_dir = output_dir
+    def run(self, dataset, knowledge_discovery):
         kfolds = min(SettingsConfig.get_kfolds(), AutoML.__get_rarest_class_count(dataset))
         assert kfolds > 1, kfolds
         reps_fold_inds = self.__create_folds_in_reps(kfolds, dataset, True)
         fsel_conf_combs, classifiers_conf_combs = generate_param_combs()
         selected_features = CV_Fselection(knowledge_discovery, fsel_conf_combs, kfolds).run(reps_fold_inds, dataset)
         best_model_trained, predictions_ordered = \
-            CV_Classification(knowledge_discovery, classifiers_conf_combs, kfolds, output_dir, False).\
-            run(reps_fold_inds, selected_features, dataset)
+            CV_Classification(knowledge_discovery, classifiers_conf_combs, self.__output_dir, False). \
+                run(reps_fold_inds, selected_features, dataset)
         best_model_trained = AutoML.__remove_bias(predictions_ordered, dataset.get_Y(), best_model_trained)
         print()
         return best_model_trained
@@ -62,7 +63,7 @@ class AutoML:
                      lambda o: o.tolist() if isinstance(o, np.ndarray) else o)
         return reps_folds_inds
 
-    @ staticmethod
+    @staticmethod
     def __indices_in_folds(dataset, skf):
         folds_inds = collections.OrderedDict()
         fold_id = 1

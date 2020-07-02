@@ -1,13 +1,13 @@
 import gc
 from pathlib import Path
 
-from PredictiveOutlierExplanationBenchmark.src.baselines.posthoc_explanation_methods import ExplanationMethods
-from PredictiveOutlierExplanationBenchmark.src.configpkg import SettingsConfig, DatasetConfig
-from PredictiveOutlierExplanationBenchmark.src.pipeline.automl.automl_processor import AutoML
-from PredictiveOutlierExplanationBenchmark.src.utils import helper_functions
-from PredictiveOutlierExplanationBenchmark.src.pipeline.Detection import evaluate_detectors
-from PredictiveOutlierExplanationBenchmark.src.utils.Logger import Logger
-from PredictiveOutlierExplanationBenchmark.src.utils.ResultsWriter import ResultsWriter
+from baselines.posthoc_explanation_methods import ExplanationMethods
+from configpkg import SettingsConfig, DatasetConfig
+from pipeline.automl.automl_processor import AutoML
+from utils import helper_functions
+from pipeline.Detection import evaluate_detectors
+from utils.Logger import Logger
+from utils.ResultsWriter import ResultsWriter
 
 
 class NormalPipeline:
@@ -61,8 +61,8 @@ class NormalPipeline:
                 rw = ResultsWriter(pseudo_samples)
                 rw.write_dataset(dataset, dataset_kind)
                 print('----------\nRunning dataset with pseudo samples: ', pseudo_samples)
-                best_trained_model_nofs = AutoML().run(dataset, rw.get_final_dir(), False)
-                best_trained_model_fs = AutoML().run(dataset, rw.get_final_dir(), True)
+                best_trained_model_nofs = AutoML(rw.get_final_dir()).run(dataset, False)
+                best_trained_model_fs = AutoML(rw.get_final_dir()).run(dataset, True)
                 results = {'no_fs': best_trained_model_nofs, 'fs': best_trained_model_fs}
                 rw.write_results(results, dataset_kind)
                 ResultsWriter.flush_navigator_file()

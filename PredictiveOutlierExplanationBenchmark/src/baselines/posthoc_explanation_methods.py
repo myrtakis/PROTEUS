@@ -1,9 +1,9 @@
 from collections import OrderedDict
-from PredictiveOutlierExplanationBenchmark.src.baselines.micencova import CA_Lasso
+from baselines.micencova import CA_Lasso
 import pandas as pd
-from PredictiveOutlierExplanationBenchmark.src.models.detectors import *
-from PredictiveOutlierExplanationBenchmark.src.holders.Dataset import Dataset
-from PredictiveOutlierExplanationBenchmark.src.baselines.shapley import SHAP
+from models.detectors import *
+from holders.Dataset import Dataset
+from baselines.shapley import SHAP
 import numpy as np
 
 

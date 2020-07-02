@@ -1,4 +1,4 @@
-from PredictiveOutlierExplanationBenchmark.src.configpkg.SettingsConfig import SettingsConfig
+from configpkg.SettingsConfig import SettingsConfig
 import pandas as pd
 import numpy as np
 
