@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from operator import itemgetter
+import pandas as pd
 import numpy as np
 from PredictiveOutlierExplanationBenchmark.src.models.detectors.base import BaseDetector
 from scipy.stats import ttest_ind
@@ -57,9 +57,9 @@ class LODA(BaseDetector):
 
     def calculate_explanation(self, outlier_ids):
         assert self.isfitted
-        features_importance = {}
+        features_importance = OrderedDict()
         for o_id in outlier_ids:
-            features_importance.setdefault(o_id, {})
+            features_importance.setdefault(o_id, [])
             for f_id in range(self.X.shape[1]):
                 left_part, right_part = self.__feature_partitions(f_id)
                 if len(left_part) < 2 or len(right_part) < 2:
@@ -68,8 +68,7 @@ class LODA(BaseDetector):
                 lp_scores = self.__partition_scores(left_part, outlier)
                 rp_scores = self.__partition_scores(right_part, outlier)
                 _, pval = ttest_ind(lp_scores, rp_scores)
-                features_importance[o_id][f_id] = pval
-            features_importance[o_id] = OrderedDict(sorted(features_importance[o_id].items(), key=itemgetter(1)))
+                features_importance[o_id].append(1. - pval)
         self.explanation = features_importance
         return features_importance
 
@@ -94,6 +93,10 @@ class LODA(BaseDetector):
 
     def get_explanation(self):
         return self.explanation
+
+    def convert_to_global_explanation(self):
+        global_expl = pd.DataFrame(np.array(list(self.explanation.values())), index=list(self.explanation.keys()))
+        return global_expl.mean(axis=0).values
 
     def is_explainable(self):
         return True

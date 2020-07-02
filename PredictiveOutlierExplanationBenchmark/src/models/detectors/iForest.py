@@ -49,5 +49,8 @@ class iForest(BaseDetector):
     def calculate_explanation(self, outlier_ids):
         return None
 
+    def convert_to_global_explanation(self):
+        return None
+
     def is_explainable(self):
         return False

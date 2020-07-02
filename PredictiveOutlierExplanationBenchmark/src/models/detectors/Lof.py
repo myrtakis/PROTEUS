@@ -27,3 +27,6 @@ class Lof(BaseDetector):
 
     def is_explainable(self):
         return False
+
+    def convert_to_global_explanation(self):
+        return None

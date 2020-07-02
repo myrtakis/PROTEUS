@@ -29,5 +29,9 @@ class BaseDetector(abc.ABC):
         return None
 
     @abc.abstractmethod
+    def convert_to_global_explanation(self):
+        return None
+
+    @abc.abstractmethod
     def is_explainable(self):
         return False
