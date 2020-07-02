@@ -38,7 +38,7 @@ class CV_Fselection:
             conf_id = 0
             for fsel_conf in self.__fsel_configs:
                 if self.__knowledge_discovery is True:
-                    print('Repetition', rep+1, '> Fold', fold_id, '> Running fsel:', fsel_conf, end='\r')
+                    print('\rRepetition', rep+1, '> Fold', fold_id, '> Running fsel:', fsel_conf, end='')
                 fsel = FeatureSelection(fsel_conf)
                 fsel.run(X_train, Y_train)
                 if fsel_fold_array[conf_id] is None:

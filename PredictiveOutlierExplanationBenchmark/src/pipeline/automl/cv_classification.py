@@ -84,8 +84,8 @@ class CV_Classification:
                 start = time.time()
                 conf = confs_info[best_c_id]
                 fsel = conf.get_fsel()
-                print('Metric', m_id, ': Training in all data the config', conf.get_fsel().get_id(), '>',
-                      conf.get_clf().get_id(), end='\r')
+                print('\rMetric', m_id, ': Training in all data the config', conf.get_fsel().get_id(), '>',
+                      conf.get_clf().get_id(), end='')
                 if not self.__is_explanation:
                     fsel = FeatureSelection(conf.get_fsel().get_config())
                     fsel.run(X, Y)
@@ -165,6 +165,6 @@ class CV_Classification:
 
     @staticmethod
     def __console_log(rep, fold_id, conf_id, total_confs, fsel, classifier, elapsed_time):
-        print('Repetition', rep+1, '> Fold', fold_id, ':', conf_id, '/', total_confs, fsel.get_id(), fsel.get_params(),
+        print('\rRepetition', rep+1, '> Fold', fold_id, ':', conf_id, '/', total_confs, fsel.get_id(), fsel.get_params(),
               '>', classifier.get_id(), classifier.get_params(), 'Time for fold', fold_id-1,
-              'was', round(elapsed_time, 2), 'secs', end='\r')
+              'was', round(elapsed_time, 2), 'secs', end='')
