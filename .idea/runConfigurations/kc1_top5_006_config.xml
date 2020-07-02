@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="kc1-top5_006_config" type="PythonConfigurationType" factoryName="Python" folderName="ConfigsRealData" singleton="false">
     <module name="MxM" />
-    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="INTERPRETER_OPTIONS" value="-W&quot;ignore&quot;" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />

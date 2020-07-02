@@ -46,6 +46,11 @@ class NormalPipeline:
 
         explanation_methods = ExplanationMethods(dataset_with_detected_outliers, detectors_info['best'])
         explanations = explanation_methods.run_all_post_hoc_explanation_methods()
+        if detectors_info['best'].get_detector().is_explainable():
+            explanations[detectors_info['best'].get_id()] = {
+                'global_explanation': detectors_info['best'].get_detector().convert_to_global_explanation(),
+                'local_explanation': detectors_info['best'].get_detector().get_explanation()
+            }
 
         ResultsWriter.setup_writer(self.protean_results_dir)
         ResultsWriter.write_detector_info_file(detectors_info['best'])

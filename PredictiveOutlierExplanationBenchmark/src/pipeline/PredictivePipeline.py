@@ -63,6 +63,8 @@ class PredictivePipeline:
         ResultsWriter.write_baselines(explanations, self.baselines_results_dir)
 
         for pseudo_samples, dataset in datasets_for_cv.items():
+            print('--------------\n--------------')
+            print('Running dataset with pseudo samples: ', pseudo_samples)
             rw = ResultsWriter(pseudo_samples)
             rw.write_dataset(dataset, 'detected')
             rw.write_hold_out_dataset(test_data_with_detected_outliers)

@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="hics100_g1_config" type="PythonConfigurationType" factoryName="Python" folderName="ConfigsHicsG1" singleton="false">
     <module name="MxM" />
-    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="INTERPRETER_OPTIONS" value="-W&quot;ignore&quot;" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />
