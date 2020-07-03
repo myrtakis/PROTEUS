@@ -39,9 +39,9 @@ def compare_methods():
     nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
     dataset_names = []
     for dim, nav_file in nav_files_json.items():
-        print('Dataset')
         real_dims = dim-1-(conf['type'] == 'synthetic')
         dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] == 'synthetic')
+        print('Evaluating explanations for Dataset', dname)
         dataset_names.append(dname + ' ' + str(real_dims) + '-d')
         ConfigMger.setup_configs(nav_file[FileKeys.navigator_conf_path])
         ps_mger = PseudoSamplesMger(nav_file[FileKeys.navigator_pseudo_samples_key], 'roc_auc', fs=True)
@@ -51,29 +51,39 @@ def compare_methods():
 
 
 def run_baseline_explanations_in_automl(ps_mger, explanations, baselines_dir):
-    datasets = get_datasets(ps_mger, FileKeys.navigator_pseudo_samples_data_path)
-    reps_fold_inds = get_reps_folds_inds(ps_mger)
-    for k, dataset in datasets.items():
-        for method, expl in explanations.items():
-            dataset.get_
-            method_output_dir = Path(baselines_dir, method, 'pseudo_samples' + k)
-            method_output_dir.mkdir(parents=True, exist_ok=True)
-            best_model = AutoML(method_output_dir).run_with_explanation(reps_fold_inds[k], dataset, expl)
-            if holdout:
-                pass
-                # best_model = test_best_model_in_hold_out(best_model)
-    pass
-
-
-def get_datasets(ps_mger, data_path_key):
-    datasets = OrderedDict()
     sorted_k_confs = sorted(ps_mger.list_k_confs())
+    reps_fold_inds = get_reps_folds_inds(ps_mger)
     for k in sorted_k_confs:
-        dataset_path = ps_mger.get_info_field_of_k(k, data_path_key)
-        anomaly_col = DatasetConfig.get_anomaly_column_name()
-        subspace_col = DatasetConfig.get_subspace_column_name()
-        datasets[k] = Dataset(dataset_path, anomaly_col, subspace_col)
-    return datasets
+        print('Running with pseudo samples', k)
+        train_dataset, test_dataset = get_datasets(ps_mger, k)
+        for method, expl in explanations.items():
+            print('----\nRunning method', method, 'with explanation', expl)
+            method_output_dir = Path(baselines_dir, method, 'pseudo_samples' + str(k))
+            method_output_dir.mkdir(parents=True, exist_ok=True)
+            best_model = AutoML(method_output_dir).run_with_explanation(reps_fold_inds[k], train_dataset, expl)
+            if holdout:
+                best_model = test_best_model_in_hold_out(best_model, test_dataset)
+            write_best_model(best_model, method_output_dir)
+
+
+def write_best_model(best_model, output_dir):
+    best_model_to_write = {'fs': {}}
+    for m_id, m_data in best_model.items():
+        best_model_to_write['fs'][m_id] = m_data.to_dict()
+    with open(os.path.join(output_dir, FileNames.best_model_fname), 'w', encoding='utf-8') as f:
+        f.write(json.dumps(best_model_to_write, indent=4, separators=(',', ': '), ensure_ascii=False))
+
+
+def get_datasets(ps_mger, k):
+    anomaly_col = DatasetConfig.get_anomaly_column_name()
+    subspace_col = DatasetConfig.get_subspace_column_name()
+    train_dataset_path = ps_mger.get_info_field_of_k(k, FileKeys.navigator_pseudo_samples_data_path)
+    train_dataset = Dataset(train_dataset_path, anomaly_col, subspace_col)
+    test_data = None
+    if holdout:
+        test_dataset_path = ps_mger.get_info_field_of_k(k, FileKeys.navigator_pseudo_samples_hold_out_data_key)
+        test_data = Dataset(test_dataset_path, anomaly_col, subspace_col)
+    return train_dataset, test_data
 
 
 def test_best_model_in_hold_out(best_model, test_data):
@@ -108,4 +118,4 @@ def get_reps_folds_inds(ps_mger):
 
 if __name__ == '__main__':
     compare_methods()
-    pass
+

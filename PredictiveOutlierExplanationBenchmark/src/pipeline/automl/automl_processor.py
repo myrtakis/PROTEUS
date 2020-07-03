@@ -19,12 +19,15 @@ class AutoML:
         self.__output_dir = output_dir
 
     def run_with_explanation(self, reps_fold_inds, dataset, explanation):
+        explanation = list(map(int, explanation))
         fsel = FeatureSelection({'id': 'explanation', 'params': None})
         fsel.set_features(explanation)
+        folds_keys = list(map(str, range(1, len(reps_fold_inds.values()) +2)))
+        selected_features = dict.fromkeys(reps_fold_inds.keys(), dict.fromkeys(folds_keys, [fsel]))
         _, classifiers_conf_combs = generate_param_combs()
         best_model_trained, predictions_ordered = \
-            CV_Classification(False, classifiers_conf_combs, self.__output_dir, False). \
-                run(reps_fold_inds, explanation, dataset)
+            CV_Classification(False, classifiers_conf_combs, self.__output_dir, True). \
+                run(reps_fold_inds, selected_features, dataset)
         best_model_trained = AutoML.__remove_bias(predictions_ordered, dataset.get_Y(), best_model_trained)
         print()
         return best_model_trained

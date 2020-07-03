@@ -166,5 +166,5 @@ class CV_Classification:
     @staticmethod
     def __console_log(rep, fold_id, conf_id, total_confs, fsel, classifier, elapsed_time):
         print('\rRepetition', rep+1, '> Fold', fold_id, ':', conf_id, '/', total_confs, fsel.get_id(), fsel.get_params(),
-              '>', classifier.get_id(), classifier.get_params(), 'Time for fold', fold_id-1,
+              '>', classifier.get_id(), classifier.get_params(), 'Time for fold', int(fold_id)-1,
               'was', round(elapsed_time, 2), 'secs', end='')
