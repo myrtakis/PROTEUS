@@ -26,7 +26,7 @@ pipeline = 'results_predictive'
 holdout = True
 
 
-conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
+conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 
@@ -36,12 +36,13 @@ conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
 
 
 def compare_methods():
+    print(conf)
     nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
     dataset_names = []
     for dim, nav_file in nav_files_json.items():
         real_dims = dim-1-(conf['type'] == 'synthetic')
         dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] == 'synthetic')
-        print('Evaluating explanations for Dataset', dname)
+        print('Evaluating explanations for Dataset', dname + ' ' + str(real_dims) + '-d')
         dataset_names.append(dname + ' ' + str(real_dims) + '-d')
         ConfigMger.setup_configs(nav_file[FileKeys.navigator_conf_path])
         ps_mger = PseudoSamplesMger(nav_file[FileKeys.navigator_pseudo_samples_key], 'roc_auc', fs=True)
