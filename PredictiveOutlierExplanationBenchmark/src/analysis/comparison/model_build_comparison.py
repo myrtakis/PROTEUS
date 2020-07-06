@@ -1,9 +1,10 @@
 from pathlib import Path
 from matplotlib.font_manager import FontProperties
-import os,sys,inspect
+import os, sys, inspect
+
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 grandpadir = os.path.dirname(os.path.dirname(currentdir))
-sys.path.insert(0,grandpadir)
+sys.path.insert(0, grandpadir)
 from configpkg import ConfigMger, DatasetConfig
 from holders.Dataset import Dataset
 from pipeline.automl.automl_processor import AutoML
@@ -20,18 +21,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-
 MAX_FEATURES = 10
 pipeline = 'results_predictive'
 holdout = True
 build_models = False  # compare the built models
 
-
-# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
+conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 
-conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
+# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
 
@@ -39,12 +38,41 @@ conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
 def compare_models():
     print(conf)
     nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
+    best_models_perf_in_sample = pd.DataFrame()
+    best_models_perf_out_of_sample = pd.DataFrame()
     dataset_names = []
     for dim, nav_file in nav_files_json.items():
-        real_dims = dim-1-(conf['type'] == 'synthetic')
+        real_dims = dim - 1 - (conf['type'] == 'synthetic')
         dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] == 'synthetic')
         dataset_names.append(dname + ' ' + str(real_dims) + '-d')
+        best_models_perf_in_sample = pd.concat(
+            [best_models_perf_in_sample, get_best_models_perf_per_method(nav_file, True)], axis=1
+        )
+        best_models_perf_out_of_sample = pd.concat(
+            [best_models_perf_out_of_sample, get_best_models_perf_per_method(nav_file, False)], axis=1
+        )
+    best_models_perf_in_sample.columns = dataset_names
+    best_models_perf_out_of_sample.columns = dataset_names
 
+
+def get_best_models_perf_per_method(nav_file, in_sample):
+    best_model_perfs = {}
+    protean_ps_dict = nav_file[FileKeys.navigator_pseudo_samples_key]
+    best_model_perfs['full'] = get_effectiveness_of_best_model(protean_ps_dict, False, in_sample)
+    best_model_perfs['protean'] = get_effectiveness_of_best_model(protean_ps_dict, True, in_sample)
+    baselines_dir = nav_file[FileKeys.navigator_baselines_key]
+    for method, data in baselines_dir.items():
+        best_model_perfs[method] = get_effectiveness_of_best_model(data, True, in_sample)
+    return pd.DataFrame(best_model_perfs.values(), index=best_model_perfs.keys())
+
+
+def get_effectiveness_of_best_model(ps_dict, fs, in_sample):
+    effectiveness_key = 'effectiveness' if in_sample else 'hold_out_effectiveness'
+    method_mger = PseudoSamplesMger(ps_dict, 'roc_auc', fs=fs)
+    best_model, best_k = method_mger.get_best_model()
+    conf_intervals = [round(x,2)for x in best_model['confidence_intervals']]
+    output = str(round(best_model[effectiveness_key], 3)) + ' ' + str(conf_intervals)
+    return output
 
 
 def build_baseline_models():
@@ -52,7 +80,7 @@ def build_baseline_models():
     nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
     dataset_names = []
     for dim, nav_file in nav_files_json.items():
-        real_dims = dim-1-(conf['type'] == 'synthetic')
+        real_dims = dim - 1 - (conf['type'] == 'synthetic')
         dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] == 'synthetic')
         print('Evaluating explanations for Dataset', dname + ' ' + str(real_dims) + '-d')
         dataset_names.append(dname + ' ' + str(real_dims) + '-d')
@@ -135,4 +163,3 @@ if __name__ == '__main__':
         build_baseline_models()
     else:
         compare_models()
-
