@@ -21,6 +21,7 @@ class AutoML:
         self.__output_dir = output_dir
 
     def run_with_explanation(self, reps_fold_inds, dataset, explanation):
+        print('Running explanation', explanation)
         explanation = list(map(int, explanation))
         fsel = FeatureSelection({'id': 'explanation', 'params': None})
         fsel.set_features(explanation)

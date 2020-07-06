@@ -24,18 +24,30 @@ import os
 MAX_FEATURES = 10
 pipeline = 'results_predictive'
 holdout = True
+build_models = False  # compare the built models
 
 
-conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
+# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 
-# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
+conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
 
 
-def compare_methods():
+def compare_models():
+    print(conf)
+    nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
+    dataset_names = []
+    for dim, nav_file in nav_files_json.items():
+        real_dims = dim-1-(conf['type'] == 'synthetic')
+        dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] == 'synthetic')
+        dataset_names.append(dname + ' ' + str(real_dims) + '-d')
+
+
+
+def build_baseline_models():
     print(conf)
     nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
     dataset_names = []
@@ -54,6 +66,7 @@ def compare_methods():
 def run_baseline_explanations_in_automl(ps_mger, explanations, baselines_dir):
     sorted_k_confs = sorted(ps_mger.list_k_confs())
     reps_fold_inds = get_reps_folds_inds(ps_mger)
+
     for k in sorted_k_confs:
         print('Running with pseudo samples', k)
         train_dataset, test_dataset = get_datasets(ps_mger, k)
@@ -118,5 +131,8 @@ def get_reps_folds_inds(ps_mger):
 
 
 if __name__ == '__main__':
-    compare_methods()
+    if build_models:
+        build_baseline_models()
+    else:
+        compare_models()
 

@@ -128,7 +128,7 @@ class PredictivePipeline:
     def __build_write_baselines_models(train_dataset, test_dataset, rw, baselines_methods):
         for method in baselines_methods:
             global_expl = baselines_methods[method]['global_explanation']
-            print('----\nRunning method', method, 'with global explanation', global_expl)
+            print('----\nRunning method', method)
             best_model = {'fs': AutoML(rw.get_final_baseline_dir(method)).run(train_dataset, False, global_expl)}
             best_model = PredictivePipeline.__test_best_model_in_hold_out(best_model, test_dataset)
             rw.write_baseline_results(best_model, method)
