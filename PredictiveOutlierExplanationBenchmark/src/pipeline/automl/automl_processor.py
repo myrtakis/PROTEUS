@@ -15,6 +15,8 @@ import pipeline.automl.automl_constants as automlconsts
 
 class AutoML:
 
+    __reps_fold_inds = None
+
     def __init__(self, output_dir):
         self.__output_dir = output_dir
 
@@ -34,15 +36,19 @@ class AutoML:
         print()
         return best_model_trained
 
-    def run(self, dataset, knowledge_discovery):
+    def run(self, dataset, knowledge_discovery, explanation=None):
         kfolds = min(SettingsConfig.get_kfolds(), AutoML.__get_rarest_class_count(dataset))
         assert kfolds > 1, kfolds
-        reps_fold_inds = self.__create_folds_in_reps(kfolds, dataset, True)
+        if AutoML.__reps_fold_inds is None:
+            AutoML.__reps_fold_inds = self.__create_folds_in_reps(kfolds, dataset, True)
+        if explanation is not None:
+            self.run_with_explanation(AutoML.__reps_fold_inds, dataset, explanation)
         fsel_conf_combs, classifiers_conf_combs = generate_param_combs()
-        selected_features = CV_Fselection(knowledge_discovery, fsel_conf_combs, kfolds).run(reps_fold_inds, dataset)
+        selected_features = CV_Fselection(knowledge_discovery, fsel_conf_combs, kfolds).\
+            run(AutoML.__reps_fold_inds, dataset)
         best_model_trained, predictions_ordered = \
-            CV_Classification(knowledge_discovery, classifiers_conf_combs, self.__output_dir, False). \
-                run(reps_fold_inds, selected_features, dataset)
+            CV_Classification(knowledge_discovery, classifiers_conf_combs, self.__output_dir, False).\
+                run(AutoML.__reps_fold_inds, selected_features, dataset)
         best_model_trained = AutoML.__remove_bias(predictions_ordered, dataset.get_Y(), best_model_trained)
         print()
         return best_model_trained
