@@ -26,8 +26,7 @@ class AutoML:
         fsel.set_features(explanation)
         selected_features = dict.fromkeys(reps_fold_inds.keys())
         for k in selected_features.keys():
-            folds_keys = list(map(str, range(1, len(reps_fold_inds[k].values()) + 1)))
-            selected_features[k] = dict.fromkeys(folds_keys, [fsel])
+            selected_features[k] = dict.fromkeys(reps_fold_inds[k].keys(), [fsel])
         _, classifiers_conf_combs = generate_param_combs()
         best_model_trained, predictions_ordered = \
             CV_Classification(False, classifiers_conf_combs, self.__output_dir, True). \
@@ -42,15 +41,19 @@ class AutoML:
         if AutoML.__reps_fold_inds is None:
             AutoML.__reps_fold_inds = self.__create_folds_in_reps(kfolds, dataset, True)
         if explanation is not None:
-            self.run_with_explanation(AutoML.__reps_fold_inds, dataset, explanation)
-        fsel_conf_combs, classifiers_conf_combs = generate_param_combs()
-        selected_features = CV_Fselection(knowledge_discovery, fsel_conf_combs, kfolds).\
-            run(AutoML.__reps_fold_inds, dataset)
-        best_model_trained, predictions_ordered = \
-            CV_Classification(knowledge_discovery, classifiers_conf_combs, self.__output_dir, False).\
-                run(AutoML.__reps_fold_inds, selected_features, dataset)
-        best_model_trained = AutoML.__remove_bias(predictions_ordered, dataset.get_Y(), best_model_trained)
-        print()
+            explanation_features_sorted = np.argsort(explanation)[::-1]
+            max_features = len(explanation_features_sorted) if automlconsts.SELECT_TOPK_FEATURES is False else automlconsts.MAX_FEATURES
+            explanation_features_sorted = list(explanation_features_sorted[0:max_features])
+            best_model_trained = self.run_with_explanation(AutoML.__reps_fold_inds, dataset, explanation_features_sorted)
+        else:
+            fsel_conf_combs, classifiers_conf_combs = generate_param_combs()
+            selected_features = CV_Fselection(knowledge_discovery, fsel_conf_combs, kfolds).\
+                run(AutoML.__reps_fold_inds, dataset)
+            best_model_trained, predictions_ordered = \
+                CV_Classification(knowledge_discovery, classifiers_conf_combs, self.__output_dir, False).\
+                    run(AutoML.__reps_fold_inds, selected_features, dataset)
+            best_model_trained = AutoML.__remove_bias(predictions_ordered, dataset.get_Y(), best_model_trained)
+            print()
         return best_model_trained
 
     @staticmethod

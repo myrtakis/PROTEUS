@@ -3,11 +3,13 @@ from utils.shared_names import FileKeys, FileNames
 import json
 from pathlib import Path
 import os
+import numpy as np
 
 
 class ResultsWriter:
 
     __base_dir = None
+    __baselines_dir = None
     __navigator_file_dict = None
     __navigator_file_path = None
     __results_initial_dir = None
@@ -33,6 +35,16 @@ class ResultsWriter:
         best_models_dict = ResultsWriter.__prepare_results(results)
         with open(os.path.join(output_dir, FileNames.best_model_fname), 'w', encoding='utf-8') as f:
             f.write(json.dumps(best_models_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
+
+    def write_baseline_results(self, best_model, method_id):
+        best_model_to_write = {'fs': {}}
+        method_output_dir = self.get_final_baseline_dir(method_id)
+        for m_id, m_data in best_model['fs'].items():
+            best_model_to_write['fs'][m_id] = m_data.to_dict()
+        with open(os.path.join(method_output_dir, FileNames.best_model_fname), 'w', encoding='utf-8') as f:
+            f.write(json.dumps(best_model_to_write, indent=4, separators=(',', ': '), ensure_ascii=False))
+        self.__update_baselines_dict(method_id, {FileKeys.navigator_pseudo_sample_dir_key: method_output_dir,
+                                                 FileKeys.navigator_pseudo_samples_num_key: self.__pseudo_samples})
 
     @staticmethod
     def __prepare_results(results):
@@ -78,13 +90,14 @@ class ResultsWriter:
                                                         detector_info_path)
 
     @staticmethod
-    def write_baselines(explanations, start_dir):
-        baseline_dir = str(ResultsWriter.__base_dir).replace(str(ResultsWriter.__results_initial_dir), str(start_dir))
-        Path(baseline_dir).mkdir(parents=True, exist_ok=True)
-        baseline_file_path = Path(baseline_dir, FileNames.baselines_explanations_fname)
-        with open(baseline_file_path, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(explanations, indent=4, separators=(',', ': '), ensure_ascii=False))
-        ResultsWriter.__update_and_flush_navigator_file(FileKeys.navigator_baselines_dir_key, baseline_dir)
+    def write_baselines_explanations(explanations, start_dir):
+        ResultsWriter.__baselines_dir = str(ResultsWriter.__base_dir).replace(str(ResultsWriter.__results_initial_dir), str(start_dir))
+        Path(ResultsWriter.__baselines_dir).mkdir(parents=True, exist_ok=True)
+        baseline_expl_file_path = Path(ResultsWriter.__baselines_dir , FileNames.baselines_explanations_fname)
+        with open(baseline_expl_file_path, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(explanations, default=ResultsWriter.json_type_transformer,
+                               indent=4, separators=(',', ': '), ensure_ascii=False))
+        ResultsWriter.__update_and_flush_navigator_file(FileKeys.navigator_baselines_dir_key, ResultsWriter.__baselines_dir)
 
     @staticmethod
     def setup_writer(results_dir):
@@ -106,7 +119,8 @@ class ResultsWriter:
             FileKeys.navigator_detector_info_path: None,
             FileKeys.navigator_original_data_results: None,
             FileKeys.navigator_train_hold_out_inds: None,
-            FileKeys.navigator_pseudo_samples_key: {}
+            FileKeys.navigator_pseudo_samples_key: {},
+            FileKeys.navigator_baselines_key: {}
         }
 
     @staticmethod
@@ -145,6 +159,8 @@ class ResultsWriter:
     def json_type_transformer(o):
         if isinstance(o, Path):
             return str(o)
+        elif isinstance(o, np.ndarray):
+            return o.tolist()
         else:
             return o
 
@@ -152,6 +168,12 @@ class ResultsWriter:
         if self.__pseudo_samples_key not in ResultsWriter.__navigator_file_dict[FileKeys.navigator_pseudo_samples_key]:
             ResultsWriter.__navigator_file_dict[FileKeys.navigator_pseudo_samples_key][self.__pseudo_samples_key] = {}
         ResultsWriter.__navigator_file_dict[FileKeys.navigator_pseudo_samples_key][self.__pseudo_samples_key][key] = val
+
+    def __update_baselines_dict(self, method_id, val):
+        baselines_methods_dict = ResultsWriter.__navigator_file_dict[FileKeys.navigator_baselines_key]
+        baselines_methods_dict.setdefault(method_id, {})
+        baselines_methods_dict[method_id][self.__pseudo_samples_key] = val
+        ResultsWriter.__navigator_file_dict[FileKeys.navigator_baselines_key] = baselines_methods_dict
 
     @staticmethod
     def __nav_file_is_empty():
@@ -162,5 +184,15 @@ class ResultsWriter:
         assert ResultsWriter.__base_dir is not None
         return ResultsWriter.__base_dir
 
+    @staticmethod
+    def get_baselines_dir():
+        assert ResultsWriter.__baselines_dir is not None
+        return ResultsWriter.__baselines_dir
+
     def get_final_dir(self):
         return self.__final_dir
+
+    def get_final_baseline_dir(self, method_id):
+        method_output_dir = Path(ResultsWriter.__baselines_dir, method_id, self.__pseudo_samples_key)
+        method_output_dir.mkdir(parents=True, exist_ok=True)
+        return method_output_dir

@@ -50,9 +50,9 @@ class PredictivePipeline:
                 calculate_explanation(train_data_with_detected_outliers.get_outlier_indices())
 
         explanation_methods = ExplanationMethods(train_data_with_detected_outliers, detectors_info['best'])
-        explanations = explanation_methods.run_all_post_hoc_explanation_methods()
+        baseline_explanations = explanation_methods.run_all_post_hoc_explanation_methods()
         if detectors_info['best'].get_detector().is_explainable():
-            explanations[detectors_info['best'].get_id()] = {
+            baseline_explanations[detectors_info['best'].get_id()] = {
                 'global_explanation': detectors_info['best'].get_detector().convert_to_global_explanation(),
                 'local_explanation': detectors_info['best'].get_detector().get_explanation()
             }
@@ -60,7 +60,7 @@ class PredictivePipeline:
         ResultsWriter.setup_writer(self.protean_results_dir)
         ResultsWriter.write_train_hold_out_inds({'training_inds': train_inds.tolist(), 'holdout_inds': test_inds.tolist()})
         ResultsWriter.write_detector_info_file(detectors_info['best'])
-        ResultsWriter.write_baselines(explanations, self.baselines_results_dir)
+        ResultsWriter.write_baselines_explanations(baseline_explanations, self.baselines_results_dir)
 
         for pseudo_samples, dataset in datasets_for_cv.items():
             print('--------------\n--------------')
@@ -68,10 +68,13 @@ class PredictivePipeline:
             rw = ResultsWriter(pseudo_samples)
             rw.write_dataset(dataset, 'detected')
             rw.write_hold_out_dataset(test_data_with_detected_outliers)
+            PredictivePipeline.__build_write_baselines_models(train_data_with_detected_outliers,
+                                                              test_data_with_detected_outliers,
+                                                              rw, baseline_explanations)
             best_trained_model_nofs = AutoML(rw.get_final_dir()).run(dataset, False)
             best_trained_model_fs = AutoML(rw.get_final_dir()).run(dataset, True)
             results = {'no_fs': best_trained_model_nofs, 'fs': best_trained_model_fs}
-            results = self.__test_best_model_in_hold_out(results, test_data_with_detected_outliers)
+            results = PredictivePipeline.__test_best_model_in_hold_out(results, test_data_with_detected_outliers)
             rw.write_results(results, 'detected')
             ResultsWriter.flush_navigator_file()
             del best_trained_model_nofs
@@ -93,8 +96,9 @@ class PredictivePipeline:
         detectors_info['best'].set_hold_out_effectiveness(perf)
         return detectors_info, test_data_labels
 
-    def __test_best_model_in_hold_out(self, results, test_data):
-        for key, data in results.items():
+    @staticmethod
+    def __test_best_model_in_hold_out(best_model, test_data):
+        for key, data in best_model.items():
             for m_id, conf in data.items():
                 fsel = conf.get_fsel()
                 clf = conf.get_clf()
@@ -102,8 +106,8 @@ class PredictivePipeline:
                 predictions = clf.predict_proba(X_new)
                 perf = metrics.calculate_metric(test_data.get_Y(), predictions, m_id)
                 conf.set_hold_out_effectiveness(perf, m_id)
-                results[key][m_id] = conf
-        return results
+                best_model[key][m_id] = conf
+        return best_model
 
     def __train_test_inds(self):
         sss = StratifiedShuffleSplit(n_splits=1, test_size=PredictivePipeline.__HOLD_OUD_PERCENTAGE, random_state=0)
@@ -120,4 +124,11 @@ class PredictivePipeline:
                        self.original_dataset.get_anomaly_column_name(),
                        self.original_dataset.get_subspace_column_name(), True)
 
-
+    @staticmethod
+    def __build_write_baselines_models(train_dataset, test_dataset, rw, baselines_methods):
+        for method in baselines_methods:
+            global_expl = baselines_methods[method]['global_explanation']
+            print('----\nRunning method', method, 'with global explanation', global_expl)
+            best_model = {'fs': AutoML(rw.get_final_baseline_dir(method)).run(train_dataset, False, global_expl)}
+            best_model = PredictivePipeline.__test_best_model_in_hold_out(best_model, test_dataset)
+            rw.write_baseline_results(best_model, method)

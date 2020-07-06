@@ -54,7 +54,7 @@ class NormalPipeline:
 
         ResultsWriter.setup_writer(self.protean_results_dir)
         ResultsWriter.write_detector_info_file(detectors_info['best'])
-        ResultsWriter.write_baselines(explanations, self.baselines_results_dir)
+        ResultsWriter.write_baselines_explanations(explanations, self.baselines_results_dir)
 
         for dataset_kind, data in datasets_for_cv.items():
             for pseudo_samples, dataset in data.items():
