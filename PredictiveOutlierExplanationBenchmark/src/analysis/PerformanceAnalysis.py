@@ -1,4 +1,8 @@
 from pathlib import Path
+import os, sys, inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+grandpadir = os.path.dirname(currentdir)
+sys.path.insert(0, grandpadir)
 from utils import helper_functions
 from utils.shared_names import *
 from utils.pseudo_samples import PseudoSamplesMger

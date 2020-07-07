@@ -3,6 +3,10 @@ import warnings
 from matplotlib.font_manager import FontProperties
 
 warnings.filterwarnings("ignore")
+import os, sys, inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+grandpadir = os.path.dirname(currentdir)
+sys.path.insert(0, grandpadir)
 
 from utils.helper_functions import read_nav_files, sort_files_by_dim
 from utils.shared_names import FileKeys
@@ -111,7 +115,9 @@ class PseudoSamplesAnalysis:
 if __name__ == '__main__':
     # path = '../results_normal/random_oversampling/iforest/classification/datasets/synthetic/hics/group_g1'
     # path = '../results_predictive/random_oversampling/iforest/classification/datasets/synthetic/hics/group_g1'
-    path = '../results_normal/random_oversampling/lof/classification/datasets/real'
+    # path = '../results_normal/random_oversampling/lof/classification/datasets/real'
     # path = '../results_predictive/random_oversampling/lof/classification/datasets/real'
 
-    PseudoSamplesAnalysis(path, real=True).analyze()
+    path, real = '../results_predictive/lof/protean/random_oversampling/classification/datasets/synthetic', False
+
+    PseudoSamplesAnalysis(path, real=real).analyze()

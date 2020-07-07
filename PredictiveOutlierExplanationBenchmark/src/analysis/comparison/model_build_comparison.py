@@ -44,6 +44,7 @@ def compare_models():
     for dim, nav_file in nav_files_json.items():
         real_dims = dim - 1 - (conf['type'] == 'synthetic')
         dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] == 'synthetic')
+        print(dname)
         dataset_names.append(dname + ' ' + str(real_dims) + '-d')
         best_models_perf_in_sample = pd.concat(
             [best_models_perf_in_sample, get_best_models_perf_per_method(nav_file, True)], axis=1
@@ -53,6 +54,7 @@ def compare_models():
         )
     best_models_perf_in_sample.columns = dataset_names
     best_models_perf_out_of_sample.columns = dataset_names
+    print()
 
 
 def get_best_models_perf_per_method(nav_file, in_sample):
@@ -71,7 +73,9 @@ def get_effectiveness_of_best_model(ps_dict, fs, in_sample):
     method_mger = PseudoSamplesMger(ps_dict, 'roc_auc', fs=fs)
     best_model, best_k = method_mger.get_best_model()
     conf_intervals = [round(x,2)for x in best_model['confidence_intervals']]
-    output = str(round(best_model[effectiveness_key], 3)) + ' ' + str(conf_intervals)
+    output_subpart1 = str(round(best_model[effectiveness_key], 3))
+    output_subpart2 = '' if not in_sample else ' ' + str(conf_intervals)
+    output = output_subpart1 + output_subpart2
     return output
 
 
