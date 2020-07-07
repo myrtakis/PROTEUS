@@ -84,9 +84,9 @@ class Transformer:
             start_ps_ind = new_df.shape[0]
             # print(list(o_sample))
             for ps_sample in range(pseudo_samples_per_outlier):
-                pseudo_sample = o_sample + Transformer.__gaussian_noise(dataset, o_sample)
+                pseudo_sample = Transformer.__gaussian_noise(dataset, o_sample, detector, threshold)
                 # print('ps', list(pseudo_sample))
-                new_df = new_df.append(pd.Series(pseudo_sample[0], index=new_df.columns), ignore_index=True)
+                new_df = new_df.append(pd.Series(pseudo_sample, index=new_df.columns), ignore_index=True)
             pseudo_samples_inds_per_outlier[outlier_row_pos] = (start_ps_ind, new_df.shape[0])
         pseudo_samples_df = new_df.iloc[pseudo_samples_indices, :]
         assert pseudo_samples_df.shape[0] == total_pseudo_samples
@@ -97,11 +97,20 @@ class Transformer:
         return new_dataset
 
     @staticmethod
-    def __gaussian_noise(dataset, o_sample):    # o_sample to be potentially used a the center of the distribution
-        noise = np.zeros(dataset.get_X().shape[1])
-        for i, (mu, sigma) in enumerate(zip(noise, 0.1 * dataset.get_std_per_column())):
-            noise[i] = np.random.normal(mu, sigma)
-        return noise
+    def __gaussian_noise(dataset, o_sample, detector, threshold):    # o_sample to be potentially used a the center of the distribution
+        alpha = 0.1
+        iters = 0
+        while True:
+            mu = np.zeros(dataset.get_X().shape[1])
+            sigma = dataset.get_std_per_column()
+            noise = np.random.normal(mu, alpha * sigma, dataset.get_X().shape[1])
+            pseudo_sample = o_sample + noise
+            if detector.predict(np.array([pseudo_sample])) >= threshold:
+                return pseudo_sample
+            if iters == 100:
+                alpha += 0.05
+                iters = 0
+            iters += 1
 
     @staticmethod
     def __get_curr_inlier_inds(true_inlier_inds, curr_inds):

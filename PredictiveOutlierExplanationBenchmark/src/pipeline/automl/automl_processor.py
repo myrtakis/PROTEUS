@@ -47,6 +47,7 @@ class AutoML:
             explanation_features_sorted = list(explanation_features_sorted[0:max_features])
             best_model_trained = self.run_with_explanation(AutoML.__reps_fold_inds, dataset, explanation_features_sorted)
         else:
+            print('------\nRunning PROTEAN pipeline')
             fsel_conf_combs, classifiers_conf_combs = generate_param_combs()
             selected_features = CV_Fselection(knowledge_discovery, fsel_conf_combs, kfolds).\
                 run(AutoML.__reps_fold_inds, dataset)
