@@ -71,9 +71,14 @@ def get_best_model_features_original_data(original_data_results_path, metric_id)
         return features, best_conf
 
 
-def add_noise_to_data(dataset):
+def add_noise_to_data(dataset, out_dims=None):
     np.random.seed(0)
-    noise_data = np.random.normal(0, 1, dataset.get_X().shape, )
+    if out_dims is not None:
+        out_dims_final = np.abs(out_dims - dataset.get_X().shape[1])
+        out_shape = (dataset.get_X().shape[0], out_dims_final)
+    else:
+        out_shape = dataset.get_X().shape
+    noise_data = np.random.normal(0, 1, out_shape)
     dataset_noise = pd.concat([dataset.get_df(), pd.DataFrame(noise_data)], axis=1)
     return Dataset(dataset_noise, dataset.get_anomaly_column_name(), dataset.get_subspace_column_name())
 

@@ -24,13 +24,12 @@ class Detector:
         for det_conf in DetectorConfig.get_detectors_confs():
             detector_id = det_conf[DetectorConfig.id_key()]
             detector_params = det_conf[DetectorConfig.params_key()]
-            detector_obj = Detector.__detectors_map[detector_id]()
-            det = Detector(detector_obj, detector_id, detector_params)
+            det = Detector(detector_id, detector_params)
             detectors_array.append(det)
         return detectors_array
 
-    def __init__(self, detector, det_id, params):
-        self.__detector = detector
+    def __init__(self, det_id, params):
+        self.__detector = Detector.__detectors_map[det_id]()
         self.__params = params
         self.__det_id = det_id
         self.__effectiveness = None

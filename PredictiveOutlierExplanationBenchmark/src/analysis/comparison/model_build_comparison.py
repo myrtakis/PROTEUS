@@ -1,10 +1,10 @@
 from pathlib import Path
 from matplotlib.font_manager import FontProperties
 import os, sys, inspect
-
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 grandpadir = os.path.dirname(os.path.dirname(currentdir))
 sys.path.insert(0, grandpadir)
+from models.OutlierDetector import Detector
 from baselines.posthoc_explanation_methods import ExplanationMethods
 from configpkg import ConfigMger, DatasetConfig
 from holders.Dataset import Dataset
@@ -27,9 +27,10 @@ pipeline = 'results_predictive'
 holdout = True
 build_models = False  # compare the built models
 
-# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
+conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
+# conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
 
-conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
+# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 

@@ -20,10 +20,10 @@ class PredictivePipeline:
         'micencova'
     ]
 
-    def __init__(self, save_dir, original_dataset, oversampling_method, detector=None):
+    def __init__(self, save_dir, original_dataset, oversampling_method, dataset_dims, detector=None):
         self.save_dir = save_dir
-        # self.original_dataset = original_dataset
-        self.original_dataset = helper_functions.add_noise_to_data(original_dataset)
+        self.original_dataset = original_dataset
+        self.dataset_dims = dataset_dims
         if self.original_dataset.get_X().shape[1] > original_dataset.get_X().shape[1]:
             print('Noise added', original_dataset.get_X().shape[1], 'dimensions ->', self.original_dataset.get_X().shape[1])
         self.oversampling_method = oversampling_method
@@ -52,6 +52,8 @@ class PredictivePipeline:
 
         print()
         print('Running Dataset:', DatasetConfig.get_dataset_path())
+        train_data_with_detected_outliers = helper_functions.add_noise_to_data(train_data_with_detected_outliers, self.dataset_dims)
+        test_data_with_detected_outliers = helper_functions.add_noise_to_data(test_data_with_detected_outliers, self.dataset_dims)
 
         explanation_methods = ExplanationMethods(train_data_with_detected_outliers, detectors_info['best'])
         baseline_explanations = explanation_methods.run_all_post_hoc_explanation_methods()
@@ -67,7 +69,7 @@ class PredictivePipeline:
 
         for pseudo_samples, dataset in datasets_for_cv.items():
             print('--------------\n--------------')
-            print('Running dataset with pseudo samples: ', pseudo_samples)
+            print('Running dataset with pseudo samples:', pseudo_samples, 'with dimensionality', self.dataset_dims, 'D')
             rw = ResultsWriter(pseudo_samples)
             rw.write_dataset(dataset, 'detected')
             rw.write_hold_out_dataset(test_data_with_detected_outliers)

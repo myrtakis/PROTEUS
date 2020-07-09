@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="test_benchmark" type="PythonConfigurationType" factoryName="Python" singleton="true">
+  <configuration default="false" name="test_benchmark" type="PythonConfigurationType" factoryName="Python" singleton="false">
     <module name="MxM" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />

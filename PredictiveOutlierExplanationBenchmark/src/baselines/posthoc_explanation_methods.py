@@ -7,13 +7,14 @@ from baselines.shapley import SHAP
 from baselines.random import RandomSelector
 import numpy as np
 import time
+import copy
 
 
 class ExplanationMethods:
 
     def __init__(self, dataset, detector=None):
         self.dataset = dataset
-        self.detector = detector
+        self.detector = copy.deepcopy(detector)
 
     def run_all_post_hoc_explanation_methods(self):
         return {
@@ -48,6 +49,7 @@ class ExplanationMethods:
         assert self.detector is not None
         output = {}
         start = time.time()
+        self.detector.train(self.dataset.get_X())
         shap = SHAP(self.dataset, self.detector.predict)
         local_explanations = shap.run()
         output['time'] = time.time() - start

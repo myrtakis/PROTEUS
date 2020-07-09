@@ -79,6 +79,15 @@ class Dataset:
     def get_subspaces(self):
         return self.__subspaces
 
+    def get_relevant_features(self):
+        rel_features = set()
+        if self.__subspaces is not None:
+            for sub in set(self.__subspaces[np.where(self.__subspaces != '-')[0]]):
+                sub_as_set = set(map(int, sub[sub.index('[') + 1: sub.index(']')].split()))
+                rel_features = rel_features.union(sub_as_set)
+        return rel_features
+
+
     def get_outlier_indices(self):
         assert self.__task_is_classification, "Outliers are predefined only for Classifcation Task and not for Regression"
         return self.__outlier_indices
