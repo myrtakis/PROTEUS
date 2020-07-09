@@ -118,6 +118,7 @@ if __name__ == '__main__':
     # path = '../results_normal/random_oversampling/lof/classification/datasets/real'
     # path = '../results_predictive/random_oversampling/lof/classification/datasets/real'
 
-    path, real = '../results_predictive/lof/protean/random_oversampling/classification/datasets/synthetic', False
+    # path, real = '../results_predictive/lof/protean/random_oversampling/classification/datasets/synthetic', False
+    path, real = '../results_predictive/lof/protean/random_oversampling/classification/datasets/real', True
 
     PseudoSamplesAnalysis(path, real=real).analyze()

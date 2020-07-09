@@ -22,7 +22,10 @@ class PredictivePipeline:
 
     def __init__(self, save_dir, original_dataset, oversampling_method, detector=None):
         self.save_dir = save_dir
-        self.original_dataset = original_dataset
+        # self.original_dataset = original_dataset
+        self.original_dataset = helper_functions.add_noise_to_data(original_dataset)
+        if self.original_dataset.get_X().shape[1] > original_dataset.get_X().shape[1]:
+            print('Noise added', original_dataset.get_X().shape[1], 'dimensions ->', self.original_dataset.get_X().shape[1])
         self.oversampling_method = oversampling_method
         detector = 'best_detector' if detector is None else detector
         self.protean_results_dir = Path('..', 'results_predictive', detector, 'protean',

@@ -1,11 +1,12 @@
 import json
 from collections import OrderedDict
 from pathlib import Path
-
+import numpy as np
 from pipeline.DatasetTransformer import Transformer
 from utils.shared_names import *
 import pandas as pd
 import os
+from holders.Dataset import Dataset
 
 
 def get_files_recursively(path_to_dir, contain_filter):
@@ -68,6 +69,13 @@ def get_best_model_features_original_data(original_data_results_path, metric_id)
         clf_id = best_model['classifiers']['id']
         best_conf = fsel_id + '_' + clf_id
         return features, best_conf
+
+
+def add_noise_to_data(dataset):
+    np.random.seed(0)
+    noise_data = np.random.normal(0, 1, dataset.get_X().shape, )
+    dataset_noise = pd.concat([dataset.get_df(), pd.DataFrame(noise_data)], axis=1)
+    return Dataset(dataset_noise, dataset.get_anomaly_column_name(), dataset.get_subspace_column_name())
 
 
 def add_datasets_with_pseudo_samples(oversampling_method, dataset_detected_outliers, detector, threshold,

@@ -5,6 +5,7 @@ import os, sys, inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 grandpadir = os.path.dirname(os.path.dirname(currentdir))
 sys.path.insert(0, grandpadir)
+from baselines.posthoc_explanation_methods import ExplanationMethods
 from configpkg import ConfigMger, DatasetConfig
 from holders.Dataset import Dataset
 from pipeline.automl.automl_processor import AutoML
@@ -26,11 +27,13 @@ pipeline = 'results_predictive'
 holdout = True
 build_models = False  # compare the built models
 
-# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
+# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
+
+conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 
-conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
+# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
 
@@ -54,7 +57,28 @@ def compare_models():
         )
     best_models_perf_in_sample.columns = dataset_names
     best_models_perf_out_of_sample.columns = dataset_names
-    print()
+    plot_dataframe(best_models_perf_in_sample, True)
+    plot_dataframe(best_models_perf_out_of_sample, False)
+
+
+def plot_dataframe(best_model_perfs, in_sample):
+    if in_sample:
+        title = 'In Sample AUC'
+    else:
+        title = 'Out of Sample AUC'
+    title += ' (' + conf['detector'] + ')'
+    fig, ax = plt.subplots(nrows=1, ncols=1)
+    table = ax.table(cellText=best_model_perfs.values, colLabels=best_model_perfs.columns,
+                     loc='top', rowLabels=best_model_perfs.index,
+                     cellLoc='center', bbox=[0.15, 0.45, 0.8, 0.5])
+    table.scale(0.8, 2.5)
+    for (row, col), cell in table.get_celld().items():
+        if (row == 0) or (col == -1):
+            cell.set_text_props(fontproperties=FontProperties(weight='bold'))
+    ax.set_title(title)
+    ax.axis('off')
+    plt.ylim((1, best_model_perfs.shape[1]))
+    plt.show()
 
 
 def get_best_models_perf_per_method(nav_file, in_sample):
@@ -162,7 +186,44 @@ def get_reps_folds_inds(ps_mger):
     return reps_folds_inds_per_k
 
 
+def test_baseline_explanations_noise():
+    print(conf)
+    nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
+    dataset_names = []
+    anomaly_col = 'is_anomaly'
+    subspace_col = None if conf['type'] == 'real' else 'subspaces'
+    for dim, nav_file in nav_files_json.items():
+        real_dims = dim - 1 - (conf['type'] == 'synthetic')
+        dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] == 'synthetic')
+        print(dname + ' ' + str(real_dims) + '-d')
+        dataset_names.append(dname + ' ' + str(real_dims) + '-d')
+        ps_mger = PseudoSamplesMger(nav_file[FileKeys.navigator_pseudo_samples_key], 'roc_auc', fs=True)
+        train_data = Dataset(ps_mger.get_info_field_of_k(0, FileKeys.navigator_pseudo_samples_data_path), anomaly_col, subspace_col)
+        train_data_noise = add_noise_to_data(train_data)
+        explanation_methods = ExplanationMethods(train_data)
+        explanation_methods_noise = ExplanationMethods(train_data_noise)
+        micencova_expl = get_topk_features_global_expl(explanation_methods.micencova_explanation, 10)
+        micencova_expl_noise = get_topk_features_global_expl(explanation_methods_noise.micencova_explanation, 10)
+        print('Noisy explanation', micencova_expl_noise)
+        print(len(set(micencova_expl).intersection(micencova_expl_noise)) / len(set(micencova_expl).union(micencova_expl_noise)))
+
+
+def add_noise_to_data(dataset):
+    np.random.seed(0)
+    noise_data = np.random.normal(0, 1, dataset.get_X().shape, )
+    dataset_noise = pd.concat([dataset.get_df(), pd.DataFrame(noise_data)], axis=1)
+    return Dataset(dataset_noise, dataset.get_anomaly_column_name(), dataset.get_subspace_column_name())
+
+
+def get_topk_features_global_expl(baseline_func, max_features):
+    global_expl = baseline_func()
+    global_explanation_sorted = np.argsort(global_expl['global_explanation'])[::-1]
+    return list(global_explanation_sorted[0:max_features])
+
+
 if __name__ == '__main__':
+    # test_baseline_explanations_noise()
+    # exit()
     if build_models:
         build_baseline_models()
     else:
