@@ -23,7 +23,7 @@ def run_pipeline(config_file_path, detector, save_dir):
 
 def keep_relevant_features():
     dataset_pd = pd.read_csv(DatasetConfig.get_dataset_path())
-    original_dims = dataset_pd.shape[1]
+    original_dims = None if DatasetConfig.get_subspace_column_name() is None else dataset_pd.shape[1]
     if DatasetConfig.get_subspace_column_name() is not None:
         ground_truth_df = pd.concat([
             dataset_pd.loc[:, DatasetConfig.get_anomaly_column_name()],
