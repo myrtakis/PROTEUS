@@ -45,15 +45,17 @@ class PredictivePipeline:
         datasets_for_cv = {}
         if pseudo_samples_array is not None:
             assert SettingsConfig.is_classification_task(), "Pseudo samples are allowed only in classification task"
-            datasets_for_cv.update(helper_functions.add_datasets_with_pseudo_samples(self.oversampling_method,
-                                                                                     train_data_with_detected_outliers,
-                                                                                     detectors_info['best'],
-                                                                                     threshold, pseudo_samples_array))
-
+            datasets_for_cv.update(helper_functions.add_datasets_oversampling(self.oversampling_method,
+                                                                              train_data_with_detected_outliers,
+                                                                              detectors_info['best'],
+                                                                              threshold, pseudo_samples_array))
+        datasets_for_cv = helper_functions.add_noise_to_train_datasets(datasets_for_cv, self.dataset_dims)
+        train_data_with_detected_outliers = helper_functions.add_noise_to_data(train_data_with_detected_outliers,
+                                                                              self.dataset_dims)
+        test_data_with_detected_outliers = helper_functions.add_noise_to_data(test_data_with_detected_outliers,
+                                                                              self.dataset_dims)
         print()
         print('Running Dataset:', DatasetConfig.get_dataset_path())
-        train_data_with_detected_outliers = helper_functions.add_noise_to_data(train_data_with_detected_outliers, self.dataset_dims)
-        test_data_with_detected_outliers = helper_functions.add_noise_to_data(test_data_with_detected_outliers, self.dataset_dims)
 
         explanation_methods = ExplanationMethods(train_data_with_detected_outliers, detectors_info['best'])
         baseline_explanations = explanation_methods.run_all_post_hoc_explanation_methods()

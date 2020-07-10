@@ -27,11 +27,11 @@ pipeline = 'results_predictive'
 holdout = True
 build_models = False  # compare the built models
 
-conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
+# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
-# conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
+conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
@@ -48,7 +48,7 @@ def compare_models():
     for dim, nav_file in nav_files_json.items():
         real_dims = dim - 1 - (conf['type'] == 'synthetic')
         dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] == 'synthetic')
-        print(dname)
+        print(dname + ' ' + str(real_dims) + '-d')
         dataset_names.append(dname + ' ' + str(real_dims) + '-d')
         best_models_perf_in_sample = pd.concat(
             [best_models_perf_in_sample, get_best_models_perf_per_method(nav_file, True)], axis=1
@@ -225,7 +225,9 @@ def get_topk_features_global_expl(baseline_func, max_features):
 if __name__ == '__main__':
     # test_baseline_explanations_noise()
     # exit()
+
     if build_models:
         build_baseline_models()
     else:
         compare_models()
+

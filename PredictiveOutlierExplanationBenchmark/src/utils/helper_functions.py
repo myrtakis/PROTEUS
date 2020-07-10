@@ -83,8 +83,8 @@ def add_noise_to_data(dataset, out_dims=None):
     return Dataset(dataset_noise, dataset.get_anomaly_column_name(), dataset.get_subspace_column_name())
 
 
-def add_datasets_with_pseudo_samples(oversampling_method, dataset_detected_outliers, detector, threshold,
-                                     pseudo_samples_arr):
+def add_datasets_oversampling(oversampling_method, dataset_detected_outliers, detector, threshold,
+                              pseudo_samples_arr):
     datasets_with_pseudo_samples = {}
     for ps_num in pseudo_samples_arr:
         if ps_num == 0:
@@ -94,6 +94,12 @@ def add_datasets_with_pseudo_samples(oversampling_method, dataset_detected_outli
                                                                     threshold)
         datasets_with_pseudo_samples[ps_num] = dataset
     return datasets_with_pseudo_samples
+
+
+def add_noise_to_train_datasets(datasets, out_dims):
+    for ps_num, dataset in datasets.items():
+        datasets[ps_num] = add_noise_to_data(dataset, out_dims)
+    return datasets
 
 
 def sort_files_by_dim(nav_files):

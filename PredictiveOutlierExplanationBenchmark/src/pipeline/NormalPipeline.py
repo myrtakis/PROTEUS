@@ -34,10 +34,10 @@ class NormalPipeline:
         pseudo_samples_array = SettingsConfig.get_pseudo_samples_array()
         if pseudo_samples_array is not None:
             assert SettingsConfig.is_classification_task(), "Pseudo samples are allowed only in classification task"
-            datasets_for_cv['detected'].update(helper_functions.add_datasets_with_pseudo_samples(self.oversampling_method,
-                                                                                                 dataset_with_detected_outliers,
-                                                                                                 detectors_info['best'],
-                                                                                                 threshold, pseudo_samples_array))
+            datasets_for_cv['detected'].update(helper_functions.add_datasets_oversampling(self.oversampling_method,
+                                                                                          dataset_with_detected_outliers,
+                                                                                          detectors_info['best'],
+                                                                                          threshold, pseudo_samples_array))
         print('Running Dataset:', DatasetConfig.get_dataset_path())
         if detectors_info['best'].get_detector().is_explainable():
             print('Computing the explanation for', detectors_info['best'].get_id())
