@@ -98,7 +98,10 @@ def add_datasets_oversampling(oversampling_method, dataset_detected_outliers, de
 
 def add_noise_to_train_datasets(datasets, out_dims):
     for ps_num, dataset in datasets.items():
-        datasets[ps_num] = add_noise_to_data(dataset, out_dims)
+        tmp_dataset = add_noise_to_data(dataset, out_dims)
+        if dataset.contains_pseudo_samples():
+            tmp_dataset.set_pseudo_samples_indices_per_outlier(dataset.get_pseudo_sample_indices_per_outlier())
+        datasets[ps_num] = tmp_dataset
     return datasets
 
 

@@ -67,7 +67,7 @@ class CV_Fselection:
     def __folds_to_confs_restructure(self, fsel_confs):
         folds_to_confs_dict = OrderedDict()
         for conf_obj in fsel_confs:
-            assert len(conf_obj) == self.__kfolds
+            assert len(conf_obj) == self.__kfolds, str(len(conf_obj)) + ' != ' + str(self.__kfolds)
             for f_id, fsel in conf_obj.items():
                 if self.__knowledge_discovery:
                     assert len(fsel.get_features()) <= automlconsts.MAX_FEATURES

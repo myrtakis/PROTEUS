@@ -17,7 +17,7 @@ class PredictivePipeline:
     __HOLD_OUD_PERCENTAGE = 0.3
 
     __methods_internal_oversampling = [
-        'micencova'
+
     ]
 
     def __init__(self, save_dir, original_dataset, oversampling_method, dataset_dims, detector=None):
@@ -75,8 +75,7 @@ class PredictivePipeline:
             rw = ResultsWriter(pseudo_samples)
             rw.write_dataset(dataset, 'detected')
             rw.write_hold_out_dataset(test_data_with_detected_outliers)
-            PredictivePipeline.__build_write_baselines_models(train_data_with_detected_outliers,
-                                                              test_data_with_detected_outliers,
+            PredictivePipeline.__build_write_baselines_models(dataset, test_data_with_detected_outliers,
                                                               rw, baseline_explanations, pseudo_samples)
             best_trained_model_nofs = AutoML(rw.get_final_dir()).run(dataset, False)
             best_trained_model_fs = AutoML(rw.get_final_dir()).run(dataset, True)
