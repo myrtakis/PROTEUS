@@ -29,6 +29,5 @@ class FileKeys:
     navigator_detector_info_path = 'detector_info'
     navigator_baseline = 'baselines'
     navigator_baselines_dir_key = 'baselines_dir'
-    navigator_baselines_explanations_path = 'explanations_path'
     navigator_baselines_key = 'baselines'
 

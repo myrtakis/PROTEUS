@@ -30,8 +30,8 @@ build_models = False  # compare the built models
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
 
-# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
-conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
+conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
+# conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
@@ -44,12 +44,14 @@ def compare_models():
     nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
     best_models_perf_in_sample = pd.DataFrame()
     best_models_perf_out_of_sample = pd.DataFrame()
+    time_df = pd.DataFrame()
     dataset_names = []
     for dim, nav_file in nav_files_json.items():
         real_dims = dim - 1 - (conf['type'] == 'synthetic')
         dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] == 'synthetic')
         print(dname + ' ' + str(real_dims) + '-d')
         dataset_names.append(dname + ' ' + str(real_dims) + '-d')
+        # time_df = pd.concat([time_df, get_time_per_method(nav_file)], axis=1)
         best_models_perf_in_sample = pd.concat(
             [best_models_perf_in_sample, get_best_models_perf_per_method(nav_file, True)], axis=1
         )
@@ -60,25 +62,27 @@ def compare_models():
     best_models_perf_out_of_sample.columns = dataset_names
     plot_dataframe(best_models_perf_in_sample, True)
     plot_dataframe(best_models_perf_out_of_sample, False)
+    # plot_dataframe(time_df, True)
 
 
 def plot_dataframe(best_model_perfs, in_sample):
-    if in_sample:
-        title = 'In Sample AUC'
-    else:
-        title = 'Out of Sample AUC'
-    title += ' (' + conf['detector'] + ')'
+    data_type = 'D_{IN}' if in_sample else 'D_{OUT}'
+    y_detector_name = 'Y_{' + conf['detector'] + '}'
+    title = 'AUC(' + y_detector_name.upper() + ', \hat{Y}_{M}, ' + data_type + ')'
     fig, ax = plt.subplots(nrows=1, ncols=1)
     table = ax.table(cellText=best_model_perfs.values, colLabels=best_model_perfs.columns,
+                     colWidths=[0.2 for x in best_model_perfs.columns],
                      loc='top', rowLabels=best_model_perfs.index,
                      cellLoc='center', bbox=[0.15, 0.45, 0.8, 0.5])
-    table.scale(0.8, 2.5)
+    # table.scale(1.5, 1.5)
+    table.set_fontsize(8)
+    # table.auto_set_column_width(col=list(range(len(best_model_perfs.columns))))
     for (row, col), cell in table.get_celld().items():
         if (row == 0) or (col == -1):
             cell.set_text_props(fontproperties=FontProperties(weight='bold'))
-    ax.set_title(title)
+    ax.set_title('$' + title + '$')
     ax.axis('off')
-    plt.ylim((1, best_model_perfs.shape[1]))
+    # plt.ylim((1, best_model_perfs.shape[1]))
     plt.show()
 
 
@@ -93,13 +97,28 @@ def get_best_models_perf_per_method(nav_file, in_sample):
     return pd.DataFrame(best_model_perfs.values(), index=best_model_perfs.keys())
 
 
+def get_time_per_method(nav_file):
+    runtime = {}
+    protean_ps_dict = nav_file[FileKeys.navigator_pseudo_samples_key]
+    protean_best_model, _ = PseudoSamplesMger(protean_ps_dict, 'roc_auc', True).get_best_model()
+    runtime['protean'] = protean_best_model['feature_selection']['time']
+    explanations = Path(nav_file[FileKeys.navigator_baselines_dir_key], FileNames.baselines_explanations_fname)
+    with open(explanations) as json_file:
+        explanations_dict = json.load(json_file)
+        for method, data in explanations_dict.items():
+            if method == 'random':
+                continue
+            runtime[method] = round(data['time'], 2)
+    return pd.DataFrame(runtime.values(), index=runtime.keys())
+
+
 def get_effectiveness_of_best_model(ps_dict, fs, in_sample):
     effectiveness_key = 'effectiveness' if in_sample else 'hold_out_effectiveness'
     method_mger = PseudoSamplesMger(ps_dict, 'roc_auc', fs=fs)
     best_model, best_k = method_mger.get_best_model()
     conf_intervals = [round(x,2)for x in best_model['confidence_intervals']]
     output_subpart1 = str(round(best_model[effectiveness_key], 3))
-    output_subpart2 = '' if not in_sample else ' ' + str(conf_intervals)
+    output_subpart2 = '' if not in_sample else '\n' + str(conf_intervals)
     output = output_subpart1 + output_subpart2
     return output
 
