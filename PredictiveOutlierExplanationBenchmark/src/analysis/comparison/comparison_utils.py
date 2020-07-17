@@ -20,6 +20,6 @@ def load_baseline_explanations(baseline_path, max_features=None):
 
 def get_dataset_name(dataset_path, synthetic):
     if synthetic:
-        return 'HiCS'
+        return 'Synth'
     else:
         return os.path.splitext(os.path.basename(dataset_path))[0]

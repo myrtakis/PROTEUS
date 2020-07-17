@@ -118,7 +118,7 @@ def read_nav_files(path_to_dir, path_must_have_word=None):
     nav_files_paths = get_files_recursively(path_to_dir, FileNames.navigator_fname)
     tmp_nav_files = []
     for f in nav_files_paths:
-        if path_must_have_word is not None and path_must_have_word in f:
+        if path_must_have_word is not None and path_must_have_word in str(f):
             tmp_nav_files.append(f)
     if path_must_have_word is not None:
         nav_files_paths = tmp_nav_files
