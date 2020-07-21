@@ -21,7 +21,7 @@ pipeline = 'results_predictive'
 
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
-conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
+# conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
@@ -29,7 +29,7 @@ conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
-# conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
+conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
 
 
 def analyze():
@@ -52,20 +52,20 @@ def analysis_per_nav_file(nav_files):
         metrics = calculate_feature_metrics(methods_features, rel_features)
         feature_perf = pd.concat([feature_perf, metrics], axis=1)
     feature_perf.columns = dataset_names
-    print(feature_perf)
+    feature_perf.to_csv('features.csv')
 
 
 def get_selected_features_per_method(nav_file):
     methods_sel_features = {}
     protean_psmger = PseudoSamplesMger(nav_file[FileKeys.navigator_pseudo_samples_key], 'roc_auc', fs=True)
     best_model, best_k = protean_psmger.get_best_model()
-    methods_sel_features['$PROTEAN_{fs}$'] = best_model['feature_selection']['features']
+    methods_sel_features['$\mathbf{PROTEAN_{fs}}$'] = best_model['feature_selection']['features']
     methods_explanations_file = Path(nav_file[FileKeys.navigator_baselines_dir_key], FileNames.baselines_explanations_fname)
     with open(methods_explanations_file) as json_file:
         explanations = json.load(json_file)
         for method, data in explanations.items():
             features_sorted = np.argsort(np.array(data['global_explanation']))[::-1]
-            method_name = '$PROTEAN_{' + method + '}$'
+            method_name = '$\mathbf{PROTEAN_{' + method + '}}$'
             methods_sel_features[method_name] = features_sorted[:MAX_FEATURES]
     return methods_sel_features
 
@@ -76,7 +76,7 @@ def get_relevant_features(nav_file):
     rel_features = orig_data.get_relevant_features()
     if len(rel_features) == 0:
         assert conf['type'] == 'real'
-        rel_features = set(np.arange(orig_data.shape[1]))
+        rel_features = set(np.arange(orig_data.get_X().shape[1]))
     return rel_features
 
 

@@ -2,6 +2,10 @@ from pathlib import Path
 import json
 from sklearn import manifold
 from sklearn.decomposition import PCA
+import os,inspect,sys
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+grandpadir = os.path.dirname(os.path.dirname(currentdir))
+sys.path.insert(0, grandpadir)
 from utils import helper_functions
 from utils.pseudo_samples import PseudoSamplesMger
 from utils.shared_names import *
@@ -61,7 +65,7 @@ class Visualizer:
             ps_mger = PseudoSamplesMger(nav_file[FileKeys.navigator_pseudo_samples_key], self.metric_id, fs=True)
             best_model, k = ps_mger.get_best_model()
             print('Best k', k)
-            dataset_path_of_best_k = ps_mger.get_info_field_of_k(k)
+            dataset_path_of_best_k = ps_mger.get_info_field_of_k(k, FileKeys.navigator_pseudo_samples_data_path)
             df = pd.read_csv(dataset_path_of_best_k)
             print('Explained Boundary')
             self.__viz_coordinator(parent_dir=None, df=df, features=best_model['feature_selection']['features'], keep_only_given_features=True)

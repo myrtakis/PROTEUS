@@ -30,13 +30,13 @@ build_models = False  # compare the built models
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
 
-conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
+# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
-# conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
+conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
 
 
 def compare_models():
@@ -49,8 +49,8 @@ def compare_models():
     for dim, nav_file in nav_files_json.items():
         real_dims = dim - 1 - (conf['type'] == 'synthetic')
         dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] == 'synthetic')
-        print(dname + ' ' + str(real_dims) + '-d')
-        dataset_names.append(dname + ' ' + str(real_dims) + '-d')
+        print(dname + ' ' + str(real_dims) + 'd')
+        dataset_names.append(dname + ' ' + str(real_dims) + 'd')
         # time_df = pd.concat([time_df, get_time_per_method(nav_file)], axis=1)
         best_models_perf_in_sample = pd.concat(
             [best_models_perf_in_sample, get_best_models_perf_per_method(nav_file, True)], axis=1
@@ -60,8 +60,10 @@ def compare_models():
         )
     best_models_perf_in_sample.columns = dataset_names
     best_models_perf_out_of_sample.columns = dataset_names
-    plot_dataframe(best_models_perf_in_sample, True)
-    plot_dataframe(best_models_perf_out_of_sample, False)
+    best_models_perf_in_sample.to_csv('in_sample.csv')
+    best_models_perf_out_of_sample.to_csv('out_sample.csv')
+    # plot_dataframe(best_models_perf_in_sample, True)
+    # plot_dataframe(best_models_perf_out_of_sample, False)
     # plot_dataframe(time_df, True)
 
 
@@ -71,7 +73,7 @@ def plot_dataframe(best_model_perfs, in_sample):
     title = 'AUC(' + y_detector_name.upper() + ', \hat{Y}_{M}, ' + data_type + ')'
     fig, ax = plt.subplots(nrows=1, ncols=1)
     table = ax.table(cellText=best_model_perfs.values, colLabels=best_model_perfs.columns,
-                     colWidths=[0.2 for x in best_model_perfs.columns],
+                     colWidths=[0.4 for x in best_model_perfs.columns],
                      loc='top', rowLabels=best_model_perfs.index,
                      cellLoc='center', bbox=[0.15, 0.45, 0.8, 0.5])
     # table.scale(1.5, 1.5)
@@ -89,11 +91,14 @@ def plot_dataframe(best_model_perfs, in_sample):
 def get_best_models_perf_per_method(nav_file, in_sample):
     best_model_perfs = {}
     protean_ps_dict = nav_file[FileKeys.navigator_pseudo_samples_key]
-    best_model_perfs['full'] = get_effectiveness_of_best_model(protean_ps_dict, False, in_sample)
-    best_model_perfs['protean'] = get_effectiveness_of_best_model(protean_ps_dict, True, in_sample)
+    best_model_perfs['PROTEAN_{full}'] = get_effectiveness_of_best_model(protean_ps_dict, False, in_sample)
+    best_model_perfs['PROTEAN_{fs}'] = get_effectiveness_of_best_model(protean_ps_dict, True, in_sample)
     baselines_dir = nav_file[FileKeys.navigator_baselines_key]
     for method, data in baselines_dir.items():
-        best_model_perfs[method] = get_effectiveness_of_best_model(data, True, in_sample)
+        if method == 'random':
+            continue
+        method_name = 'PROTEAN_{' + method + '}'
+        best_model_perfs[method_name] = get_effectiveness_of_best_model(data, True, in_sample)
     return pd.DataFrame(best_model_perfs.values(), index=best_model_perfs.keys())
 
 
@@ -108,7 +113,8 @@ def get_time_per_method(nav_file):
         for method, data in explanations_dict.items():
             if method == 'random':
                 continue
-            runtime[method] = round(data['time'], 2)
+            method_name = 'PROTEAN_{' + method + '}'
+            runtime[method_name] = round(data['time'], 2)
     return pd.DataFrame(runtime.values(), index=runtime.keys())
 
 
