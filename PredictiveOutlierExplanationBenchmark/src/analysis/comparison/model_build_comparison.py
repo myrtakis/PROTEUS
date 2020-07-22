@@ -52,7 +52,7 @@ def compare_models():
     dataset_names = []
     for dim, nav_file in nav_files_json.items():
         real_dims = dim - 1 - (conf['type'] == 'synthetic')
-        dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] == 'synthetic')
+        dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] != 'real')
         print(dname + ' ' + str(real_dims) + 'd')
         dataset_names.append(dname + ' ' + str(real_dims) + 'd')
         # time_df = pd.concat([time_df, get_time_per_method(nav_file)], axis=1)
@@ -73,6 +73,9 @@ def compare_models():
 
 
 def plot_databframe_as_barplot(df_in, df_out, error_in):
+    for i in range(2):
+        df_in = pd.concat([df_in, df_in], axis=1)
+        error_in = pd.concat([error_in, error_in], axis=1)
     assert not any(df_in.index == df_out.index) is False
     arr = np.arange(len(error_in.columns)) % 2
     errorbars = np.zeros((error_in.shape[0], 2, int(error_in.shape[1] / 2)), dtype=float)
@@ -80,18 +83,16 @@ def plot_databframe_as_barplot(df_in, df_out, error_in):
     errorbars[:, 1, :] = error_in.iloc[:, arr == 1].values
     df_in.index = ['$' + x + '$' for x in df_in.index]
     df_out.index = ['$' + x + '$' for x in df_out.index]
-    fig, axes = plt.subplots(figsize=(15,7), nrows=1, ncols=2)
-    df_in.transpose().plot(ax=axes[0], kind='bar', zorder=3, rot=0, yerr=errorbars, capsize=7, grid=True, legend=None)
+    fig, axes = plt.subplots(figsize=(20,7), nrows=1, ncols=2)
+    df_in.transpose().plot(ax=axes[0], kind='bar', zorder=3, rot=0, yerr=errorbars, capsize=5, grid=True, legend=None)
     df_out.transpose().plot(ax=axes[1], kind='bar', zorder=3, rot=0, grid=True, legend=None)
-    axes[0].legend(loc='upper center', ncol=3, bbox_to_anchor=(0.4, 1.3), fontsize=18)
+    axes[0].legend(loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.3), fontsize=18)
     axes[0].set_yticks(np.arange(0, 1.1, .1))
     axes[1].set_yticks(np.arange(0, 1.1, .1))
     axes[0].tick_params(labelsize=14)
     axes[1].tick_params(labelsize=14)
-    handles, labels = axes[0].get_legend_handles_labels()
-    # plt.figlegend(handles, labels, loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.1), fontsize=18)
-    # plt.subplots_adjust(right=0.85)
-    plt.tight_layout()
+    # plt.tight_layout()
+    plt.subplots_adjust(hspace=0.65, wspace=0.65)
     plt.show()
 
 
