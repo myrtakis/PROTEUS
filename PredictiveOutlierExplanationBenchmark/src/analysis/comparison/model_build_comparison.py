@@ -29,7 +29,7 @@ holdout = True
 build_models = False  # compare the built models
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
-conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
+# conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
 
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
@@ -38,7 +38,7 @@ conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
-# conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
+conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
 
 
 def compare_models():
@@ -73,10 +73,19 @@ def compare_models():
 
 
 def plot_databframe_as_barplot(df_in, df_out, error_in):
-    for i in range(2):
-        df_in = pd.concat([df_in, df_in], axis=1)
-        error_in = pd.concat([error_in, error_in], axis=1)
     assert not any(df_in.index == df_out.index) is False
+    leg_handles_dict = {
+        'PROTEAN_{full}': ('tab:blue', '$PROTEAN_{full}$'),
+        'PROTEAN_{fs}': ('tab:orange', '$PROTEAN_{fs}$'),
+        'PROTEAN_{micencova}': ('tab:green', '$PROTEAN_{micencova}$'),
+        'PROTEAN_{shap}': ('tab:red', '$PROTEAN_{shap}$'),
+        'PROTEAN_{loda}': ('tab:purple', '$PROTEAN_{loda}$'),
+    }
+    leg_handles_arr = []
+    colors = []
+    for m in df_in.index:
+        leg_handles_arr.append(leg_handles_dict[m][1])
+        colors.append(leg_handles_dict[m][0])
     arr = np.arange(len(error_in.columns)) % 2
     errorbars = np.zeros((error_in.shape[0], 2, int(error_in.shape[1] / 2)), dtype=float)
     errorbars[:, 0, :] = error_in.iloc[:, arr == 0].values
@@ -84,16 +93,21 @@ def plot_databframe_as_barplot(df_in, df_out, error_in):
     df_in.index = ['$' + x + '$' for x in df_in.index]
     df_out.index = ['$' + x + '$' for x in df_out.index]
     fig, axes = plt.subplots(figsize=(20,7), nrows=1, ncols=2)
-    df_in.transpose().plot(ax=axes[0], kind='bar', zorder=3, rot=0, yerr=errorbars, capsize=5, grid=True, legend=None)
+    df_in.transpose().plot(ax=axes[0], kind='bar', zorder=3, rot=0, yerr=errorbars, capsize=5, grid=True, color=colors)
     df_out.transpose().plot(ax=axes[1], kind='bar', zorder=3, rot=0, grid=True, legend=None)
-    axes[0].legend(loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.3), fontsize=18)
+    axes[0].legend(leg_handles_arr, loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.3), fontsize=18)
     axes[0].set_yticks(np.arange(0, 1.1, .1))
     axes[1].set_yticks(np.arange(0, 1.1, .1))
     axes[0].tick_params(labelsize=14)
     axes[1].tick_params(labelsize=14)
-    # plt.tight_layout()
     plt.subplots_adjust(hspace=0.65, wspace=0.65)
-    plt.show()
+    plt.tight_layout()
+    output_folder = Path('..', 'figures', 'results')
+    output_folder.mkdir(parents=True, exist_ok=True)
+    fig_name = 'real_' if conf['type'] == 'real' else 'synthetic_'
+    fig_name += conf['detector'] + '.png'
+    plt.savefig(Path(output_folder, fig_name), dpi=300)
+    plt.clf()
 
 
 def plot_dataframe_as_table(best_model_perfs, in_sample):
