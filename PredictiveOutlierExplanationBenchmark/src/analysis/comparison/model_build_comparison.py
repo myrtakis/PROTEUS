@@ -1,6 +1,7 @@
 from pathlib import Path
 from matplotlib.font_manager import FontProperties
 import os, sys, inspect
+
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 grandpadir = os.path.dirname(os.path.dirname(currentdir))
 sys.path.insert(0, grandpadir)
@@ -28,7 +29,8 @@ holdout = True
 build_models = False  # compare the built models
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
-# conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
+conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
+
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
@@ -36,13 +38,15 @@ build_models = False  # compare the built models
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
-conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
+# conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
 
 
 def compare_models():
     print(conf)
     nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
     best_models_perf_in_sample = pd.DataFrame()
+    ci_in_sample = pd.DataFrame()
+    error_in_sample = pd.DataFrame()
     best_models_perf_out_of_sample = pd.DataFrame()
     time_df = pd.DataFrame()
     dataset_names = []
@@ -52,22 +56,46 @@ def compare_models():
         print(dname + ' ' + str(real_dims) + 'd')
         dataset_names.append(dname + ' ' + str(real_dims) + 'd')
         # time_df = pd.concat([time_df, get_time_per_method(nav_file)], axis=1)
-        best_models_perf_in_sample = pd.concat(
-            [best_models_perf_in_sample, get_best_models_perf_per_method(nav_file, True)], axis=1
-        )
-        best_models_perf_out_of_sample = pd.concat(
-            [best_models_perf_out_of_sample, get_best_models_perf_per_method(nav_file, False)], axis=1
-        )
+        best_models_perf_in_sample_curr, ci_in_sample_curr, err_in_sample_curr = get_best_models_perf_per_method(
+            nav_file, True)
+        best_models_perf_in_sample = pd.concat([best_models_perf_in_sample, best_models_perf_in_sample_curr], axis=1)
+        ci_in_sample = pd.concat([ci_in_sample, ci_in_sample_curr], axis=1)
+        error_in_sample = pd.concat([error_in_sample, err_in_sample_curr], axis=1)
+        best_models_perf_out_sample_curr, _, _ = get_best_models_perf_per_method(nav_file, False)
+        best_models_perf_out_of_sample = pd.concat([best_models_perf_out_of_sample, best_models_perf_out_sample_curr],
+                                                   axis=1)
     best_models_perf_in_sample.columns = dataset_names
     best_models_perf_out_of_sample.columns = dataset_names
-    best_models_perf_in_sample.to_csv('in_sample.csv')
-    best_models_perf_out_of_sample.to_csv('out_sample.csv')
-    # plot_dataframe(best_models_perf_in_sample, True)
-    # plot_dataframe(best_models_perf_out_of_sample, False)
-    # plot_dataframe(time_df, True)
+    # best_models_perf_in_sample.to_csv('in_sample.csv')
+    # best_models_perf_out_of_sample.to_csv('out_sample.csv')
+    plot_databframe_as_barplot(best_models_perf_in_sample, best_models_perf_out_of_sample, error_in_sample)
+    # plot_databframe_as_barplot(best_models_perf_out_of_sample, None, False)
 
 
-def plot_dataframe(best_model_perfs, in_sample):
+def plot_databframe_as_barplot(df_in, df_out, error_in):
+    assert not any(df_in.index == df_out.index) is False
+    arr = np.arange(len(error_in.columns)) % 2
+    errorbars = np.zeros((error_in.shape[0], 2, int(error_in.shape[1] / 2)), dtype=float)
+    errorbars[:, 0, :] = error_in.iloc[:, arr == 0].values
+    errorbars[:, 1, :] = error_in.iloc[:, arr == 1].values
+    df_in.index = ['$' + x + '$' for x in df_in.index]
+    df_out.index = ['$' + x + '$' for x in df_out.index]
+    fig, axes = plt.subplots(figsize=(15,7), nrows=1, ncols=2)
+    df_in.transpose().plot(ax=axes[0], kind='bar', zorder=3, rot=0, yerr=errorbars, capsize=7, grid=True, legend=None)
+    df_out.transpose().plot(ax=axes[1], kind='bar', zorder=3, rot=0, grid=True, legend=None)
+    axes[0].legend(loc='upper center', ncol=3, bbox_to_anchor=(0.4, 1.3), fontsize=18)
+    axes[0].set_yticks(np.arange(0, 1.1, .1))
+    axes[1].set_yticks(np.arange(0, 1.1, .1))
+    axes[0].tick_params(labelsize=14)
+    axes[1].tick_params(labelsize=14)
+    handles, labels = axes[0].get_legend_handles_labels()
+    # plt.figlegend(handles, labels, loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.1), fontsize=18)
+    # plt.subplots_adjust(right=0.85)
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_dataframe_as_table(best_model_perfs, in_sample):
     data_type = 'D_{IN}' if in_sample else 'D_{OUT}'
     y_detector_name = 'Y_{' + conf['detector'] + '}'
     title = 'AUC(' + y_detector_name.upper() + ', \hat{Y}_{M}, ' + data_type + ')'
@@ -90,16 +118,24 @@ def plot_dataframe(best_model_perfs, in_sample):
 
 def get_best_models_perf_per_method(nav_file, in_sample):
     best_model_perfs = {}
+    ci = {}
+    error = {}
     protean_ps_dict = nav_file[FileKeys.navigator_pseudo_samples_key]
-    best_model_perfs['PROTEAN_{full}'] = get_effectiveness_of_best_model(protean_ps_dict, False, in_sample)
-    best_model_perfs['PROTEAN_{fs}'] = get_effectiveness_of_best_model(protean_ps_dict, True, in_sample)
+    best_model_perfs['PROTEAN_{full}'], ci['PROTEAN_{full}'] = get_effectiveness_of_best_model(protean_ps_dict, False,
+                                                                                               in_sample)
+    best_model_perfs['PROTEAN_{fs}'], ci['PROTEAN_{fs}'] = get_effectiveness_of_best_model(protean_ps_dict, True,
+                                                                                           in_sample)
     baselines_dir = nav_file[FileKeys.navigator_baselines_key]
     for method, data in baselines_dir.items():
         if method == 'random':
             continue
         method_name = 'PROTEAN_{' + method + '}'
-        best_model_perfs[method_name] = get_effectiveness_of_best_model(data, True, in_sample)
-    return pd.DataFrame(best_model_perfs.values(), index=best_model_perfs.keys())
+        best_model_perfs[method_name], ci[method_name] = get_effectiveness_of_best_model(data, True, in_sample)
+    for m in ci.keys():
+        error[m] = [np.abs(ci[m][0] - best_model_perfs[m]), np.abs(ci[m][1] - best_model_perfs[m])]
+        best_model_perfs[m] = [best_model_perfs[m]]
+        ci[m] = [ci[m]]
+    return pd.DataFrame(best_model_perfs).transpose(), pd.DataFrame(ci).transpose(), pd.DataFrame(error).transpose()
 
 
 def get_time_per_method(nav_file):
@@ -122,11 +158,8 @@ def get_effectiveness_of_best_model(ps_dict, fs, in_sample):
     effectiveness_key = 'effectiveness' if in_sample else 'hold_out_effectiveness'
     method_mger = PseudoSamplesMger(ps_dict, 'roc_auc', fs=fs)
     best_model, best_k = method_mger.get_best_model()
-    conf_intervals = [round(x,2)for x in best_model['confidence_intervals']]
-    output_subpart1 = str(round(best_model[effectiveness_key], 3))
-    output_subpart2 = '' if not in_sample else '\n' + str(conf_intervals)
-    output = output_subpart1 + output_subpart2
-    return output
+    conf_intervals = [round(x, 2) for x in best_model['confidence_intervals']]
+    return round(best_model[effectiveness_key], 3), conf_intervals
 
 
 def build_baseline_models():
@@ -224,14 +257,16 @@ def test_baseline_explanations_noise():
         print(dname + ' ' + str(real_dims) + '-d')
         dataset_names.append(dname + ' ' + str(real_dims) + '-d')
         ps_mger = PseudoSamplesMger(nav_file[FileKeys.navigator_pseudo_samples_key], 'roc_auc', fs=True)
-        train_data = Dataset(ps_mger.get_info_field_of_k(0, FileKeys.navigator_pseudo_samples_data_path), anomaly_col, subspace_col)
+        train_data = Dataset(ps_mger.get_info_field_of_k(0, FileKeys.navigator_pseudo_samples_data_path), anomaly_col,
+                             subspace_col)
         train_data_noise = add_noise_to_data(train_data)
         explanation_methods = ExplanationMethods(train_data)
         explanation_methods_noise = ExplanationMethods(train_data_noise)
         micencova_expl = get_topk_features_global_expl(explanation_methods.micencova_explanation, 10)
         micencova_expl_noise = get_topk_features_global_expl(explanation_methods_noise.micencova_explanation, 10)
         print('Noisy explanation', micencova_expl_noise)
-        print(len(set(micencova_expl).intersection(micencova_expl_noise)) / len(set(micencova_expl).union(micencova_expl_noise)))
+        print(len(set(micencova_expl).intersection(micencova_expl_noise)) / len(
+            set(micencova_expl).union(micencova_expl_noise)))
 
 
 def add_noise_to_data(dataset):
@@ -255,4 +290,3 @@ if __name__ == '__main__':
         build_baseline_models()
     else:
         compare_models()
-
