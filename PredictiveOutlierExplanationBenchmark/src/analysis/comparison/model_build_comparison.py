@@ -34,11 +34,11 @@ build_models = False  # compare the built models
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
-# conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
+conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
-conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
+# conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
 
 
 def compare_models():
@@ -93,7 +93,7 @@ def plot_databframe_as_barplot(df_in, df_out, error_in):
     df_in.index = ['$' + x + '$' for x in df_in.index]
     df_out.index = ['$' + x + '$' for x in df_out.index]
     fig, axes = plt.subplots(figsize=(20,7), nrows=1, ncols=2)
-    df_in.transpose().plot(ax=axes[0], kind='bar', zorder=3, rot=0, yerr=errorbars, capsize=5, grid=True, color=colors)
+    df_in.transpose().plot(ax=axes[0], kind='bar', zorder=3, rot=0, yerr=errorbars, capsize=5, grid=True, legend=None, color=colors)
     df_out.transpose().plot(ax=axes[1], kind='bar', zorder=3, rot=0, grid=True, legend=None)
     axes[0].legend(leg_handles_arr, loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.3), fontsize=18)
     axes[0].set_yticks(np.arange(0, 1.1, .1))
