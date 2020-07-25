@@ -23,7 +23,11 @@ class PredictivePipeline:
     def __init__(self, save_dir, original_dataset, oversampling_method, dataset_dims, detector=None):
         self.save_dir = save_dir
         self.original_dataset = original_dataset
-        self.dataset_dims = dataset_dims
+        if dataset_dims is None:
+            assert DatasetConfig.get_subspace_column_name() is None
+            self.dataset_dims = 4 * original_dataset.get_X().shape[1]
+        else:
+            self.dataset_dims = dataset_dims
         if self.original_dataset.get_X().shape[1] > original_dataset.get_X().shape[1]:
             print('Noise added', original_dataset.get_X().shape[1], 'dimensions ->', self.original_dataset.get_X().shape[1])
         self.oversampling_method = oversampling_method
