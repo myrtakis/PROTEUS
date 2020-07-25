@@ -28,16 +28,18 @@ def convert_mat_to_csv(path):
     path = path.replace('mat', 'csv')
     df = pd.DataFrame(csv, columns=vars)
     df = preprocess(df, anomaly_column)
-    df.to_csv(path, header=False, index=False)
+    df.to_csv(path, index=False)
     return df
 
 
 def preprocess(df, target_column, subspace_column=None):
     df = remove_nan_columns(df, target_column)
+    df = remove_nan_rows(df)
     df = remove_features_of_single_value(df, target_column)
     df = remove_duplicates(df)
     df = df.apply(pd.to_numeric)
     df = standarization(df, target_column, subspace_column)
+    assert not df.isnull().values.any()
     return df
 
 
@@ -64,19 +66,25 @@ def standarization(df, target_col_name, subspace_col_name=None):
     else:
         ground_truth = df.loc[:, [target_col_name]]
     X_scaled = standar.fit_transform(X.values)
-    X = pd.DataFrame(X_scaled, columns=X.columns)
     print('Dataframe standarized using Z-score')
-    return pd.concat([X, ground_truth], axis=1)
+    return pd.DataFrame(np.concatenate((X_scaled, ground_truth.values), axis=1), columns=df.columns)
 
 
 def remove_nan_columns(df, target_column):
     y = df[target_column]
     df = df.drop(columns=[target_column])
     nan_cols = df.columns[df.isna().any()].tolist()
-    print(len(nan_cols), 'contained NaN and removed')
+    print(len(nan_cols), 'columns contained NaN and removed')
     if len(nan_cols) > 0:
         df = df.drop(columns=nan_cols)
     return pd.concat([df, y], axis=1)
+
+
+def remove_nan_rows(df):
+    old_row_num = df.shape[0]
+    df = df.dropna()
+    print(old_row_num - df.shape[0], 'rows contained NaN and removed')
+    return df.dropna()
 
 
 def remove_features_of_single_value(df, target_column):
@@ -92,6 +100,6 @@ def remove_features_of_single_value(df, target_column):
 
 def remove_duplicates(df):
     old_rows = df.shape[0]
-    df = df.drop_duplicates()
+    df = df.drop_duplicates(keep='last')
     print(old_rows - df.shape[0], 'rows were duplicated and removed')
     return df
