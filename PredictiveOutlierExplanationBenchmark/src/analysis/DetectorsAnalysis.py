@@ -83,11 +83,22 @@ class DetectorAnalysis:
 
     def __detectors_perfs_real_data(self):
         det_perfs = {}
+        import os
         for nav_file in self.nav_files:
             detectors_info_file = nav_file[FileKeys.navigator_detector_info_path]
+            original_dataset_df = pd.read_csv(nav_file[FileKeys.navigator_original_dataset_path])
+            data_name = os.path.basename(nav_file[FileKeys.navigator_original_dataset_path])
+            outliers = np.where(original_dataset_df['is_anomaly'] == 1)[0]
+            topk = len(outliers)
+            with open(nav_file[FileKeys.navigator_train_hold_out_inds]) as jf:
+                train_inds = np.array(json.load(jf)['training_inds'])
+                outliers = set(outliers).intersection()
             with open(detectors_info_file) as json_file:
                 for det, data in json.load(json_file).items():
-                    det_perfs[det] = data['effectiveness'][self.metric_id]
+                    output = str(round(data['effectiveness'][self.metric_id]))
+                    inds_topk = train_inds[np.argsort(data['scores_in_train'])[::-1][:int(topk)]]
+                    output += ' ' + str(len(outliers.intersection(inds_topk))) + '/' + str(len(outliers))
+                    det_perfs[data_name] = output
         return det_perfs
 
     def __compute_rel_fratio(self, original_dataset_path, dim):

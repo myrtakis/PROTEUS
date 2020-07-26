@@ -20,12 +20,14 @@ class PredictivePipeline:
 
     ]
 
+    __NOISE_TO_REAL_DATA_FACTOR = None
+
     def __init__(self, save_dir, original_dataset, oversampling_method, dataset_dims, detector=None):
         self.save_dir = save_dir
         self.original_dataset = original_dataset
-        if dataset_dims is None:
+        if dataset_dims is None and PredictivePipeline.__NOISE_TO_REAL_DATA_FACTOR is not None:
             assert DatasetConfig.get_subspace_column_name() is None
-            self.dataset_dims = 4 * original_dataset.get_X().shape[1]
+            self.dataset_dims = PredictivePipeline.__NOISE_TO_REAL_DATA_FACTOR * original_dataset.get_X().shape[1]
         else:
             self.dataset_dims = dataset_dims
         if self.original_dataset.get_X().shape[1] > original_dataset.get_X().shape[1]:
@@ -47,12 +49,14 @@ class PredictivePipeline:
         test_data_with_detected_outliers = self.__generate_test_dataset(test_data_labels, original_dataset_test)
         pseudo_samples_array = SettingsConfig.get_pseudo_samples_array()
         datasets_for_cv = {}
+        print('Oversampling')
         if pseudo_samples_array is not None:
             assert SettingsConfig.is_classification_task(), "Pseudo samples are allowed only in classification task"
             datasets_for_cv.update(helper_functions.add_datasets_oversampling(self.oversampling_method,
                                                                               train_data_with_detected_outliers,
                                                                               detectors_info['best'],
                                                                               threshold, pseudo_samples_array))
+        print('Adding noise to data')
         datasets_for_cv = helper_functions.add_noise_to_train_datasets(datasets_for_cv, self.dataset_dims)
         train_data_with_detected_outliers = helper_functions.add_noise_to_data(train_data_with_detected_outliers,
                                                                               self.dataset_dims)

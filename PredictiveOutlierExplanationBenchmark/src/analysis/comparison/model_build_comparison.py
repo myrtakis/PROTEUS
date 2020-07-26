@@ -34,9 +34,9 @@ build_models = False  # compare the built models
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
-conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
+# conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 
-# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
+conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
 
@@ -54,7 +54,8 @@ def compare_models():
         real_dims = dim - 1 - (conf['type'] == 'synthetic')
         dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] != 'real')
         print(dname + ' ' + str(real_dims) + 'd')
-        dataset_names.append(dname + ' ' + str(real_dims) + 'd')
+        rel_fratio = '(' + str(int(round((dim-5)/dim, 2) * 100)) + '%)' if conf['type'] != 'real' else ''
+        dataset_names.append(dname + ' ' + str(real_dims) + 'd ' + rel_fratio)
         # time_df = pd.concat([time_df, get_time_per_method(nav_file)], axis=1)
         best_models_perf_in_sample_curr, ci_in_sample_curr, err_in_sample_curr = get_best_models_perf_per_method(
             nav_file, True)
@@ -75,11 +76,12 @@ def compare_models():
 def plot_databframe_as_barplot(df_in, df_out, error_in):
     assert not any(df_in.index == df_out.index) is False
     leg_handles_dict = {
-        'PROTEAN_{full}': ('tab:blue', '$PROTEAN_{full}$'),
-        'PROTEAN_{fs}': ('tab:orange', '$PROTEAN_{fs}$'),
-        'PROTEAN_{micencova}': ('tab:green', '$PROTEAN_{micencova}$'),
-        'PROTEAN_{shap}': ('tab:red', '$PROTEAN_{shap}$'),
-        'PROTEAN_{loda}': ('tab:purple', '$PROTEAN_{loda}$'),
+        'PROTEUS_{full}': ('tab:blue', '$PROTEUS_{full}$'),
+        'PROTEUS_{fs}': ('tab:orange', '$PROTEUS_{fs}$'),
+        'PROTEUS_{ca-lasso}': ('tab:green', '$PROTEUS_{ca-lasso}$'),
+        'PROTEUS_{shap}': ('tab:red', '$PROTEUS_{shap}$'),
+        'PROTEUS_{loda}': ('tab:purple', '$PROTEUS_{loda}$'),
+        'PROTEUS_{random}': ('cyan', '$PROTEUS_{random}$')
     }
     leg_handles_arr = []
     colors = []
@@ -93,13 +95,14 @@ def plot_databframe_as_barplot(df_in, df_out, error_in):
     df_in.index = ['$' + x + '$' for x in df_in.index]
     df_out.index = ['$' + x + '$' for x in df_out.index]
     fig, axes = plt.subplots(figsize=(20,7), nrows=1, ncols=2)
-    df_in.transpose().plot(ax=axes[0], kind='bar', zorder=3, rot=0, yerr=errorbars, capsize=5, grid=True, legend=None, color=colors)
-    df_out.transpose().plot(ax=axes[1], kind='bar', zorder=3, rot=0, grid=True, legend=None)
+    rotation = 0 if conf['type'] == 'real' else 25
+    df_in.transpose().plot(ax=axes[0], kind='bar', zorder=3, rot=rotation, yerr=errorbars, capsize=5, grid=True, legend=None, color=colors)
+    df_out.transpose().plot(ax=axes[1], kind='bar', zorder=3, rot=rotation, grid=True, legend=None, color=colors)
     axes[0].legend(leg_handles_arr, loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.3), fontsize=18)
     axes[0].set_yticks(np.arange(0, 1.1, .1))
     axes[1].set_yticks(np.arange(0, 1.1, .1))
-    axes[0].tick_params(labelsize=14)
-    axes[1].tick_params(labelsize=14)
+    axes[0].tick_params(labelsize=18)
+    axes[1].tick_params(labelsize=18)
     plt.subplots_adjust(hspace=0.65, wspace=0.65)
     plt.tight_layout()
     output_folder = Path('..', 'figures', 'results')
@@ -136,15 +139,17 @@ def get_best_models_perf_per_method(nav_file, in_sample):
     ci = {}
     error = {}
     protean_ps_dict = nav_file[FileKeys.navigator_pseudo_samples_key]
-    best_model_perfs['PROTEAN_{full}'], ci['PROTEAN_{full}'] = get_effectiveness_of_best_model(protean_ps_dict, False,
+    best_model_perfs['PROTEUS_{full}'], ci['PROTEUS_{full}'] = get_effectiveness_of_best_model(protean_ps_dict, False,
                                                                                                in_sample)
-    best_model_perfs['PROTEAN_{fs}'], ci['PROTEAN_{fs}'] = get_effectiveness_of_best_model(protean_ps_dict, True,
+    best_model_perfs['PROTEUS_{fs}'], ci['PROTEUS_{fs}'] = get_effectiveness_of_best_model(protean_ps_dict, True,
                                                                                            in_sample)
     baselines_dir = nav_file[FileKeys.navigator_baselines_key]
     for method, data in baselines_dir.items():
-        if method == 'random':
-            continue
-        method_name = 'PROTEAN_{' + method + '}'
+        # if method == 'random':
+        #     continue
+        if method == 'micencova':
+            method = 'ca-lasso'
+        method_name = 'PROTEUS_{' + method + '}'
         best_model_perfs[method_name], ci[method_name] = get_effectiveness_of_best_model(data, True, in_sample)
     for m in ci.keys():
         error[m] = [np.abs(ci[m][0] - best_model_perfs[m]), np.abs(ci[m][1] - best_model_perfs[m])]
@@ -164,7 +169,7 @@ def get_time_per_method(nav_file):
         for method, data in explanations_dict.items():
             if method == 'random':
                 continue
-            method_name = 'PROTEAN_{' + method + '}'
+            method_name = 'PROTEUS_{' + method + '}'
             runtime[method_name] = round(data['time'], 2)
     return pd.DataFrame(runtime.values(), index=runtime.keys())
 

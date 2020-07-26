@@ -72,6 +72,8 @@ def get_best_model_features_original_data(original_data_results_path, metric_id)
 
 
 def add_noise_to_data(dataset, out_dims=None):
+    if out_dims is None:
+        return dataset
     np.random.seed(0)
     if out_dims is not None:
         out_dims_final = np.abs(out_dims - dataset.get_X().shape[1])
@@ -97,6 +99,8 @@ def add_datasets_oversampling(oversampling_method, dataset_detected_outliers, de
 
 
 def add_noise_to_train_datasets(datasets, out_dims):
+    if out_dims is None:
+        return datasets
     for ps_num, dataset in datasets.items():
         tmp_dataset = add_noise_to_data(dataset, out_dims)
         if dataset.contains_pseudo_samples():

@@ -23,14 +23,14 @@ pipeline = 'results_predictive'
 MAX_FEATURES = 10
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
-conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
+# conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
 
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 
-# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
+conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
 
