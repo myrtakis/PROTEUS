@@ -29,3 +29,19 @@ spectrometer_loda:
 kc1_top5_loda:
 	tmux new-session -d -s "kc1_top5_loda"
 	tmux send-keys -t kc1_top5_loda "cd ../../src && conda activate MxM && python -W ignore main.py -d loda -c ../configurations/classification/real_datasets/kc1_top5_006_config.json" ENTER
+
+lympho_loda:
+	tmux new-session -d -s "lympho_loda"
+	tmux send-keys -t lympho_loda "cd ../../src && conda activate MxM && python -W ignore main.py -d loda -c ../configurations/classification/real_datasets/lympho_config.json" ENTER
+
+ionosphere_loda:
+	tmux new-session -d -s "ionosphere_loda"
+	tmux send-keys -t ionosphere_loda "cd ../../src && conda activate MxM && python -W ignore main.py -d loda -c ../configurations/classification/real_datasets/ionosphere_config.json" ENTER
+
+wbc_loda:
+	tmux new-session -d -s "wbc_loda"
+	tmux send-keys -t wbc_loda "cd ../../src && conda activate MxM && python -W ignore main.py -d loda -c ../configurations/classification/real_datasets/wbc_config.json" ENTER
+
+wine_loda:
+	tmux new-session -d -s "wine_loda"
+	tmux send-keys -t wine_loda "cd ../../src && conda activate MxM && python -W ignore main.py -d loda -c ../configurations/classification/real_datasets/wine_config.json" ENTER

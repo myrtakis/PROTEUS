@@ -29,3 +29,19 @@ spectrometer_iforest:
 kc1_top5_iforest:
 	tmux new-session -d -s "kc1_top5_iforest"
 	tmux send-keys -t kc1_top5_iforest "cd ../../src && conda activate MxM && python -W ignore main.py -d iforest -c ../configurations/classification/real_datasets/kc1_top5_006_config.json" ENTER
+
+lympho_iforest:
+	tmux new-session -d -s "lympho_iforest"
+	tmux send-keys -t lympho_iforest "cd ../../src && conda activate MxM && python -W ignore main.py -d iforest -c ../configurations/classification/real_datasets/lympho_config.json" ENTER
+
+ionosphere_iforest:
+	tmux new-session -d -s "ionosphere_iforest"
+	tmux send-keys -t ionosphere_iforest "cd ../../src && conda activate MxM && python -W ignore main.py -d iforest -c ../configurations/classification/real_datasets/ionosphere_config.json" ENTER
+
+wbc_iforest:
+	tmux new-session -d -s "wbc_iforest"
+	tmux send-keys -t wbc_iforest "cd ../../src && conda activate MxM && python -W ignore main.py -d iforest -c ../configurations/classification/real_datasets/wbc_config.json" ENTER
+
+wine_iforest:
+	tmux new-session -d -s "wine_iforest"
+	tmux send-keys -t wine_iforest "cd ../../src && conda activate MxM && python -W ignore main.py -d iforest -c ../configurations/classification/real_datasets/wine_config.json" ENTER
