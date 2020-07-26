@@ -41,7 +41,7 @@ def select_detector(detectors_arr, dataset, detector_id_to_select, threshold_per
     desc_ordered_indices = np.argsort(selected_detector.get_scores_in_train())[::-1]
     topk_points = floor(threshold_percentage * dataset.get_X().shape[0])
     true_outliers = set(desc_ordered_indices[:topk_points]).intersection(dataset.get_outlier_indices())
-    print('True outliers found for threshold', SettingsConfig.get_top_k_points_to_explain(), ':', true_outliers)
+    print('True outliers found for the points in top', topk_points, ':', true_outliers)
     detectors_info['best'] = selected_detector
     return detectors_info
 
