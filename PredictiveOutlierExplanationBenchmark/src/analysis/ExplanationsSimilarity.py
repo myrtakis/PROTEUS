@@ -17,10 +17,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import os
+from pipeline.automl.automl_constants import MAX_FEATURES
 
 pipeline = 'results_predictive'
-MAX_FEATURES = 10
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}

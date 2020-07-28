@@ -22,8 +22,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+from pipeline.automl.automl_constants import MAX_FEATURES
 
-MAX_FEATURES = 10
+
 pipeline = 'results_predictive'
 holdout = True
 build_models = False  # compare the built models
@@ -36,8 +37,8 @@ build_models = False  # compare the built models
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 
-conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
-# conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
+# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
+conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
 
 
@@ -51,6 +52,8 @@ def compare_models():
     time_df = pd.DataFrame()
     dataset_names = []
     for dim, nav_file in nav_files_json.items():
+        if not (dim == 31 or dim == 34):
+            continue
         real_dims = dim - 1 - (conf['type'] == 'synthetic')
         dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] != 'real')
         print(dname + ' ' + str(real_dims) + 'd')
@@ -96,6 +99,7 @@ def plot_databframe_as_barplot(df_in, df_out, error_in):
     df_out.index = ['$' + x + '$' for x in df_out.index]
     fig, axes = plt.subplots(figsize=(20,7), nrows=1, ncols=2)
     rotation = 0 if conf['type'] == 'real' else 25
+    rotation = 25
     df_in.transpose().plot(ax=axes[0], kind='bar', zorder=3, rot=rotation, yerr=errorbars, capsize=5, grid=True, legend=None, color=colors)
     df_out.transpose().plot(ax=axes[1], kind='bar', zorder=3, rot=rotation, grid=True, legend=None, color=colors)
     axes[0].legend(leg_handles_arr, loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.3), fontsize=18)

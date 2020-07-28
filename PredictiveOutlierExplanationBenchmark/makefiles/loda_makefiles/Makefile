@@ -45,3 +45,11 @@ wbc_loda:
 wine_loda:
 	tmux new-session -d -s "wine_loda"
 	tmux send-keys -t wine_loda "cd ../../src && conda activate MxM && python -W ignore main.py -d loda -c ../configurations/classification/real_datasets/wine_config.json" ENTER
+
+gisette_loda:
+	tmux new-session -d -s "gisette_loda"
+	tmux send-keys -t gisettee_loda "cd ../../src && conda activate MxM && python -W ignore main.py -d loda -c ../configurations/classification/real_datasets/gisette_config.json" ENTER
+
+kidney_loda:
+	tmux new-session -d -s "kidney_loda"
+	tmux send-keys -t kidney_loda "cd ../../src && conda activate MxM && python -W ignore main.py -d loda -c ../configurations/classification/real_datasets/AP_Endometrium_Kidney019_config.json" ENTER

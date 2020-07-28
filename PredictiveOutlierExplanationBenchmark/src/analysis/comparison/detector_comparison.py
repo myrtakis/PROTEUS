@@ -10,8 +10,8 @@ from sklearn.metrics import roc_auc_score
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from pipeline.automl.automl_constants import MAX_FEATURES
 
-MAX_FEATURES = 10
 
 # conf = {'path': '../results_normal/lof', 'detector': 'lof', 'holdout': False, 'type': 'synthetic'}
 # conf = {'path': '../results_normal/iforest', 'detector': 'iforest', 'holdout': False, 'type': 'synthetic'}

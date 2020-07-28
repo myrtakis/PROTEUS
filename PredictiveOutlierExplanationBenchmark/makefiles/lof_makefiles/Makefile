@@ -45,3 +45,11 @@ wbc_lof:
 wine_lof:
 	tmux new-session -d -s "wine_lof"
 	tmux send-keys -t wine_lof "cd ../../src && conda activate MxM && python -W ignore main.py -d lof -c ../configurations/classification/real_datasets/wine_config.json" ENTER
+
+gisette_lof:
+	tmux new-session -d -s "gisette_lof"
+	tmux send-keys -t gisette_lof "cd ../../src && conda activate MxM && python -W ignore main.py -d lof -c ../configurations/classification/real_datasets/gisette_config.json" ENTER
+
+kidney_lof:
+	tmux new-session -d -s "kidney_lof"
+	tmux send-keys -t kidney_lof "cd ../../src && conda activate MxM && python -W ignore main.py -d lof -c ../configurations/classification/real_datasets/AP_Endometrium_Kidney019_config.json" ENTER

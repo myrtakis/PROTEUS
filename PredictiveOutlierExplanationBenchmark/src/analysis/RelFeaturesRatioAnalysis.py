@@ -15,21 +15,21 @@ from utils.pseudo_samples import PseudoSamplesMger
 import pandas as pd
 import json
 import numpy as np
+from pipeline.automl.automl_constants import MAX_FEATURES
 
-MAX_FEATURES = 10
 pipeline = 'results_predictive'
 
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
 
-# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
+conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
-conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
+# conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
 
 
 def analyze():
@@ -40,7 +40,8 @@ def analyze():
 
 def analysis_per_nav_file(nav_files):
     dataset_names = []
-    feature_perf = pd.DataFrame()
+    feature_perf_prec = pd.DataFrame()
+    feature_perf_recall = pd.DataFrame()
     for dim, nav_file in nav_files.items():
         ConfigMger.setup_configs(nav_file[FileKeys.navigator_conf_path])
         real_dims = dim - 1 - (conf['type'] == 'synthetic')
@@ -49,23 +50,25 @@ def analysis_per_nav_file(nav_files):
         dataset_names.append(dname + ' ' + str(real_dims) + '-d')
         methods_features = get_selected_features_per_method(nav_file)
         rel_features = get_relevant_features(nav_file)
-        metrics = calculate_feature_metrics(methods_features, rel_features)
-        feature_perf = pd.concat([feature_perf, metrics], axis=1)
-    feature_perf.columns = dataset_names
-    feature_perf.to_csv('features.csv')
+        recall, prec = calculate_feature_metrics(methods_features, rel_features)
+        feature_perf_prec = pd.concat([feature_perf_prec, prec], axis=1)
+        feature_perf_recall = pd.concat([feature_perf_recall, recall], axis=1)
+    feature_perf_prec.columns = dataset_names
+    feature_perf_recall.columns = dataset_names
+    pd.concat([feature_perf_recall,feature_perf_prec], axis=1).to_latex('abnormalfeatures.tex', index=True, header=True)
 
 
 def get_selected_features_per_method(nav_file):
     methods_sel_features = {}
     protean_psmger = PseudoSamplesMger(nav_file[FileKeys.navigator_pseudo_samples_key], 'roc_auc', fs=True)
     best_model, best_k = protean_psmger.get_best_model()
-    methods_sel_features['$\mathbf{PROTEAN_{fs}}$'] = best_model['feature_selection']['features']
+    methods_sel_features['PROTEUS$_{fs}$'] = best_model['feature_selection']['features']
     methods_explanations_file = Path(nav_file[FileKeys.navigator_baselines_dir_key], FileNames.baselines_explanations_fname)
     with open(methods_explanations_file) as json_file:
         explanations = json.load(json_file)
         for method, data in explanations.items():
             features_sorted = np.argsort(np.array(data['global_explanation']))[::-1]
-            method_name = '$\mathbf{PROTEAN_{' + method + '}}$'
+            method_name = '$PROTEUS$_{' + method + '}$'
             methods_sel_features[method_name] = features_sorted[:MAX_FEATURES]
     return methods_sel_features
 
@@ -81,13 +84,14 @@ def get_relevant_features(nav_file):
 
 
 def calculate_feature_metrics(methods_features, rel_features):
-    method_perfs = {}
+    methods_precision = {}
+    methods_recall = {}
     for method, sel_features in methods_features.items():
-        if conf['type'] == 'real':
-            method_perfs[method] = features_precision(sel_features, rel_features)
-        else:
-            method_perfs[method] = features_recall(sel_features, rel_features)
-    return pd.DataFrame(method_perfs.values(), index=method_perfs.keys())
+        methods_precision[method] = features_precision(sel_features, rel_features)
+        methods_recall[method] = features_recall(sel_features, rel_features)
+    methods_recall_as_df = pd.DataFrame(methods_recall.values(), index=methods_recall.keys())
+    methods_precision_as_df = pd.DataFrame(methods_precision.values(), index=methods_precision.keys())
+    return methods_recall_as_df, methods_precision_as_df
 
 
 def features_precision(selected_features, optimal_features):

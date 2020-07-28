@@ -45,3 +45,11 @@ wbc_iforest:
 wine_iforest:
 	tmux new-session -d -s "wine_iforest"
 	tmux send-keys -t wine_iforest "cd ../../src && conda activate MxM && python -W ignore main.py -d iforest -c ../configurations/classification/real_datasets/wine_config.json" ENTER
+
+gisette_iforest:
+	tmux new-session -d -s "gisette_iforest"
+	tmux send-keys -t gisette_iforest "cd ../../src && conda activate MxM && python -W ignore main.py -d iforest -c ../configurations/classification/real_datasets/gisette_config.json" ENTER
+
+kidney_iforest:
+	tmux new-session -d -s "kidney_iforest"
+	tmux send-keys -t kidney_iforest "cd ../../src && conda activate MxM && python -W ignore main.py -d iforest -c ../configurations/classification/real_datasets/AP_Endometrium_Kidney019_config.json" ENTER
