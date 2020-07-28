@@ -3,12 +3,13 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from arff2pandas import a2p
+from pathlib import Path
 
 
 anomaly_column = 'is_anomaly'
 
 
-def convert_arff_to_csv(path, split_cols_to_char=None):
+def convert_arff_to_csv(path, split_cols_to_char=None, savedir=None):
     with open(path) as f:
         df = a2p.load(f)
     if split_cols_to_char is not None:
@@ -16,10 +17,15 @@ def convert_arff_to_csv(path, split_cols_to_char=None):
         cols[-1] = anomaly_column
         df = df.set_axis(cols, axis=1, inplace=False)
     df = preprocess(df, anomaly_column)
+    if savedir is not None:
+        savedir = Path(savedir, Path(path).stem)
+    else:
+        savedir = path
+    df.to_csv(savedir, index=False)
     return df
 
 
-def convert_mat_to_csv(path):
+def convert_mat_to_csv(path, savedir=None):
     mat = loadmat(path)
     vars = np.arange(mat['X'].shape[1]+1)
     vars = ['Var' + str(v) for v in vars]
@@ -28,7 +34,29 @@ def convert_mat_to_csv(path):
     path = path.replace('mat', 'csv')
     df = pd.DataFrame(csv, columns=vars)
     df = preprocess(df, anomaly_column)
-    df.to_csv(path, index=False)
+    if savedir is not None:
+        savedir = Path(savedir, Path(path).stem)
+    else:
+        savedir = path
+    df.to_csv(savedir, index=False)
+    return df
+
+
+def unify_format_of_df(path, savedir=None):
+    df = pd.read_csv(path)
+    cols = list(df.columns)
+    cols[-1] = anomaly_column
+    df.columns = cols
+    class_counts = df[anomaly_column].value_counts()
+    if 0 not in list(class_counts) and 1 not in list(class_counts):
+        df[anomaly_column] = df[anomaly_column].replace([class_counts.index[np.argmax(list(class_counts))]], 0)
+        df[anomaly_column] = df[anomaly_column].replace([class_counts.index[np.argmin(list(class_counts))]], 1)
+    df = preprocess(df, anomaly_column)
+    if savedir is not None:
+        savedir = Path(savedir, Path(path).stem)
+    else:
+        savedir = path
+    df.to_csv(savedir, index=False)
     return df
 
 
