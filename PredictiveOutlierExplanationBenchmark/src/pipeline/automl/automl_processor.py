@@ -11,6 +11,7 @@ from utils.shared_names import FileNames
 from pipeline.ModelConfigsGen import generate_param_combs
 from models.FeatureSelection import FeatureSelection
 import pipeline.automl.automl_constants as automlconsts
+from utils.ResultsWriter import ResultsWriter
 
 
 class AutoML:
@@ -20,18 +21,21 @@ class AutoML:
     def __init__(self, output_dir):
         self.__output_dir = output_dir
 
-    def run_with_explanation(self, reps_fold_inds, dataset, explanation):
+    def run_with_explanation(self, reps_fold_inds, dataset, explanation, explanation_size):
         print('Running explanation', explanation)
+        output_dir = ResultsWriter.add_explanation_size_to_path(self.__output_dir, explanation_size)
         explanation = list(map(int, explanation))
+        assert len(explanation) == explanation_size
         fsel = FeatureSelection({'id': 'explanation', 'params': None})
         fsel.set_features(explanation)
+        fsel.set_time(.0)
         selected_features = dict.fromkeys(reps_fold_inds.keys())
         for k in selected_features.keys():
             selected_features[k] = dict.fromkeys(reps_fold_inds[k].keys(), [fsel])
         _, classifiers_conf_combs = generate_param_combs()
         best_model_trained, predictions_ordered = \
-            CV_Classification(False, classifiers_conf_combs, self.__output_dir, True). \
-                run(reps_fold_inds, selected_features, dataset)
+            CV_Classification(False, classifiers_conf_combs, output_dir, True). \
+                run(reps_fold_inds, selected_features, dataset, explanation_size)
         best_model_trained = AutoML.__remove_bias(predictions_ordered, dataset.get_Y(), best_model_trained)
         print()
         return best_model_trained
@@ -41,22 +45,28 @@ class AutoML:
         assert kfolds > 1, kfolds
         if AutoML.__reps_fold_inds is None:
             AutoML.__reps_fold_inds = self.__create_folds_in_reps(kfolds, dataset, True)
+        best_model_trained_per_expl_size = {}
         if explanation is not None:
             explanation_features_sorted = np.argsort(explanation)[::-1]
-            max_features = len(explanation_features_sorted) if automlconsts.SELECT_TOPK_FEATURES is False else automlconsts.MAX_FEATURES
-            explanation_features_sorted = list(explanation_features_sorted[0:max_features])
-            best_model_trained = self.run_with_explanation(AutoML.__reps_fold_inds, dataset, explanation_features_sorted)
+            for expl_size in automlconsts.EXPLANATION_SIZE:
+                topk_explanation_features = list(explanation_features_sorted[0:expl_size])
+                best_model_trained = self.run_with_explanation(AutoML.__reps_fold_inds, dataset,
+                                                               topk_explanation_features, expl_size)
+                best_model_trained_per_expl_size[expl_size] = best_model_trained
         else:
             print('------\nRunning PROTEAN pipeline')
             fsel_conf_combs, classifiers_conf_combs = generate_param_combs()
             selected_features = CV_Fselection(knowledge_discovery, fsel_conf_combs, kfolds).\
                 run(AutoML.__reps_fold_inds, dataset)
-            best_model_trained, predictions_ordered = \
-                CV_Classification(knowledge_discovery, classifiers_conf_combs, self.__output_dir, False).\
-                    run(AutoML.__reps_fold_inds, selected_features, dataset)
-            best_model_trained = AutoML.__remove_bias(predictions_ordered, dataset.get_Y(), best_model_trained)
+            for expl_size, sel_features in selected_features.items():
+                output_dir = ResultsWriter.add_explanation_size_to_path(self.__output_dir, expl_size)
+                best_model_trained, predictions_ordered = \
+                    CV_Classification(knowledge_discovery, classifiers_conf_combs, output_dir, False).\
+                        run(AutoML.__reps_fold_inds, sel_features, dataset, expl_size)
+                best_model_trained = AutoML.__remove_bias(predictions_ordered, dataset.get_Y(), best_model_trained)
+                best_model_trained_per_expl_size[expl_size] = best_model_trained
             print()
-        return best_model_trained
+        return best_model_trained_per_expl_size
 
     @staticmethod
     def __get_rarest_class_count(dataset):

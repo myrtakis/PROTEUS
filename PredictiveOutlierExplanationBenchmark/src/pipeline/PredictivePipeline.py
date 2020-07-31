@@ -20,14 +20,15 @@ class PredictivePipeline:
 
     ]
 
-    __NOISE_TO_REAL_DATA_FACTOR = None
-
-    def __init__(self, save_dir, original_dataset, oversampling_method, dataset_dims, detector=None):
+    def __init__(self, save_dir, original_dataset, oversampling_method, dataset_dims, noise, detector=None):
         self.save_dir = save_dir
         self.original_dataset = original_dataset
-        if dataset_dims is None and PredictivePipeline.__NOISE_TO_REAL_DATA_FACTOR is not None:
+        self.noise = noise
+        if DatasetConfig.get_subspace_column_name() is not None:
+            self.noise = round(1 - (len(original_dataset.get_relevant_features()) / (dataset_dims-2)), 2)
+        if dataset_dims is None and noise != 0:
             assert DatasetConfig.get_subspace_column_name() is None
-            self.dataset_dims = PredictivePipeline.__NOISE_TO_REAL_DATA_FACTOR * original_dataset.get_X().shape[1]
+            self.dataset_dims = int(original_dataset.get_X().shape[1] / (1-noise))
         else:
             self.dataset_dims = dataset_dims
         if self.original_dataset.get_X().shape[1] > original_dataset.get_X().shape[1]:
@@ -72,7 +73,7 @@ class PredictivePipeline:
             explanation = PredictivePipeline.__detector_explanation(train_data_with_detected_outliers, detectors_info['best'])
             baseline_explanations[detectors_info['best'].get_id()] = explanation
 
-        ResultsWriter.setup_writer(self.protean_results_dir)
+        ResultsWriter.setup_writer(self.protean_results_dir, self.noise)
         ResultsWriter.write_train_hold_out_inds({'training_inds': train_inds.tolist(), 'holdout_inds': test_inds.tolist()})
         ResultsWriter.write_detector_info_file(detectors_info['best'])
         ResultsWriter.write_baselines_explanations(baseline_explanations, self.baselines_results_dir)
@@ -111,17 +112,19 @@ class PredictivePipeline:
         return detectors_info, test_data_labels
 
     @staticmethod
-    def __test_best_model_in_hold_out(best_model, test_data):
-        for key, data in best_model.items():
-            for m_id, conf in data.items():
-                fsel = conf.get_fsel()
-                clf = conf.get_clf()
-                X_new = test_data.get_X().iloc[:, fsel.get_features()]
-                predictions = clf.predict_proba(X_new)
-                perf = metrics.calculate_metric(test_data.get_Y(), predictions, m_id)
-                conf.set_hold_out_effectiveness(perf, m_id)
-                best_model[key][m_id] = conf
-        return best_model
+    def __test_best_model_in_hold_out(best_models_per_expl_size, test_data):
+        for expl_size, best_model in best_models_per_expl_size.items():
+            for key, data in best_model.items():
+                for m_id, conf in data.items():
+                    fsel = conf.get_fsel()
+                    clf = conf.get_clf()
+                    X_new = test_data.get_X().iloc[:, fsel.get_features()]
+                    predictions = clf.predict_proba(X_new)
+                    perf = metrics.calculate_metric(test_data.get_Y(), predictions, m_id)
+                    conf.set_hold_out_effectiveness(perf, m_id)
+                    best_model[key][m_id] = conf
+            best_models_per_expl_size[expl_size] = best_model
+        return best_models_per_expl_size
 
     def __train_test_inds(self):
         sss = StratifiedShuffleSplit(n_splits=1, test_size=PredictivePipeline.__HOLD_OUD_PERCENTAGE, random_state=0)
@@ -159,6 +162,7 @@ class PredictivePipeline:
                 continue
             else:
                 print('----\nBuilding model for method', method)
-            best_model = {'fs': AutoML(rw.get_final_baseline_dir(method)).run(train_dataset, False, global_expl)}
-            best_model = PredictivePipeline.__test_best_model_in_hold_out(best_model, test_dataset)
-            rw.write_baseline_results(best_model, method)
+            final_output_dir = ResultsWriter.add_noise_to_path(rw.get_final_baseline_dir(method))
+            best_model_per_expl_size = {'fs': AutoML(final_output_dir).run(train_dataset, False, global_expl)}
+            best_model_per_expl_size = PredictivePipeline.__test_best_model_in_hold_out(best_model_per_expl_size, test_dataset)
+            rw.write_baseline_results(best_model_per_expl_size, method)

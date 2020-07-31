@@ -13,6 +13,7 @@ class ResultsWriter:
     __navigator_file_dict = None
     __navigator_file_path = None
     __results_initial_dir = None
+    __noise = None
 
     def __init__(self, pseudo_samples):
         assert ResultsWriter.__base_dir is not None
@@ -25,34 +26,50 @@ class ResultsWriter:
         self.__update_pseudo_samples_dir(FileKeys.navigator_pseudo_sample_dir_key, self.__final_dir)
 
     def write_results(self, results, dataset_kind):
-        if dataset_kind == 'original':
-            original_data_res_path = Path(ResultsWriter.__base_dir, dataset_kind)
-            original_data_res_path.mkdir(parents=True, exist_ok=True)
-            output_dir = original_data_res_path
-            self.__update_and_flush_navigator_file(FileKeys.navigator_original_data_results, original_data_res_path)
-        else:
-            output_dir = self.__final_dir
+        # if dataset_kind == 'original':
+        #     original_data_res_path = Path(ResultsWriter.__base_dir, dataset_kind)
+        #     original_data_res_path.mkdir(parents=True, exist_ok=True)
+        #     output_dir = original_data_res_path
+        #     self.__update_and_flush_navigator_file(FileKeys.navigator_original_data_results, original_data_res_path)
         best_models_dict = ResultsWriter.__prepare_results(results)
-        with open(os.path.join(output_dir, FileNames.best_model_fname), 'w', encoding='utf-8') as f:
-            f.write(json.dumps(best_models_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
+        for expl_size, best_model in best_models_dict.items():
+            output_dir = ResultsWriter.add_explanation_size_to_path(self.__final_dir, expl_size)
+            ResultsWriter.write_info_file(output_dir, expl_size)
+            with open(os.path.join(output_dir, FileNames.best_model_fname), 'w', encoding='utf-8') as f:
+                f.write(json.dumps(best_models_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
 
-    def write_baseline_results(self, best_model, method_id):
-        best_model_to_write = {'fs': {}}
+    def write_baseline_results(self, best_model_per_expl_size, method_id):
         method_output_dir = self.get_final_baseline_dir(method_id)
-        for m_id, m_data in best_model['fs'].items():
-            best_model_to_write['fs'][m_id] = m_data.to_dict()
-        with open(os.path.join(method_output_dir, FileNames.best_model_fname), 'w', encoding='utf-8') as f:
-            f.write(json.dumps(best_model_to_write, indent=4, separators=(',', ': '), ensure_ascii=False))
+        for key, expl_data in best_model_per_expl_size.items():
+            best_model_to_write = {'fs': {}}
+            for expl_size, best_model in expl_data.items():
+                for m_id, m_data in best_model.items():
+                    best_model_to_write['fs'][m_id] = m_data.to_dict()
+                final_output_path = ResultsWriter.add_noise_to_path(method_output_dir)
+                final_output_path = ResultsWriter.add_explanation_size_to_path(final_output_path, expl_size)
+                ResultsWriter.write_info_file(final_output_path, expl_size)
+                with open(os.path.join(final_output_path, FileNames.best_model_fname), 'w', encoding='utf-8') as f:
+                    f.write(json.dumps(best_model_to_write, indent=4, separators=(',', ': '), ensure_ascii=False))
         self.__update_baselines_dict(method_id, {FileKeys.navigator_pseudo_sample_dir_key: method_output_dir,
                                                  FileKeys.navigator_pseudo_samples_num_key: self.__pseudo_samples})
 
     @staticmethod
+    def write_info_file(output_folder, expl_size):
+        info_file_cont = {FileKeys.info_file_explanation_size: expl_size,
+                          FileKeys.info_file_noise_level: ResultsWriter.__noise}
+        with open(os.path.join(output_folder, FileNames.info_file_fname), 'w', encoding='utf-8') as f:
+            f.write(json.dumps(info_file_cont, indent=4, separators=(',', ': '), ensure_ascii=False))
+
+    @staticmethod
     def __prepare_results(results):
         tmp_dict = {'no_fs': {}, 'fs': {}}
-        for k in tmp_dict.keys():
-            for m_id, m_data in results[k].items():
-                tmp_dict[k][m_id] = m_data.to_dict()
-        return tmp_dict
+        best_models_per_expanation = {}
+        for key, data in results.items():
+            for expl_size, best_model in data.items():
+                for m_id, m_data in best_model.items():
+                    tmp_dict[key][m_id] = m_data.to_dict()
+            best_models_per_expanation[expl_size] = tmp_dict
+        return best_models_per_expanation
 
     def write_dataset(self, dataset, dataset_kind):
         if dataset_kind == 'original':
@@ -100,7 +117,8 @@ class ResultsWriter:
         ResultsWriter.__update_and_flush_navigator_file(FileKeys.navigator_baselines_dir_key, ResultsWriter.__baselines_dir)
 
     @staticmethod
-    def setup_writer(results_dir):
+    def setup_writer(results_dir, noise):
+        ResultsWriter.__noise = noise
         ResultsWriter.__setup_base_dir(results_dir).mkdir(parents=True, exist_ok=True)
         ResultsWriter.__setup_navigator_file()
 
@@ -146,7 +164,7 @@ class ResultsWriter:
         ResultsWriter.flush_navigator_file()
 
     def __generate_final_dir(self):
-        self.__final_dir = os.path.join(ResultsWriter.__base_dir, self.__pseudo_samples_key)
+        self.__final_dir = os.path.join(ResultsWriter.__base_dir, self.__pseudo_samples_key, ResultsWriter.get_noise_as_name())
         Path(self.__final_dir).mkdir(parents=True, exist_ok=True)
 
     @staticmethod
@@ -196,3 +214,15 @@ class ResultsWriter:
         method_output_dir = Path(ResultsWriter.__baselines_dir, method_id, self.__pseudo_samples_key)
         method_output_dir.mkdir(parents=True, exist_ok=True)
         return method_output_dir
+
+    @staticmethod
+    def add_noise_to_path(path):
+        return Path(path, ResultsWriter.get_noise_as_name())
+
+    @staticmethod
+    def add_explanation_size_to_path(path, explanation_size):
+        return Path(path, 'expl_size_' + str(explanation_size))
+
+    @staticmethod
+    def get_noise_as_name():
+        return 'noise_' + str(ResultsWriter.__noise).replace('.', '')

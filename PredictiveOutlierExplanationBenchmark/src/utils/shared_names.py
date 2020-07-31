@@ -13,6 +13,7 @@ class FileNames:
     best_models_bench_fname = 'models_benchmark.json'
     best_model_fname = 'best_model.json'
     baselines_explanations_fname = 'baseline_explanations.json'
+    info_file_fname = 'info.json'
 
 
 class FileKeys:
@@ -30,4 +31,7 @@ class FileKeys:
     navigator_baseline = 'baselines'
     navigator_baselines_dir_key = 'baselines_dir'
     navigator_baselines_key = 'baselines'
+
+    info_file_noise_level = 'noise_level'
+    info_file_explanation_size = 'explanation_size'
 

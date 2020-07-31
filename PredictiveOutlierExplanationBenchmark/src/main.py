@@ -9,16 +9,19 @@ import numpy as np
 RUN_NORMAL_PIPELINE = False
 OVERSAMPLING_METHOD = 'random'
 
+NOISE_LEVEL = [0]
+
 
 def run_pipeline(config_file_path, detector, save_dir):
     ConfigMger.setup_configs(config_file_path)
     dataset_pd, original_dims = keep_relevant_features()
     original_dataset = Dataset(dataset_pd, DatasetConfig.get_anomaly_column_name(),
                                DatasetConfig.get_subspace_column_name())
-    if RUN_NORMAL_PIPELINE:
-        NormalPipeline(save_dir, original_dataset, detector).run()
-    else:
-        PredictivePipeline(save_dir, original_dataset, OVERSAMPLING_METHOD, original_dims, detector).run()
+    for noise in NOISE_LEVEL:
+        if RUN_NORMAL_PIPELINE:
+            NormalPipeline(save_dir, original_dataset, detector, noise).run()
+        else:
+            PredictivePipeline(save_dir, original_dataset, OVERSAMPLING_METHOD, original_dims, noise, detector).run()
 
 
 def keep_relevant_features():

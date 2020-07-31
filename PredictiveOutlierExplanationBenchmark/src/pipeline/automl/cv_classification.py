@@ -18,12 +18,12 @@ class CV_Classification:
         self.__knowledge_discovery = knowledge_discovery
         self.__is_explanation = is_explanation
 
-    def run(self, folds_inds_reps, fsel_objs, dataset):
+    def run(self, folds_inds_reps, fsel_objs, dataset, explanation_size):
         perfs_dict, predictions_ordered, confs_info = self.__repeated_cv(folds_inds_reps, fsel_objs, dataset)
         best_model_perfs = CV_Classification.__select_best_model_per_metric(perfs_dict)
         print('\nRun Classifiers: completed')
-        best_models_trained = self.__train_best_model_in_all_data(best_model_perfs, confs_info,
-                                                                  dataset.get_X(), dataset.get_Y())
+        best_models_trained = self.__train_best_model_in_all_data(best_model_perfs, confs_info, dataset.get_X(),
+                                                                  dataset.get_Y(), explanation_size)
         return best_models_trained, predictions_ordered
 
     def __repeated_cv(self, folds_inds_reps, fsel_objs, dataset):
@@ -78,7 +78,7 @@ class CV_Classification:
             elapsed_time = time.time() - start
         return conf_info, predictions
 
-    def __train_best_model_in_all_data(self, best_model_per_metric, confs_info, X, Y):
+    def __train_best_model_in_all_data(self, best_model_per_metric, confs_info, X, Y, explanation_size):
         for m_id, m_data in best_model_per_metric.items():
             for best_c_id in m_data:
                 start = time.time()
@@ -89,8 +89,8 @@ class CV_Classification:
                 if not self.__is_explanation:
                     fsel = FeatureSelection(conf.get_fsel().get_config())
                     fsel.run(X, Y)
-                    if self.__knowledge_discovery is True and automlconsts.SELECT_TOPK_FEATURES:
-                        fsel.set_features(fsel.get_features()[0:automlconsts.MAX_FEATURES])
+                    if self.__knowledge_discovery:
+                        fsel.set_features(fsel.get_features()[0:explanation_size])
                     assert len(fsel.get_features()) > 0
                     end = time.time()
                     fsel.set_time(round(end - start, 2))
@@ -165,6 +165,7 @@ class CV_Classification:
 
     @staticmethod
     def __console_log(rep, fold_id, conf_id, total_confs, fsel, classifier, elapsed_time):
-        print('\rRepetition', rep+1, '> Fold', fold_id, ':', conf_id, '/', total_confs, fsel.get_id(), fsel.get_params(),
+        print('\rRepetition', rep+1, '> Fold', fold_id, ':', conf_id, '/', total_confs, '|explanation|=',
+              len(fsel.get_features()), fsel.get_id(), fsel.get_params(),
               '>', classifier.get_id(), classifier.get_params(), 'Time for fold', int(fold_id)-1,
               'was', round(elapsed_time, 2), 'secs', end='')

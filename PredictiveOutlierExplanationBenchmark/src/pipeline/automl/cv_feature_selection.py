@@ -2,6 +2,7 @@ from collections import OrderedDict
 import numpy as np
 from models.FeatureSelection import FeatureSelection
 import pipeline.automl.automl_constants as automlconsts
+import copy
 
 
 class CV_Fselection:
@@ -19,13 +20,17 @@ class CV_Fselection:
             fsel_fold_dict = self.__cross_validate_fs(dataset.get_X(), dataset.get_Y(), folds_inds, rep)
             reps_fsel_fold_array[rep, :] = fsel_fold_dict
         valid_confs = self.__keep_valid_confs(reps_fsel_fold_array)
-        for rep in range(valid_confs.shape[0]):
-            self.__select_top_k_features(valid_confs[rep, :])
-        folds_to_confs = OrderedDict()
-        for rep in range(valid_confs.shape[0]):
-            folds_to_confs[rep] = self.__folds_to_confs_restructure(valid_confs[rep, :])
+        features_per_explanation_size = {}
+        for expl_size in automlconsts.EXPLANATION_SIZE:
+            valid_confs_cp = copy.deepcopy(valid_confs)
+            for rep in range(valid_confs_cp.shape[0]):
+                self.__select_top_k_features(valid_confs_cp[rep, :], expl_size)
+            folds_to_confs = OrderedDict()
+            for rep in range(valid_confs_cp.shape[0]):
+                folds_to_confs[rep] = self.__folds_to_confs_restructure(valid_confs_cp[rep, :], expl_size)
+            features_per_explanation_size[expl_size] = folds_to_confs
         print()
-        return folds_to_confs
+        return features_per_explanation_size
 
     def __cross_validate_fs(self, X, Y, folds_inds, rep):
         fsel_fold_array = np.full(len(self.__fsel_configs), None, dtype=object)
@@ -56,21 +61,21 @@ class CV_Fselection:
         valid_confs = np.where(self.__valid_fs_confs == True)[0]
         return reps_fsel_folds_array[:, valid_confs]
 
-    def __select_top_k_features(self, fsel_in_folds):
+    def __select_top_k_features(self, fsel_in_folds, topk):
         if not self.__knowledge_discovery:
             return fsel_in_folds
         for conf_obj in fsel_in_folds:
             for f_id, fsel in conf_obj.items():
-                if len(fsel.get_features()) > automlconsts.MAX_FEATURES:
-                    fsel.set_features(fsel.get_features()[0:automlconsts.MAX_FEATURES])
+                if len(fsel.get_features()) > topk:
+                    fsel.set_features(fsel.get_features()[0:topk])
 
-    def __folds_to_confs_restructure(self, fsel_confs):
+    def __folds_to_confs_restructure(self, fsel_confs, topk):
         folds_to_confs_dict = OrderedDict()
         for conf_obj in fsel_confs:
             assert len(conf_obj) == self.__kfolds, str(len(conf_obj)) + ' != ' + str(self.__kfolds)
             for f_id, fsel in conf_obj.items():
                 if self.__knowledge_discovery:
-                    assert len(fsel.get_features()) <= automlconsts.MAX_FEATURES
+                    assert len(fsel.get_features()) <= topk
                 folds_to_confs_dict.setdefault(f_id, [])
                 folds_to_confs_dict[f_id].append(fsel)
         return folds_to_confs_dict
