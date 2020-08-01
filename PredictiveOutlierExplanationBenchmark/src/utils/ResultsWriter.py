@@ -36,7 +36,7 @@ class ResultsWriter:
             output_dir = ResultsWriter.add_explanation_size_to_path(self.__final_dir, expl_size)
             ResultsWriter.write_info_file(output_dir, expl_size)
             with open(os.path.join(output_dir, FileNames.best_model_fname), 'w', encoding='utf-8') as f:
-                f.write(json.dumps(best_models_dict, indent=4, separators=(',', ': '), ensure_ascii=False))
+                f.write(json.dumps(best_model, indent=4, separators=(',', ': '), ensure_ascii=False))
 
     def write_baseline_results(self, best_model_per_expl_size, method_id):
         method_output_dir = self.get_final_baseline_dir(method_id)
@@ -62,14 +62,14 @@ class ResultsWriter:
 
     @staticmethod
     def __prepare_results(results):
-        tmp_dict = {'no_fs': {}, 'fs': {}}
-        best_models_per_expanation = {}
+        best_model_per_expl_size = {}
         for key, data in results.items():
             for expl_size, best_model in data.items():
+                best_model_per_expl_size.setdefault(expl_size, {})
                 for m_id, m_data in best_model.items():
-                    tmp_dict[key][m_id] = m_data.to_dict()
-            best_models_per_expanation[expl_size] = tmp_dict
-        return best_models_per_expanation
+                    best_model[m_id] = m_data.to_dict()
+                best_model_per_expl_size[expl_size][key] = best_model
+        return best_model_per_expl_size
 
     def write_dataset(self, dataset, dataset_kind):
         if dataset_kind == 'original':

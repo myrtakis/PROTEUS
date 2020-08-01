@@ -88,8 +88,9 @@ class PredictivePipeline:
                                                               rw, baseline_explanations, pseudo_samples)
             best_trained_model_nofs = AutoML(rw.get_final_dir()).run(dataset, False)
             best_trained_model_fs = AutoML(rw.get_final_dir()).run(dataset, True)
-            results = {'no_fs': best_trained_model_nofs, 'fs': best_trained_model_fs}
-            results = PredictivePipeline.__test_best_model_in_hold_out(results, test_data_with_detected_outliers)
+            results = {}
+            results['no_fs'] = PredictivePipeline.__test_best_model_in_hold_out(best_trained_model_nofs, test_data_with_detected_outliers)
+            results['fs'] = PredictivePipeline.__test_best_model_in_hold_out(best_trained_model_fs, test_data_with_detected_outliers)
             rw.write_results(results, 'detected')
             ResultsWriter.flush_navigator_file()
             del best_trained_model_nofs
@@ -114,16 +115,14 @@ class PredictivePipeline:
     @staticmethod
     def __test_best_model_in_hold_out(best_models_per_expl_size, test_data):
         for expl_size, best_model in best_models_per_expl_size.items():
-            for key, data in best_model.items():
-                for m_id, conf in data.items():
-                    fsel = conf.get_fsel()
-                    clf = conf.get_clf()
-                    X_new = test_data.get_X().iloc[:, fsel.get_features()]
-                    predictions = clf.predict_proba(X_new)
-                    perf = metrics.calculate_metric(test_data.get_Y(), predictions, m_id)
-                    conf.set_hold_out_effectiveness(perf, m_id)
-                    best_model[key][m_id] = conf
-            best_models_per_expl_size[expl_size] = best_model
+            for m_id, conf in best_model.items():
+                fsel = conf.get_fsel()
+                clf = conf.get_clf()
+                X_new = test_data.get_X().iloc[:, fsel.get_features()]
+                predictions = clf.predict_proba(X_new)
+                perf = metrics.calculate_metric(test_data.get_Y(), predictions, m_id)
+                conf.set_hold_out_effectiveness(perf, m_id)
+                best_models_per_expl_size[expl_size][m_id] = conf
         return best_models_per_expl_size
 
     def __train_test_inds(self):
@@ -163,6 +162,7 @@ class PredictivePipeline:
             else:
                 print('----\nBuilding model for method', method)
             final_output_dir = ResultsWriter.add_noise_to_path(rw.get_final_baseline_dir(method))
-            best_model_per_expl_size = {'fs': AutoML(final_output_dir).run(train_dataset, False, global_expl)}
-            best_model_per_expl_size = PredictivePipeline.__test_best_model_in_hold_out(best_model_per_expl_size, test_dataset)
-            rw.write_baseline_results(best_model_per_expl_size, method)
+            best_model_per_expl_size_dict = {}
+            best_model_per_expl_size = AutoML(final_output_dir).run(train_dataset, False, global_expl)
+            best_model_per_expl_size_dict['fs'] = PredictivePipeline.__test_best_model_in_hold_out(best_model_per_expl_size, test_dataset)
+            rw.write_baseline_results(best_model_per_expl_size_dict, method)
