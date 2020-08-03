@@ -57,7 +57,7 @@ class PredictivePipeline:
                                                                               train_data_with_detected_outliers,
                                                                               detectors_info['best'],
                                                                               threshold, pseudo_samples_array))
-        print('Adding noise to data')
+        print('Adding noise to data', self.noise)
         datasets_for_cv = helper_functions.add_noise_to_train_datasets(datasets_for_cv, self.dataset_dims)
         train_data_with_detected_outliers = helper_functions.add_noise_to_data(train_data_with_detected_outliers,
                                                                               self.dataset_dims)
