@@ -91,6 +91,10 @@ def get_selected_features_per_method(nav_file):
     with open(methods_explanations_file) as json_file:
         explanations = json.load(json_file)
         for method, data in explanations.items():
+            if method == 'random':
+                continue
+            if method == 'micencova':
+                method = 'ca-lasso'
             features_sorted = np.argsort(np.array(data['global_explanation']))[::-1]
             method_name = 'PROTEUS_{' + method + '}'
             methods_sel_features[method_name] = features_sorted[:MAX_FEATURES]
