@@ -52,14 +52,17 @@ def analyze():
         prec_dict[conf['detector']] = feature_perf_prec
         recall_dict[conf['detector']] = feature_perf_recall
 
-    # tmp_dict = {'lof': None, 'iforest': None, 'loda': None}
-    # indexes = ['PROTEUS_{fs}', 'PROTEUS_{ca-lasso}', 'PROTEUS_{shap}', 'PROTEUS_{loda}']
-    # columns = ['S 20d (10%)', 'S 20d (10%)', 'S 20d (10%)', 'S 20d (10%)', 'S 100d (10%)']
-    # for k in tmp_dict.keys():
-    #     tmp_dict[k] = pd.DataFrame(np.random.rand(4, 5), index=indexes, columns=columns)
-    # plot_dataframes(tmp_dict, tmp_dict, fig_name)
+    tmp_dict = {'lof': None, 'iforest': None, 'loda': None}
+    indexes = ['PROTEUS_{fs}', 'PROTEUS_{ca-lasso}', 'PROTEUS_{shap}', 'PROTEUS_{loda}']
+    columns = ['S 20d (10%)', 'S 40d (10%)', 'S 60d (10%)', 'S 80d (10%)', 'S 100d (10%)']
+    for k in tmp_dict.keys():
+        if k == 'loda':
+            tmp_dict[k] = pd.DataFrame(np.random.rand(4, 5), index=indexes, columns=columns)
+        else:
+            tmp_dict[k] = pd.DataFrame(np.random.rand(3, 5), index=indexes[0:-1], columns=columns)
+    plot_dataframes(tmp_dict, tmp_dict.copy(), fig_name)
 
-    plot_dataframes(prec_dict, recall_dict, fig_name)
+    # plot_dataframes(prec_dict, recall_dict, fig_name)
 
 
 def analysis_per_nav_file(nav_files, conf):
@@ -125,48 +128,45 @@ def calculate_feature_metrics(methods_features, rel_features):
 def plot_dataframes(prec_perfs, recall_perfs, fig_name):
     fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(10, 4), sharex=True)
     leg_handles_dict = {
-        'PROTEUS_{full}': ('tab:blue', '$PROTEUS_{full}$'),
         'PROTEUS_{fs}': ('tab:orange', '$PROTEUS_{fs}$'),
         'PROTEUS_{ca-lasso}': ('tab:green', '$PROTEUS_{ca-lasso}$'),
         'PROTEUS_{shap}': ('tab:red', '$PROTEUS_{shap}$'),
         'PROTEUS_{loda}': ('tab:purple', '$PROTEUS_{loda}$'),
-        'PROTEUS_{random}': ('cyan', '$PROTEUS_{random}$')
     }
     leg_handles_arr = []
     colors = []
     markers = ["-s", "-o", "-v", "-^"]
-    keys = list(prec_perfs.keys())
     loda_i = loda_j = 0
-    for m in prec_perfs[keys[0]].index:
+    for m in leg_handles_dict:
         leg_handles_arr.append(leg_handles_dict[m][1])
         colors.append(leg_handles_dict[m][0])
     for i, perf_dict in enumerate([prec_perfs, recall_perfs]):
         for j, (det, perf_df) in enumerate(perf_dict.items()):
+            if perf_df.shape[0] < len(leg_handles_dict):
+                tmp_df = pd.DataFrame(np.full((1, perf_df.shape[1]), None), index=['PROTEUS_{loda}'], columns=perf_df.columns)
+                perf_df = pd.concat([perf_df, tmp_df])
             det = det.upper()
             if det == 'IFOREST':
                 det = 'iForest'
-            axes[i, j].locator_params(axis='x', nbins=perf_df.shape[0])
+            axes[i, j].locator_params(axis='x', nbins=perf_df.shape[1])
             axes[i, j].set_ylim((0, 1.05))
             axes[i, j].set_yticks(np.arange(0, 1.2, 0.2))
-            axes[i, j].set_title(det, fontsize=13)
+            if i == 0:
+                axes[i, j].set_title(det, fontsize=13)
             ytitle = 'Precision' if i == 1 else 'Recall'
             axes[i, j].set_ylabel(ytitle, fontsize=13)
-            axes[i, j].set_xticklabels(labels=list(perf_df.index), ha='center')
+            axes[i, j].set_xticklabels(labels=list(perf_df.columns), ha='right')
             if det == 'LODA':
                 loda_i = i
                 loda_j = j
-            perf_df.transpose().plot(ax=axes[i, j], legend=None, rot=25, style=markers, color=colors)
+            perf_df.transpose().plot(ax=axes[i, j], legend=None, rot=30, style=markers, color=colors)
     handles, labels = axes[loda_i, loda_j].get_legend_handles_labels()
     fig.legend(handles, leg_handles_arr, loc='upper center', ncol=4, fontsize=14)
-    fig.subplots_adjust(wspace=0.6, hspace=0.5, bottom=0.2, top=0.8)
-    # plt.tight_layout()
-    x0, x1, y0, y1 = plt.axis()
-    margin_x = 0.1 * (x1 - x0)
-    margin_y = 0.1 * (y1 - y0)
-    plt.axis((x0 - margin_x, x1 + margin_x, y0 - margin_y, y1 + margin_y))
+    fig.subplots_adjust(wspace=0.6, hspace=0.3, bottom=0.2, top=0.78)
+    plt.autoscale(enable=True, axis='x', tight=True)
     output_folder = Path('..', 'figures', 'results')
     output_folder.mkdir(parents=True, exist_ok=True)
-    plt.savefig(Path(output_folder, fig_name), dpi=300)
+    plt.savefig(Path(output_folder, fig_name), dpi=300, bbox_inches='tight', pad_inches=0)
     plt.clf()
 
 
