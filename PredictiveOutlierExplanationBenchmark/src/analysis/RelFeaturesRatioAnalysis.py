@@ -52,17 +52,17 @@ def analyze():
         prec_dict[conf['detector']] = feature_perf_prec
         recall_dict[conf['detector']] = feature_perf_recall
 
-    tmp_dict = {'lof': None, 'iforest': None, 'loda': None}
-    indexes = ['PROTEUS_{fs}', 'PROTEUS_{ca-lasso}', 'PROTEUS_{shap}', 'PROTEUS_{loda}']
-    columns = ['S 20d (10%)', 'S 40d (10%)', 'S 60d (10%)', 'S 80d (10%)', 'S 100d (10%)']
-    for k in tmp_dict.keys():
-        if k == 'loda':
-            tmp_dict[k] = pd.DataFrame(np.random.rand(4, 5), index=indexes, columns=columns)
-        else:
-            tmp_dict[k] = pd.DataFrame(np.random.rand(3, 5), index=indexes[0:-1], columns=columns)
-    plot_dataframes(tmp_dict, tmp_dict.copy(), fig_name)
+    # tmp_dict = {'lof': None, 'iforest': None, 'loda': None}
+    # indexes = ['PROTEUS_{fs}', 'PROTEUS_{ca-lasso}', 'PROTEUS_{shap}', 'PROTEUS_{loda}']
+    # columns = ['S 20d (10%)', 'S 40d (10%)', 'S 60d (10%)', 'S 80d (10%)', 'S 100d (10%)']
+    # for k in tmp_dict.keys():
+    #     if k == 'loda':
+    #         tmp_dict[k] = pd.DataFrame(np.random.rand(4, 5), index=indexes, columns=columns)
+    #     else:
+    #         tmp_dict[k] = pd.DataFrame(np.random.rand(3, 5), index=indexes[0:-1], columns=columns)
+    # plot_dataframes(tmp_dict, tmp_dict.copy(), fig_name)
 
-    # plot_dataframes(prec_dict, recall_dict, fig_name)
+    plot_dataframes(prec_dict, recall_dict, fig_name)
 
 
 def analysis_per_nav_file(nav_files, conf):
@@ -74,7 +74,8 @@ def analysis_per_nav_file(nav_files, conf):
         real_dims = dim - 1 - (conf['type'] == 'synthetic')
         dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] == 'synthetic')
         print(dname + ' ' + str(real_dims) + '-d')
-        dataset_names.append(dname + ' ' + str(real_dims) + '-d')
+        noise_ratio_str = '(' + str(round((dim-5)/dim,2) * 100) + '%)'
+        dataset_names.append(dname + ' ' + str(real_dims) + '-d ' + noise_ratio_str)
         methods_features = get_selected_features_per_method(nav_file)
         rel_features = get_relevant_features(nav_file, conf)
         recall, prec = calculate_feature_metrics(methods_features, rel_features)
@@ -126,7 +127,7 @@ def calculate_feature_metrics(methods_features, rel_features):
 
 
 def plot_dataframes(prec_perfs, recall_perfs, fig_name):
-    fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(10, 4), sharex=True)
+    fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(10.5, 4.5), sharex=False)
     leg_handles_dict = {
         'PROTEUS_{fs}': ('tab:orange', '$PROTEUS_{fs}$'),
         'PROTEUS_{ca-lasso}': ('tab:green', '$PROTEUS_{ca-lasso}$'),
@@ -151,15 +152,16 @@ def plot_dataframes(prec_perfs, recall_perfs, fig_name):
             axes[i, j].locator_params(axis='x', nbins=perf_df.shape[1])
             axes[i, j].set_ylim((0, 1.05))
             axes[i, j].set_yticks(np.arange(0, 1.2, 0.2))
-            if i == 0:
-                axes[i, j].set_title(det, fontsize=13)
             ytitle = 'Precision' if i == 1 else 'Recall'
             axes[i, j].set_ylabel(ytitle, fontsize=13)
-            axes[i, j].set_xticklabels(labels=list(perf_df.columns), ha='right')
             if det == 'LODA':
                 loda_i = i
                 loda_j = j
             perf_df.transpose().plot(ax=axes[i, j], legend=None, rot=30, style=markers, color=colors)
+            axes[i, j].set_xticklabels(labels=axes[i, j].get_xticklabels(), ha='right')
+            if i == 0:
+                axes[i, j].set_title(det, fontsize=13)
+                axes[i, j].set_xticklabels([])
     handles, labels = axes[loda_i, loda_j].get_legend_handles_labels()
     fig.legend(handles, leg_handles_arr, loc='upper center', ncol=4, fontsize=14)
     fig.subplots_adjust(wspace=0.6, hspace=0.3, bottom=0.2, top=0.78)
