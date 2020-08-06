@@ -1,4 +1,5 @@
 import os, inspect, sys
+from collections import OrderedDict
 from pathlib import Path
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -27,8 +28,8 @@ test_confs = [
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
 
 synth_confs =[
-    {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'},
     {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'},
+    {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'},
     {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 ]
 
@@ -41,8 +42,8 @@ confs_to_analyze = synth_confs
 
 def analyze():
     fig_name = None
-    prec_dict = {}
-    recall_dict = {}
+    prec_dict = OrderedDict()
+    recall_dict = OrderedDict()
     for conf in confs_to_analyze:
         if fig_name is None:
             fig_name = 'real_features_perf.png' if conf['type'] == 'real' else 'synthetic_features_perf.png'
@@ -152,7 +153,7 @@ def plot_dataframes(prec_perfs, recall_perfs, fig_name):
             axes[i, j].locator_params(axis='x', nbins=perf_df.shape[1])
             axes[i, j].set_ylim((0, 1.05))
             axes[i, j].set_yticks(np.arange(0, 1.2, 0.2))
-            ytitle = 'Precision' if i == 1 else 'Recall'
+            ytitle = 'Precision' if i == 0 else 'Recall'
             axes[i, j].set_ylabel(ytitle, fontsize=13)
             if det == 'LODA':
                 loda_i = i
@@ -160,15 +161,15 @@ def plot_dataframes(prec_perfs, recall_perfs, fig_name):
             perf_df.transpose().plot(ax=axes[i, j], legend=None, rot=30, style=markers, color=colors)
             axes[i, j].set_xticklabels(labels=axes[i, j].get_xticklabels(), ha='right')
             if i == 0:
-                axes[i, j].set_title(det, fontsize=13)
+                axes[i, j].set_title(det, fontsize=14)
                 axes[i, j].set_xticklabels([])
     handles, labels = axes[loda_i, loda_j].get_legend_handles_labels()
-    fig.legend(handles, leg_handles_arr, loc='upper center', ncol=4, fontsize=14)
-    fig.subplots_adjust(wspace=0.6, hspace=0.3, bottom=0.2, top=0.78)
+    fig.legend(handles, leg_handles_arr, loc='upper center', ncol=4, fontsize=13)
+    fig.subplots_adjust(wspace=0.6, hspace=0.3, bottom=0.2, top=0.8)
     plt.autoscale(enable=True, axis='x', tight=True)
     output_folder = Path('..', 'figures', 'results')
     output_folder.mkdir(parents=True, exist_ok=True)
-    plt.savefig(Path(output_folder, fig_name), dpi=300, bbox_inches='tight', pad_inches=0)
+    plt.savefig(Path(output_folder, fig_name), dpi=300, bbox_inches='tight', pad_inches=0.1)
     plt.clf()
 
 

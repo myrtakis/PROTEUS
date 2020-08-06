@@ -29,31 +29,41 @@ pipeline = 'results_predictive'
 holdout = True
 build_models = False  # compare the built models
 
-# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'}
-# conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
+test_confs = [
+        #{'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'},
+        {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
+    ]
 
 
-# conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'}
-# conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'}
-# conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
+synth_confs =[
+    {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'},
+    {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'},
+    {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
+]
 
 # conf = {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'real'}
-conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
+# conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
+
+confs_to_analyze = test_confs
 
 
 def compare_models():
-    print(conf)
-    nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
+    pred_perfs_dict = OrderedDict()
+    for conf in confs_to_analyze:
+        print(conf)
+        pred_perfs_dict[conf['detector']] = best_models(conf)
+    plot_results(pred_perfs_dict)
+
+
+def best_models(conf):
     best_models_perf_in_sample = pd.DataFrame()
     ci_in_sample = pd.DataFrame()
     error_in_sample = pd.DataFrame()
     best_models_perf_out_of_sample = pd.DataFrame()
-    time_df = pd.DataFrame()
     dataset_names = []
+    nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
     for dim, nav_file in nav_files_json.items():
-        if not (dim == 31 or dim == 34):
-            continue
         real_dims = dim - 1 - (conf['type'] == 'synthetic')
         dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] != 'real')
         print(dname + ' ' + str(real_dims) + 'd')
@@ -70,51 +80,64 @@ def compare_models():
                                                    axis=1)
     best_models_perf_in_sample.columns = dataset_names
     best_models_perf_out_of_sample.columns = dataset_names
-    # best_models_perf_in_sample.to_csv('in_sample.csv')
-    # best_models_perf_out_of_sample.to_csv('out_sample.csv')
-    plot_databframe_as_barplot(best_models_perf_in_sample, best_models_perf_out_of_sample, error_in_sample)
-    # plot_databframe_as_barplot(best_models_perf_out_of_sample, None, False)
+    return {'best_models_perf_in_sample': best_models_perf_in_sample,
+            'best_models_perf_out_of_sample': best_models_perf_out_of_sample,
+            'ci_in_sample': ci_in_sample,
+            'error_in_sample': error_in_sample}
 
 
-def plot_databframe_as_barplot(df_in, df_out, error_in):
-    assert not any(df_in.index == df_out.index) is False
+def plot_results(pred_perfs_dict):
+    fig, axes = plt.subplots(figsize=(10, 4), nrows=2, ncols=3)
+    for j, (det, pred_perf) in enumerate(pred_perfs_dict.items()):
+        df_in = pred_perf['best_models_perf_in_sample']
+        df_out = pred_perf['best_models_perf_out_of_sample']
+        error_in = pred_perf['error_in_sample']
+        assert not any(df_in.index == df_out.index) is False
+        add_dataframe_to_axes(df_in, axes[0, j], error_in)
+        add_dataframe_to_axes(df_out, axes[1, j])
+        axes[0, j].set_xticklabels([])
+        if det == 'iforest':
+            det = 'iForest'
+        else:
+            det.upper()
+        axes[0, j].set_title(det, fontsize=15, fontweight='bold')
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper center', ncol=4, fontsize=13)
+    plt.tight_layout()
+    fig.subplots_adjust(wspace=0.3, hspace=0.3, bottom=0, top=0.8)
+    output_folder = Path('..', 'figures', 'results')
+    output_folder.mkdir(parents=True, exist_ok=True)
+    plt.savefig(Path(output_folder, 'synthetic_auc.png'), dpi=300, bbox_inches='tight', pad_inches=0)
+    plt.clf()
+
+
+def add_dataframe_to_axes(df, ax, error_in=None):
     leg_handles_dict = {
-        'PROTEUS_{full}': ('tab:blue', '$PROTEUS_{full}$'),
-        'PROTEUS_{fs}': ('tab:orange', '$PROTEUS_{fs}$'),
-        'PROTEUS_{ca-lasso}': ('tab:green', '$PROTEUS_{ca-lasso}$'),
-        'PROTEUS_{shap}': ('tab:red', '$PROTEUS_{shap}$'),
-        'PROTEUS_{loda}': ('tab:purple', '$PROTEUS_{loda}$'),
-        'PROTEUS_{random}': ('cyan', '$PROTEUS_{random}$')
+        'PROTEUS_{full}': ('tab:blue', '$PROTEUS_${full}$'),
+        'PROTEUS_{fs}': ('tab:orange', '$PROTEUS_${fs}$'),
+        'PROTEUS_{ca-lasso}': ('tab:green', '$PROTEUS_${ca-lasso}$'),
+        'PROTEUS_{shap}': ('tab:red', 'PROTEUS$_{shap}$'),
+        'PROTEUS_{loda}': ('tab:purple', 'PROTEUS$_{loda}$'),
+        'PROTEUS_{random}': ('cyan', 'PROTEUS$_{random}$')
     }
     leg_handles_arr = []
     colors = []
-    for m in df_in.index:
+    for m in df.index:
         leg_handles_arr.append(leg_handles_dict[m][1])
         colors.append(leg_handles_dict[m][0])
-    arr = np.arange(len(error_in.columns)) % 2
-    errorbars = np.zeros((error_in.shape[0], 2, int(error_in.shape[1] / 2)), dtype=float)
-    errorbars[:, 0, :] = error_in.iloc[:, arr == 0].values
-    errorbars[:, 1, :] = error_in.iloc[:, arr == 1].values
-    df_in.index = ['$' + x + '$' for x in df_in.index]
-    df_out.index = ['$' + x + '$' for x in df_out.index]
-    fig, axes = plt.subplots(figsize=(20,7), nrows=1, ncols=2)
-    rotation = 0 if conf['type'] == 'real' else 25
-    rotation = 25
-    df_in.transpose().plot(ax=axes[0], kind='bar', zorder=3, rot=rotation, yerr=errorbars, capsize=5, grid=True, legend=None, color=colors)
-    df_out.transpose().plot(ax=axes[1], kind='bar', zorder=3, rot=rotation, grid=True, legend=None, color=colors)
-    axes[0].legend(leg_handles_arr, loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.3), fontsize=18)
-    axes[0].set_yticks(np.arange(0, 1.1, .1))
-    axes[1].set_yticks(np.arange(0, 1.1, .1))
-    axes[0].tick_params(labelsize=18)
-    axes[1].tick_params(labelsize=18)
-    plt.subplots_adjust(hspace=0.65, wspace=0.65)
-    plt.tight_layout()
-    output_folder = Path('..', 'figures', 'results')
-    output_folder.mkdir(parents=True, exist_ok=True)
-    fig_name = 'real_' if conf['type'] == 'real' else 'synthetic_'
-    fig_name += conf['detector'] + '.png'
-    plt.savefig(Path(output_folder, fig_name), dpi=300)
-    plt.clf()
+    errorbars = None
+    if error_in is not None:
+        arr = np.arange(len(error_in.columns)) % 2
+        errorbars = np.zeros((error_in.shape[0], 2, int(error_in.shape[1] / 2)), dtype=float)
+        errorbars[:, 0, :] = error_in.iloc[:, arr == 0].values
+        errorbars[:, 1, :] = error_in.iloc[:, arr == 1].values
+    # df.index = ['$' + x + '$' for x in df.index]
+    df.transpose().plot(ax=ax, kind='bar', zorder=3, rot=25, yerr=errorbars, capsize=5, grid=True, legend=None, color=colors)
+    # axes[0].legend(leg_handles_arr, loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.3), fontsize=18)
+    ax.set_yticks(np.arange(0, 1.1, .1))
+    ax.set_yticks(np.arange(0, 1.1, .1))
+    ax.set_ylabel('Mean AUC')
+    #ax[1].tick_params(labelsize=18)
 
 
 def plot_dataframe_as_table(best_model_perfs, in_sample):
@@ -149,8 +172,8 @@ def get_best_models_perf_per_method(nav_file, in_sample):
                                                                                            in_sample)
     baselines_dir = nav_file[FileKeys.navigator_baselines_key]
     for method, data in baselines_dir.items():
-        # if method == 'random':
-        #     continue
+        if method == 'random':
+            continue
         if method == 'micencova':
             method = 'ca-lasso'
         method_name = 'PROTEUS_{' + method + '}'
