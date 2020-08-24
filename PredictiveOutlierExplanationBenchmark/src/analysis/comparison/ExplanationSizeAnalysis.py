@@ -28,6 +28,13 @@ pipeline = 'results_predictive'
 expl_size = None
 noise_level = 0
 
+datasets = {
+    'wine',
+    'wbc',
+    'arrhythmia',
+    'ionosphere'
+}
+
 test_confs = [
     {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'},
 {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'},
@@ -52,6 +59,8 @@ def analyze_explanation_size():
         for dim, nav_file in nav_files_json.items():
             real_dims = dim - 1
             dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] != 'real')
+            if dname not in datasets:
+                continue
             print(dname + ' ' + str(real_dims) + 'd')
             info_dict_proteus = read_proteus_files(nav_file)
             info_dict_baselines = read_baseline_files(nav_file)
@@ -88,12 +97,13 @@ def plot_datasets_perfs(ax, perfs):
         'loda': ('tab:purple', 'PROTEUS$_{loda}$'),
     }
     colors = []
-    # markers = ["-s", "-o", "-v", "-^", "-*"]
+    markers = ["-s", "-o", "-v", "-^", "-*"]
     for m in leg_handles_dict:
         colors.append(leg_handles_dict[m][0])
     perfs.index = [str(i) for i in perfs.index]
-    sns.lineplot(data=perfs, ax=ax, dashes=False, markers=["s", "o", "v", "^", "*"], color=colors)
-    ax.get_legend().remove()
+    perfs.plot(ax=ax, legend=None, style=markers, color=colors)
+    #sns.lineplot(data=perfs, ax=ax, dashes=False, markers=["s", "o", "v", "^", "*"], color=colors)
+    #ax.get_legend().remove()
     ax.locator_params(axis='x', nbins=perfs.shape[0])
     ax.set_ylim((0, 1.05))
     ax.set_yticks(np.arange(0, 1.2, 0.2))

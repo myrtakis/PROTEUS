@@ -45,7 +45,7 @@ synth_confs =[
 # conf = {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'real'}
 # conf = {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
 
-confs_to_analyze = test_confs
+confs_to_analyze = synth_confs
 
 
 def compare_models():
@@ -87,7 +87,7 @@ def best_models(conf):
 
 
 def plot_results(pred_perfs_dict):
-    fig, axes = plt.subplots(figsize=(10, 4), nrows=2, ncols=3)
+    fig, axes = plt.subplots(figsize=(11, 4.5), nrows=2, ncols=3)
     for j, (det, pred_perf) in enumerate(pred_perfs_dict.items()):
         df_in = pred_perf['best_models_perf_in_sample']
         df_out = pred_perf['best_models_perf_out_of_sample']
@@ -99,12 +99,12 @@ def plot_results(pred_perfs_dict):
         if det == 'iforest':
             det = 'iForest'
         else:
-            det.upper()
+            det = det.upper()
         axes[0, j].set_title(det, fontsize=15, fontweight='bold')
-    handles, labels = axes[0, 0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper center', ncol=4, fontsize=13)
+    handles, labels = axes[0, 2].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper center', ncol=5, fontsize=13)
     plt.tight_layout()
-    fig.subplots_adjust(wspace=0.3, hspace=0.3, bottom=0, top=0.8)
+    fig.subplots_adjust(wspace=0.3, hspace=0.3, bottom=0, top=0.78)
     output_folder = Path('..', 'figures', 'results')
     output_folder.mkdir(parents=True, exist_ok=True)
     plt.savefig(Path(output_folder, 'synthetic_auc.png'), dpi=300, bbox_inches='tight', pad_inches=0)
@@ -131,9 +131,9 @@ def add_dataframe_to_axes(df, ax, error_in=None):
         errorbars = np.zeros((error_in.shape[0], 2, int(error_in.shape[1] / 2)), dtype=float)
         errorbars[:, 0, :] = error_in.iloc[:, arr == 0].values
         errorbars[:, 1, :] = error_in.iloc[:, arr == 1].values
-    # df.index = ['$' + x + '$' for x in df.index]
-    df.transpose().plot(ax=ax, kind='bar', zorder=3, rot=25, yerr=errorbars, capsize=5, grid=True, legend=None, color=colors)
-    # axes[0].legend(leg_handles_arr, loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.3), fontsize=18)
+    df.index = [x.replace('_', '$_') + '$' for x in df.index]
+    df.transpose().plot(ax=ax, kind='bar', zorder=3, rot=25, yerr=errorbars, capsize=2, width=0.7,
+                        linewidth=0.08, ecolor='darkslategrey', grid=True, legend=None, color=colors)
     ax.set_yticks(np.arange(0, 1.1, .1))
     ax.set_yticks(np.arange(0, 1.1, .1))
     ax.set_ylabel('Mean AUC')

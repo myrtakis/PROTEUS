@@ -75,7 +75,7 @@ def analysis_per_nav_file(nav_files, conf):
         real_dims = dim - 1 - (conf['type'] == 'synthetic')
         dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] == 'synthetic')
         print(dname + ' ' + str(real_dims) + '-d')
-        noise_ratio_str = '(' + str(round((dim-5)/dim,2) * 100) + '%)'
+        noise_ratio_str = '(' + str(int(round((dim-5)/dim,2) * 100)) + '%)'
         dataset_names.append(dname + ' ' + str(real_dims) + '-d ' + noise_ratio_str)
         methods_features = get_selected_features_per_method(nav_file)
         rel_features = get_relevant_features(nav_file, conf)
@@ -161,15 +161,15 @@ def plot_dataframes(prec_perfs, recall_perfs, fig_name):
             perf_df.transpose().plot(ax=axes[i, j], legend=None, rot=30, style=markers, color=colors)
             axes[i, j].set_xticklabels(labels=axes[i, j].get_xticklabels(), ha='right')
             if i == 0:
-                axes[i, j].set_title(det, fontsize=14)
+                axes[i, j].set_title(det, fontsize=14, fontweight='bold')
                 axes[i, j].set_xticklabels([])
     handles, labels = axes[loda_i, loda_j].get_legend_handles_labels()
     fig.legend(handles, leg_handles_arr, loc='upper center', ncol=4, fontsize=13)
-    fig.subplots_adjust(wspace=0.6, hspace=0.3, bottom=0.2, top=0.8)
+    fig.subplots_adjust(wspace=0.5, hspace=0.3, bottom=0.2, top=0.8)
     plt.autoscale(enable=True, axis='x', tight=True)
     output_folder = Path('..', 'figures', 'results')
     output_folder.mkdir(parents=True, exist_ok=True)
-    plt.savefig(Path(output_folder, fig_name), dpi=300, bbox_inches='tight', pad_inches=0.1)
+    plt.savefig(Path(output_folder, fig_name), dpi=300, bbox_inches='tight', pad_inches=0.05)
     plt.clf()
 
 
