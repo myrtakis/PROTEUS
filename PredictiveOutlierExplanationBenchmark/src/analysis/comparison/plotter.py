@@ -27,16 +27,16 @@ synth_confs =[
     {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 ]
 
-confs_to_analyze = synth_confs
+confs_to_analyze = test_confs
 
 
 leg_handles_dict = {
-        'PROTEUS_{full}': ('tab:blue', '$PROTEUS_${full}$'),
-        'PROTEUS_{fs}': ('tab:orange', '$PROTEUS_${fs}$'),
-        'PROTEUS_{ca-lasso}': ('tab:green', '$PROTEUS_${ca-lasso}$'),
-        'PROTEUS_{shap}': ('tab:red', 'PROTEUS$_{shap}$'),
-        'PROTEUS_{loda}': ('tab:purple', 'PROTEUS$_{loda}$'),
-        'PROTEUS_{random}': ('cyan', 'PROTEUS$_{random}$')
+        'PROTEUS$_{full}$': 'tab:blue',
+        'PROTEUS$_{fs}$': 'tab:orange',
+        'PROTEUS$_{ca-lasso}$': 'tab:green',
+        'PROTEUS$_{shap}$': 'tab:red',
+        'PROTEUS$_{loda}$': 'tab:purple',
+        'PROTEUS$_{random}$': 'cyan',
     }
 
 
@@ -45,7 +45,9 @@ def plot_panels():
     for conf in confs_to_analyze:
         print(conf)
         pred_perfs_dict[conf['detector']] = best_models(conf)
-    bias_plot(pred_perfs_dict)
+    # bias_plot(pred_perfs_dict)
+    test_auc_plot(pred_perfs_dict, 0)
+    # test_auc_plot(pred_perfs_dict, 1)
 
 
 def best_models(conf):
@@ -91,9 +93,9 @@ def get_best_models_perf_per_method(nav_file, in_sample):
     ci = {}
     error = {}
     protean_ps_dict = nav_file[FileKeys.navigator_pseudo_samples_key]
-    best_model_perfs['PROTEUS_{full}'], ci['PROTEUS_{full}'] = get_effectiveness_of_best_model(protean_ps_dict, False,
+    best_model_perfs['PROTEUS$_{full}$'], ci['PROTEUS$_{full}$'] = get_effectiveness_of_best_model(protean_ps_dict, False,
                                                                                                in_sample)
-    best_model_perfs['PROTEUS_{fs}'], ci['PROTEUS_{fs}'] = get_effectiveness_of_best_model(protean_ps_dict, True,
+    best_model_perfs['PROTEUS$_{fs}$'], ci['PROTEUS$_{fs}$'] = get_effectiveness_of_best_model(protean_ps_dict, True,
                                                                                            in_sample)
     baselines_dir = nav_file[FileKeys.navigator_baselines_key]
     for method, data in baselines_dir.items():
@@ -101,7 +103,7 @@ def get_best_models_perf_per_method(nav_file, in_sample):
             continue
         if method == 'micencova':
             method = 'ca-lasso'
-        method_name = 'PROTEUS_{' + method + '}'
+        method_name = 'PROTEUS$_{' + method + '}$'
         best_model_perfs[method_name], ci[method_name] = get_effectiveness_of_best_model(data, True, in_sample)
     for m in ci.keys():
         error[m] = [np.abs(ci[m][0] - best_model_perfs[m]), np.abs(ci[m][1] - best_model_perfs[m])]
@@ -130,6 +132,23 @@ def calculate_error(pred_perfs_dict):
     return lb_error, ub_error
 
 
+def average_out_dim(pred_perfs_dict, option):
+    average_df = pd.DataFrame()
+    for (det, pred_perf) in pred_perfs_dict.items():
+        test_df = pred_perf['best_models_perf_out_of_sample']
+        if option == 0:
+            if len(average_df) == 0:
+                average_df = test_df
+            else:
+                average_df += test_df
+        else:
+            dimensions_avg = pd.DataFrame(test_df.mean(axis=1), columns=[det])
+            average_df = pd.concat([average_df, dimensions_avg], axis=1)
+    if option == 0:
+        average_df /= len(pred_perfs_dict)
+    return average_df
+
+
 def bias_plot(pred_perfs_dict):
     bias_df = calculate_bias(pred_perfs_dict)
     lb_error, ub_error = calculate_error(pred_perfs_dict)
@@ -149,12 +168,10 @@ def bias_plot(pred_perfs_dict):
     plt.clf()
 
 
-def dimensionality_test_auc():
-    pass
-
-
-def detectors_test_auc():
-    pass
+def test_auc_plot(pred_perfs_dict, option):
+    avg_df = average_out_dim(pred_perfs_dict, option)
+    avg_df.transpose().plot()
+    plt.show()
 
 
 if __name__ == '__main__':
