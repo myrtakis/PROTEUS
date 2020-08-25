@@ -27,7 +27,7 @@ synth_confs =[
     {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 ]
 
-confs_to_analyze = test_confs
+confs_to_analyze = synth_confs
 
 
 leg_handles_dict = {
@@ -122,30 +122,30 @@ def calculate_bias(pred_perfs_dict):
 
 
 def calculate_error(pred_perfs_dict):
-    error_df = pd.DataFrame(dtype=object)
+    error_df = pd.DataFrame()
     for (det, pred_perf) in pred_perfs_dict.items():
         error_df = pd.concat([error_df,  pred_perf['error_in_sample']], axis=1)
-    lb_error = [x for x in error_df.loc[:, 0::2].values.flatten()]
-    ub_error = [x for x in error_df.loc[:, 1::2].values.flatten()]
+    lb_error = [x for x in error_df.iloc[:, 0::2].values.flatten() if not np.isnan(x)]
+    ub_error = [x for x in error_df.iloc[:, 1::2].values.flatten() if not np.isnan(x)]
     return lb_error, ub_error
 
 
 def bias_plot(pred_perfs_dict):
     bias_df = calculate_bias(pred_perfs_dict)
     lb_error, ub_error = calculate_error(pred_perfs_dict)
-    bias_vals = bias_df.values.flatten()
+    bias_vals = np.array([x for x in bias_df.values.flatten() if not np.isnan(x)])
     x = np.arange(len(bias_vals))
     bias_vals += x
     plt.plot(x, 'k-')
     plt.plot(bias_vals, 'r.')
-    plt.fill_between(x, x - lb_error, x + lb_error, alpha=0.2)
+    plt.fill_between(x, x - lb_error, x + ub_error, alpha=0.2)
     plt.xlabel('AUC Train Performance', fontsize=14)
     plt.ylabel('AUC Test Performance', fontsize=14)
     plt.xticks([])
     plt.yticks([])
     output_folder = Path('..', 'figures', 'results')
     output_folder.mkdir(parents=True, exist_ok=True)
-    plt.savefig(Path(output_folder, 'bias.png'), dpi=300, bbox_inches='tight', pad_inches=0)
+    plt.savefig(Path(output_folder, 'bias.png'), dpi=300, bbox_inches='tight')
     plt.clf()
 
 
