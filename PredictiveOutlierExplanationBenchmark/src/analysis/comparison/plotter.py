@@ -27,17 +27,7 @@ synth_confs =[
     {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 ]
 
-confs_to_analyze = test_confs
-
-
-leg_handles_dict = {
-        'PROTEUS$_{full}$': 'tab:blue',
-        'PROTEUS$_{fs}$': 'tab:orange',
-        'PROTEUS$_{ca-lasso}$': 'tab:green',
-        'PROTEUS$_{shap}$': 'tab:red',
-        'PROTEUS$_{loda}$': 'tab:purple',
-        'PROTEUS$_{random}$': 'cyan',
-    }
+confs_to_analyze = synth_confs
 
 
 def plot_panels():
@@ -45,9 +35,9 @@ def plot_panels():
     for conf in confs_to_analyze:
         print(conf)
         pred_perfs_dict[conf['detector']] = best_models(conf)
-    # bias_plot(pred_perfs_dict)
+    bias_plot(pred_perfs_dict)
     test_auc_plot(pred_perfs_dict, 0)
-    # test_auc_plot(pred_perfs_dict, 1)
+    test_auc_plot(pred_perfs_dict, 1)
 
 
 def best_models(conf):
@@ -113,14 +103,14 @@ def get_best_models_perf_per_method(nav_file, in_sample):
 
 
 def calculate_bias(pred_perfs_dict):
-    bias_df = pd.DataFrame()
+    train_df_total = pd.DataFrame()
+    test_df_total = pd.DataFrame()
     for (det, pred_perf) in pred_perfs_dict.items():
-        train_perfs = pred_perf['best_models_perf_in_sample'].copy()
-        test_perfs = pred_perf['best_models_perf_out_of_sample'].copy()
-        assert not any(train_perfs.index != test_perfs.index)
-        assert not any(train_perfs.columns != test_perfs.columns)
-        bias_df = pd.concat([bias_df, test_perfs - train_perfs], axis=1)
-    return bias_df
+        train_df_total = pd.concat([train_df_total, pred_perf['best_models_perf_in_sample']], axis=1)
+        test_df_total = pd.concat([test_df_total, pred_perf['best_models_perf_out_of_sample']], axis=1)
+        assert not any(train_df_total.index != test_df_total.index)
+        assert not any(train_df_total.columns != test_df_total.columns)
+    return train_df_total, test_df_total
 
 
 def calculate_error(pred_perfs_dict):
@@ -134,14 +124,19 @@ def calculate_error(pred_perfs_dict):
 
 def average_out_dim(pred_perfs_dict, option):
     average_df = pd.DataFrame()
+    fs_methods = 5
     for (det, pred_perf) in pred_perfs_dict.items():
         test_df = pred_perf['best_models_perf_out_of_sample']
+        if test_df.shape[0] < fs_methods:
+            loda = pd.DataFrame(OrderedDict.fromkeys(test_df.columns, 1), index=['PROTEUS$_{loda}$'])
+            test_df = pd.concat([test_df, loda], axis=0)
         if option == 0:
             if len(average_df) == 0:
                 average_df = test_df
             else:
                 average_df += test_df
         else:
+            det = det.upper() if det != 'iforest' else 'iForest'
             dimensions_avg = pd.DataFrame(test_df.mean(axis=1), columns=[det])
             average_df = pd.concat([average_df, dimensions_avg], axis=1)
     if option == 0:
@@ -150,18 +145,17 @@ def average_out_dim(pred_perfs_dict, option):
 
 
 def bias_plot(pred_perfs_dict):
-    bias_df = calculate_bias(pred_perfs_dict)
+    train_df, test_df = calculate_bias(pred_perfs_dict)
     lb_error, ub_error = calculate_error(pred_perfs_dict)
-    bias_vals = np.array([x for x in bias_df.values.flatten() if not np.isnan(x)])
-    x = np.arange(len(bias_vals))
-    bias_vals += x
-    plt.plot(x, 'k-')
-    plt.plot(bias_vals, 'r.')
-    plt.fill_between(x, x - lb_error, x + ub_error, alpha=0.2)
-    plt.xlabel('AUC Train Performance', fontsize=14)
+    train_vals = np.array([x for x in train_df.values.flatten() if not np.isnan(x)])
+    test_vals = np.array([x for x in test_df.values.flatten() if not np.isnan(x)])
+    #x = np.arange(len(train_vals))
+    #plt.plot(x, 'k-')
+    plt.plot([min(train_vals), max(train_vals)], [min(test_vals), max(test_vals)])
+    plt.scatter(train_vals, test_vals, color='r', marker='o')
+    # plt.fill_between(x, x - lb_error, x + ub_error, alpha=0.2)
+    plt.xlabel('AUC Train Performance Estimation', fontsize=14)
     plt.ylabel('AUC Test Performance', fontsize=14)
-    plt.xticks([])
-    plt.yticks([])
     output_folder = Path('..', 'figures', 'results')
     output_folder.mkdir(parents=True, exist_ok=True)
     plt.savefig(Path(output_folder, 'bias.png'), dpi=300, bbox_inches='tight')
@@ -169,9 +163,34 @@ def bias_plot(pred_perfs_dict):
 
 
 def test_auc_plot(pred_perfs_dict, option):
+    leg_handles_dict = {
+        'PROTEUS$_{full}$': 'tab:blue',
+        'PROTEUS$_{fs}$': 'tab:orange',
+        'PROTEUS$_{ca-lasso}$': 'tab:green',
+        'PROTEUS$_{shap}$': 'tab:red',
+        'PROTEUS$_{loda}$': 'tab:purple',
+        'PROTEUS$_{random}$': 'cyan',
+    }
     avg_df = average_out_dim(pred_perfs_dict, option)
-    avg_df.transpose().plot()
-    plt.show()
+    colors = []
+    for k in avg_df.index:
+        colors.append(leg_handles_dict[k])
+    markers = ["-*", "-s", "-o", "-v", "-^", '']
+    avg_df.transpose().plot(style=markers, color=colors)
+    plt.yticks(np.arange(0, 1.1, .1))
+    plt.xticks(np.arange(avg_df.shape[1]), avg_df.columns)
+    plt.ylim([0, 1.1])
+    plt.ylabel('Test AUC')
+    xlabel = 'Data Dimensionality (Noisy Features Ratio)' if option is 0 else 'Detectors'
+    plt.xlabel(xlabel)
+    output_folder = Path('..', 'figures', 'results')
+    output_folder.mkdir(parents=True, exist_ok=True)
+    if option == 0:
+        fname = 'synth-dim-test-auc.png'
+    else:
+        fname = 'synth-det-test-auc.png'
+    plt.savefig(Path(output_folder, fname), dpi=300, bbox_inches='tight')
+    plt.clf()
 
 
 if __name__ == '__main__':
