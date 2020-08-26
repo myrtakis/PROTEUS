@@ -12,6 +12,7 @@ from analysis.comparison.comparison_utils import get_dataset_name
 from utils.pseudo_samples import PseudoSamplesMger
 from utils.shared_names import FileKeys, FileNames
 import matplotlib.pyplot as plt
+import statsmodels.api as sm
 
 
 pipeline = 'results_predictive'
@@ -27,7 +28,7 @@ synth_confs =[
     {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 ]
 
-confs_to_analyze = synth_confs
+confs_to_analyze = test_confs
 
 
 def plot_panels():
@@ -146,14 +147,15 @@ def average_out_dim(pred_perfs_dict, option):
 
 def bias_plot(pred_perfs_dict):
     train_df, test_df = calculate_bias(pred_perfs_dict)
+    lowess = sm.nonparametric.lowess
     lb_error, ub_error = calculate_error(pred_perfs_dict)
     train_vals = np.array([x for x in train_df.values.flatten() if not np.isnan(x)])
     test_vals = np.array([x for x in test_df.values.flatten() if not np.isnan(x)])
-    #x = np.arange(len(train_vals))
-    #plt.plot(x, 'k-')
     plt.plot([min(train_vals), max(train_vals)], [min(test_vals), max(test_vals)])
     plt.scatter(train_vals, test_vals, color='r', marker='o')
     # plt.fill_between(x, x - lb_error, x + ub_error, alpha=0.2)
+    lowess_arr = lowess(test_vals, train_vals)
+    plt.plot(lowess_arr[:, 0], lowess_arr[:, 1], color='tab:green')
     plt.xlabel('AUC Train Performance Estimation', fontsize=14)
     plt.ylabel('AUC Test Performance', fontsize=14)
     output_folder = Path('..', 'figures', 'results')
