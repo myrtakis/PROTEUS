@@ -25,11 +25,10 @@ import seaborn as sns
 
 pipeline = 'results_predictive'
 
-expl_size = None
-noise_level = 0
+expl_size = 2
+noise_level = None
 
 datasets = {
-    'wine',
     'wbc',
     'arrhythmia',
     'ionosphere'
@@ -49,39 +48,36 @@ real_confs = [
 
 
 def analyze_explanation_size():
-    fig, axes = plt.subplots(nrows=6, ncols=4, figsize=(11, 13), sharex=False)
-    i = 0
-    loda_i = loda_j = 0
-    for conf in real_confs:
+    fs_methods = 5
+    pred_perfs_dict = {}
+    fig, axes = plt.subplots(nrows=1, ncols=3, sharex=False)
+    for conf in test_confs:
         print(conf)
-        j = 0
         nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
         for dim, nav_file in nav_files_json.items():
             real_dims = dim - 1
-            dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] != 'real')
+            # todo conf['type'] != 'real'
+            dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] != 'test')
             if dname not in datasets:
                 continue
             print(dname + ' ' + str(real_dims) + 'd')
             info_dict_proteus = read_proteus_files(nav_file)
             info_dict_baselines = read_baseline_files(nav_file)
-            perfs_train = methods_effectiveness(nav_file, info_dict_proteus, info_dict_baselines, in_sample=True)
-            plot_datasets_perfs(axes[i, j], perfs_train)
             perfs_test = methods_effectiveness(nav_file, info_dict_proteus, info_dict_baselines, in_sample=False)
-            plot_datasets_perfs(axes[i+1, j], perfs_test)
-            if conf['detector'] == 'loda':
-                loda_i, loda_j = i, j
-            if i == 0:
-                axes[i, j].set_title(dname, fontweight='bold')
-            if j < 1:
-                axes[i, j].set_ylabel('Mean AUC')
-                axes[i+1, j].set_ylabel('Mean AUC')
-            if i+1 == 5:
-                axes[i+1, j].set_xlabel('Explanation Size')
-            j += 1
-        i += 2
-    handles, labels = axes[loda_i, loda_j].get_legend_handles_labels()
+            if perfs_test.shape[1] < fs_methods:
+                loda = pd.DataFrame(np.full(perfs_test.shape[0], 1), index=perfs_test.index, columns=['loda'])
+                perfs_test = pd.concat([perfs_test, loda], axis=1)
+            if dname not in pred_perfs_dict:
+                pred_perfs_dict[dname] = perfs_test
+            else:
+                pred_perfs_dict[dname] += perfs_test
+    for i, (dname, df) in enumerate(pred_perfs_dict.items()):
+        df /= 3
+        plot_datasets_perfs(axes[i], df)
+    handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc='upper center', ncol=5, fontsize=13)
-    plt.subplots_adjust(wspace=.4, hspace=.3, top=.92)
+    #plt.subplots_adjust(wspace=.4, hspace=.3, top=.92)
+    plt.tight_layout()
     output_folder = Path('..', 'figures', 'results')
     output_folder.mkdir(parents=True, exist_ok=True)
     plt.savefig(Path(output_folder, 'real-expl-size-auc.png'), dpi=300, bbox_inches='tight', pad_inches=0)
@@ -102,8 +98,6 @@ def plot_datasets_perfs(ax, perfs):
         colors.append(leg_handles_dict[m][0])
     perfs.index = [str(i) for i in perfs.index]
     perfs.plot(ax=ax, legend=None, style=markers, color=colors)
-    #sns.lineplot(data=perfs, ax=ax, dashes=False, markers=["s", "o", "v", "^", "*"], color=colors)
-    #ax.get_legend().remove()
     ax.locator_params(axis='x', nbins=perfs.shape[0])
     ax.set_ylim((0, 1.05))
     ax.set_yticks(np.arange(0, 1.2, 0.2))
