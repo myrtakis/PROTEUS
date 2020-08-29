@@ -29,9 +29,9 @@ expl_size = 2
 noise_level = None
 
 datasets = {
-    'wbc',
-    'arrhythmia',
-    'ionosphere'
+    'wbc': 'Breast Cancer',
+    'arrhythmia': 'Arrhythmia',
+    'ionosphere': 'Ionosphere'
 }
 
 test_confs = [
@@ -50,7 +50,7 @@ real_confs = [
 def analyze_explanation_size():
     fs_methods = 5
     pred_perfs_dict = {}
-    fig, axes = plt.subplots(nrows=1, ncols=3, sharex=False)
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(10, 3), sharex=False, sharey=True)
     for conf in test_confs:
         print(conf)
         nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
@@ -73,18 +73,18 @@ def analyze_explanation_size():
                 pred_perfs_dict[dname] += perfs_test
     for i, (dname, df) in enumerate(pred_perfs_dict.items()):
         df /= 3
-        plot_datasets_perfs(axes[i], df)
+        plot_datasets_perfs(axes[i], df, datasets[dname])
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper center', ncol=5, fontsize=13)
-    #plt.subplots_adjust(wspace=.4, hspace=.3, top=.92)
-    plt.tight_layout()
+    fig.legend(handles, labels, loc='upper center', ncol=5, fontsize=11)
+    plt.subplots_adjust(wspace=.2, hspace=.15, top=.75)
+    #plt.tight_layout()
     output_folder = Path('..', 'figures', 'results')
     output_folder.mkdir(parents=True, exist_ok=True)
-    plt.savefig(Path(output_folder, 'real-expl-size-auc.png'), dpi=300, bbox_inches='tight', pad_inches=0)
+    plt.savefig(Path(output_folder, 'real-noise-auc.png'), dpi=300, bbox_inches='tight', pad_inches=0)
     plt.clf()
 
 
-def plot_datasets_perfs(ax, perfs):
+def plot_datasets_perfs(ax, perfs, dataset_title):
     leg_handles_dict = {
         'full': ('tab:blue', 'PROTEUS$_{full}$'),
         'fs': ('tab:orange', 'PROTEUS$_{fs}$'),
@@ -96,9 +96,13 @@ def plot_datasets_perfs(ax, perfs):
     markers = ["-s", "-o", "-v", "-^", "-*"]
     for m in leg_handles_dict:
         colors.append(leg_handles_dict[m][0])
-    perfs.index = [str(i) for i in perfs.index]
+    perfs.index = [str(int(float(x) * 100)) + ' %' for x in perfs.index]
+    perfs.columns = ['PROTEUS$_{' + x + '}$' for x in perfs.columns]
     perfs.plot(ax=ax, legend=None, style=markers, color=colors)
     ax.locator_params(axis='x', nbins=perfs.shape[0])
+    ax.set_ylabel('Test AUC')
+    ax.margins(1,1)
+    ax.set_title(dataset_title, fontsize=13)
     ax.set_ylim((0, 1.05))
     ax.set_yticks(np.arange(0, 1.2, 0.2))
 
