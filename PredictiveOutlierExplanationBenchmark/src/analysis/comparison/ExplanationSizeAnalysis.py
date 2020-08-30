@@ -25,7 +25,7 @@ import seaborn as sns
 
 pipeline = 'results_predictive'
 
-expl_size = 2
+expl_size = 10
 noise_level = None
 
 datasets = {
@@ -50,14 +50,13 @@ real_confs = [
 def analyze_explanation_size():
     fs_methods = 5
     pred_perfs_dict = {}
-    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(10, 3), sharex=False, sharey=True)
-    for conf in test_confs:
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(10, 3), sharey=True)
+    for conf in real_confs:
         print(conf)
         nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
         for dim, nav_file in nav_files_json.items():
             real_dims = dim - 1
-            # todo conf['type'] != 'real'
-            dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] != 'test')
+            dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] != 'real')
             if dname not in datasets:
                 continue
             print(dname + ' ' + str(real_dims) + 'd')
@@ -71,12 +70,13 @@ def analyze_explanation_size():
                 pred_perfs_dict[dname] = perfs_test
             else:
                 pred_perfs_dict[dname] += perfs_test
+    min_perf = min([df.min().min() for df in pred_perfs_dict.values()]) / 3
     for i, (dname, df) in enumerate(pred_perfs_dict.items()):
         df /= 3
-        plot_datasets_perfs(axes[i], df, datasets[dname])
+        plot_datasets_perfs(axes[i], df, datasets[dname], min_perf)
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper center', ncol=5, fontsize=11)
-    plt.subplots_adjust(wspace=.2, hspace=.15, top=.75)
+    fig.legend(handles, labels, loc='upper center', ncol=5, fontsize=12, handletextpad=0.1)
+    plt.subplots_adjust(wspace=.15, hspace=.15, top=.7)
     #plt.tight_layout()
     output_folder = Path('..', 'figures', 'results')
     output_folder.mkdir(parents=True, exist_ok=True)
@@ -84,7 +84,7 @@ def analyze_explanation_size():
     plt.clf()
 
 
-def plot_datasets_perfs(ax, perfs, dataset_title):
+def plot_datasets_perfs(ax, perfs, dataset_title, min_perf):
     leg_handles_dict = {
         'full': ('tab:blue', 'PROTEUS$_{full}$'),
         'fs': ('tab:orange', 'PROTEUS$_{fs}$'),
@@ -96,15 +96,17 @@ def plot_datasets_perfs(ax, perfs, dataset_title):
     markers = ["-s", "-o", "-v", "-^", "-*"]
     for m in leg_handles_dict:
         colors.append(leg_handles_dict[m][0])
-    perfs.index = [str(int(float(x) * 100)) + ' %' for x in perfs.index]
+    perfs.index = [str(int(float(x) * 100)) + '%' for x in perfs.index]
     perfs.columns = ['PROTEUS$_{' + x + '}$' for x in perfs.columns]
-    perfs.plot(ax=ax, legend=None, style=markers, color=colors)
-    ax.locator_params(axis='x', nbins=perfs.shape[0])
-    ax.set_ylabel('Test AUC')
-    ax.margins(1,1)
-    ax.set_title(dataset_title, fontsize=13)
-    ax.set_ylim((0, 1.05))
-    ax.set_yticks(np.arange(0, 1.2, 0.2))
+    perfs.plot(ax=ax, legend=None, style=markers, color=colors, markersize=8)
+    #ax.locator_params(axis='x', nbins=perfs.shape[0])
+    #ax.set_ylabel('Test AUC')
+    ax.set_title(dataset_title, fontsize=14)
+    ax.set_ylim([min_perf, 1.05])
+    #ax.set_yticks(np.arange(0.5, 1.05, 0.05))
+    plt.setp(ax.get_xticklabels(), fontsize=13)
+    plt.setp(ax.get_yticklabels(), fontsize=13)
+    #ax.set_yticks(np.arange(0, 1.2, 0.2))
 
 
 def methods_effectiveness(nav_file, info_dict_proteus, info_dict_baselines, in_sample):
