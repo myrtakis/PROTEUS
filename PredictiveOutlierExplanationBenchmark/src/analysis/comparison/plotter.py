@@ -28,7 +28,7 @@ synth_confs =[
     {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 ]
 
-confs_to_analyze = test_confs
+confs_to_analyze = synth_confs
 
 
 def plot_panels():
@@ -139,6 +139,8 @@ def average_out_dim(pred_perfs_dict, option):
         else:
             det = det.upper() if det != 'iforest' else 'iForest'
             dimensions_avg = pd.DataFrame(test_df.mean(axis=1), columns=[det])
+            if det != 'LODA':
+                dimensions_avg.iloc[-1, -1] = np.NaN
             average_df = pd.concat([average_df, dimensions_avg], axis=1)
     if option == 0:
         average_df /= len(pred_perfs_dict)
@@ -177,14 +179,15 @@ def test_auc_plot(pred_perfs_dict, option):
     colors = []
     for k in avg_df.index:
         colors.append(leg_handles_dict[k])
-    markers = ["-*", "-s", "-o", "-v", "-^", '']
+    markers = ["-s", "-o", "-v", "-^", "-*"]
     avg_df.transpose().plot(style=markers, color=colors)
     plt.yticks(np.arange(0, 1.1, .1))
-    plt.xticks(np.arange(avg_df.shape[1]), avg_df.columns)
+    plt.xticks(np.arange(avg_df.shape[1]), avg_df.columns, fontsize=11)
     plt.ylim([0, 1.1])
     plt.ylabel('Test AUC')
     xlabel = 'Data Dimensionality (Noisy Features Ratio)' if option is 0 else 'Detectors'
-    plt.xlabel(xlabel)
+    plt.xlabel(xlabel, fontsize=13, labelpad=5)
+    plt.legend(prop={'size': 12})
     output_folder = Path('..', 'figures', 'results')
     output_folder.mkdir(parents=True, exist_ok=True)
     if option == 0:
