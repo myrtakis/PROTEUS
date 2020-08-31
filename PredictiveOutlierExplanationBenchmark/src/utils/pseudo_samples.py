@@ -38,6 +38,9 @@ class PseudoSamplesMger:
                 best_k = k
         return best_model, best_k
 
+    def get_best_model_per_k(self):
+        return self.best_model_per_k
+
     def optimal_pseudo_samples(self):
         self.sort_ps_samples_by_perf()
         # return something
