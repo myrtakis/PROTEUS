@@ -16,15 +16,16 @@ import statsmodels.api as sm
 import json
 
 expl_size = 10
-noise_level = None
+noise_level = 0
 
 pipeline = 'results_predictive'
 
 datasets = {
-    'wbc',
-    'arrhythmia',
-    'ionosphere'
+    'wbc': 'Breast Cancer',
+    'arrhythmia': 'Arrhythmia',
+    'ionosphere': 'Ionosphere'
 }
+
 
 test_confs = [
         #{'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'},
@@ -39,7 +40,7 @@ real_confs =[
 
 
 def analyze_oversampling_effect():
-    test_perfs_df = pd.DataFrame()
+    test_perfs_dataset = {}
     for conf in real_confs:
         print(conf)
         nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
@@ -50,8 +51,14 @@ def analyze_oversampling_effect():
                 continue
             print(dname + ' ' + str(real_dims) + 'd')
             info_dict_proteus = read_proteus_files(nav_file)
-            info_dict_baselines = read_baseline_files(nav_file)
-            perfs_test = methods_effectiveness(nav_file, info_dict_proteus, info_dict_baselines)
+            perfs_test = methods_effectiveness(nav_file, info_dict_proteus, True, conf['detector'])
+            if datasets[dname] not in test_perfs_dataset:
+                test_perfs_dataset[datasets[dname]] = perfs_test['fs'][noise_level]
+            else:
+                test_perfs_dataset[datasets[dname]] = pd.concat([test_perfs_dataset[datasets[dname]],
+                                                                 perfs_test['fs'][noise_level]], axis=1)
+    print()
+
 
 def read_proteus_files(nav_file):
     info_files_dict = {}
@@ -109,6 +116,55 @@ def read_info_file(info_file):
     with open(info_file) as json_file:
         info_dict = json.load(json_file)
         return info_dict
+
+
+def methods_effectiveness(nav_file, info_dict_proteus, in_sample, detector):
+    method_perfs_pd = OrderedDict()
+    for method, data in info_dict_proteus.items():
+        if 'full' in method:
+            continue
+        method_perfs_pd[method] = effectiveness(nav_file, data, method, False, True, in_sample, detector)
+    return method_perfs_pd
+
+
+def effectiveness(nav_file, info_dict, method, is_baseline, fs, in_sample, detector):
+    perf_dict = OrderedDict()
+    if is_baseline:
+        ps_dict = nav_file[FileKeys.navigator_baselines_key]
+    else:
+        ps_dict = nav_file[FileKeys.navigator_pseudo_samples_key]
+    for k, v in info_dict.items():
+        for ps_key, dir in v.items():
+            if is_baseline:
+                reform_pseudo_samples_dict(ps_dict[method][ps_key], dir)
+            else:
+                reform_pseudo_samples_dict(ps_dict[ps_key], dir)
+        if is_baseline:
+            ps_mger = PseudoSamplesMger(ps_dict[method], 'roc_auc', fs)
+        else:
+            ps_mger = PseudoSamplesMger(ps_dict, 'roc_auc', fs)
+        perfs_per_k = get_effectiveness_of_best_model(ps_mger, in_sample)
+        detector = 'iForest' if detector == 'iforest' else detector.upper()
+        perf_dict[k] = pd.DataFrame(perfs_per_k.values(), index=perfs_per_k.keys(), columns=[detector])
+    return perf_dict
+
+
+def get_effectiveness_of_best_model(ps_mger, in_sample):
+    effectiveness_key = 'effectiveness' if in_sample else 'hold_out_effectiveness'
+    best_model_per_k = ps_mger.get_best_model_per_k()
+    perfs_per_k = OrderedDict()
+    for k, data in sorted(best_model_per_k.items()):
+        perfs_per_k[k] = data[effectiveness_key]
+    return perfs_per_k
+
+
+def reform_pseudo_samples_dict(ps_dict, dir):
+    old_dir = ps_dict[FileKeys.navigator_pseudo_sample_dir_key]
+    for k, v in ps_dict.items():
+        if type(v) is str and old_dir in v:
+            ps_dict[k] = old_dir.replace(old_dir, dir)
+    return ps_dict
+
 
 if __name__ == '__main__':
     analyze_oversampling_effect()
