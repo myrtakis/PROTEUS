@@ -76,7 +76,10 @@ class AutoML:
         else:
             assert dataset.last_original_sample_index() is not None
             assert dataset.get_pseudo_sample_indices_per_outlier() is not None
-            return int(min(collections.Counter(dataset.get_Y()[:dataset.last_original_sample_index()]).values()))
+            if not automlconsts.GROUPING:
+                return len(dataset.get_outlier_indices())
+            else:
+                return int(min(collections.Counter(dataset.get_Y()[:dataset.last_original_sample_index()]).values()))
 
     def __create_folds_in_reps(self, kfolds, dataset, save_option):
         reps_folds_inds = OrderedDict()
@@ -93,14 +96,14 @@ class AutoML:
     def __indices_in_folds(dataset, skf):
         folds_inds = collections.OrderedDict()
         fold_id = 1
-        if dataset.contains_pseudo_samples():
+        if dataset.contains_pseudo_samples() and automlconsts.GROUPING:
             X = dataset.get_X()[:dataset.last_original_sample_index()]
             Y = dataset.get_Y()[:dataset.last_original_sample_index()]
         else:
             X = dataset.get_X()
             Y = dataset.get_Y()
         for train_inds, test_inds in skf.split(X, Y):
-            if dataset.contains_pseudo_samples():
+            if dataset.contains_pseudo_samples() and automlconsts.GROUPING:
                 ps_indices_per_outlier = dataset.get_pseudo_sample_indices_per_outlier()
                 train_inds = AutoML.__add_pseudo_samples_inds(ps_indices_per_outlier, train_inds)
                 test_inds = AutoML.__add_pseudo_samples_inds(ps_indices_per_outlier, test_inds)
