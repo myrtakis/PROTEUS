@@ -18,8 +18,8 @@ import statsmodels.api as sm
 pipeline = 'results_predictive'
 
 test_confs = [
-        #{'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'},
-        {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
+        {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'test'},
+        # {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
     ]
 
 synth_confs =[
@@ -28,7 +28,7 @@ synth_confs =[
     {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 ]
 
-confs_to_analyze = synth_confs
+confs_to_analyze = test_confs
 
 
 def plot_panels():
@@ -43,6 +43,7 @@ def plot_panels():
 
 def best_models(conf):
     best_models_perf_in_sample = pd.DataFrame()
+    cv_estimates = pd.DataFrame()
     ci_in_sample = pd.DataFrame()
     error_in_sample = pd.DataFrame()
     best_models_perf_out_of_sample = pd.DataFrame()
@@ -55,18 +56,21 @@ def best_models(conf):
         rel_fratio = '(' + str(int(round((dim-5)/dim, 2) * 100)) + '%)' if conf['type'] != 'real' else ''
         dataset_names.append(dname + ' ' + str(real_dims) + 'd ' + rel_fratio)
         # time_df = pd.concat([time_df, get_time_per_method(nav_file)], axis=1)
-        best_models_perf_in_sample_curr, ci_in_sample_curr, err_in_sample_curr = get_best_models_perf_per_method(
-            nav_file, True)
+        best_models_perf_in_sample_curr, ci_in_sample_curr, err_in_sample_curr, cv_estimates_curr = \
+            get_best_models_perf_per_method(nav_file, True)
         best_models_perf_in_sample = pd.concat([best_models_perf_in_sample, best_models_perf_in_sample_curr], axis=1)
+        cv_estimates = pd.concat([cv_estimates, cv_estimates_curr], axis=1)
         ci_in_sample = pd.concat([ci_in_sample, ci_in_sample_curr], axis=1)
         error_in_sample = pd.concat([error_in_sample, err_in_sample_curr], axis=1)
-        best_models_perf_out_sample_curr, _, _ = get_best_models_perf_per_method(nav_file, False)
+        best_models_perf_out_sample_curr, _, _, _ = get_best_models_perf_per_method(nav_file, False)
         best_models_perf_out_of_sample = pd.concat([best_models_perf_out_of_sample, best_models_perf_out_sample_curr],
                                                    axis=1)
+    cv_estimates.columns = dataset_names
     best_models_perf_in_sample.columns = dataset_names
     best_models_perf_out_of_sample.columns = dataset_names
     return {'best_models_perf_in_sample': best_models_perf_in_sample,
             'best_models_perf_out_of_sample': best_models_perf_out_of_sample,
+            'cv_estimates': cv_estimates,
             'ci_in_sample': ci_in_sample,
             'error_in_sample': error_in_sample}
 
@@ -75,19 +79,21 @@ def get_effectiveness_of_best_model(ps_dict, fs, in_sample):
     effectiveness_key = 'effectiveness' if in_sample else 'hold_out_effectiveness'
     method_mger = PseudoSamplesMger(ps_dict, 'roc_auc', fs=fs)
     best_model, best_k = method_mger.get_best_model()
+    cv_estimate = round(best_model['cv_estimate'], 3) if in_sample else None
     conf_intervals = [round(x, 2) for x in best_model['confidence_intervals']]
-    return round(best_model[effectiveness_key], 3), conf_intervals
+    return round(best_model[effectiveness_key], 3), conf_intervals, [cv_estimate]
 
 
 def get_best_models_perf_per_method(nav_file, in_sample):
+    cv_estimates = {}
     best_model_perfs = {}
     ci = {}
     error = {}
     protean_ps_dict = nav_file[FileKeys.navigator_pseudo_samples_key]
-    best_model_perfs['PROTEUS$_{full}$'], ci['PROTEUS$_{full}$'] = get_effectiveness_of_best_model(protean_ps_dict, False,
-                                                                                               in_sample)
-    best_model_perfs['PROTEUS$_{fs}$'], ci['PROTEUS$_{fs}$'] = get_effectiveness_of_best_model(protean_ps_dict, True,
-                                                                                           in_sample)
+    best_model_perfs['PROTEUS$_{full}$'], ci['PROTEUS$_{full}$'], cv_estimates['PROTEUS$_{full}$'] = \
+        get_effectiveness_of_best_model(protean_ps_dict, False, in_sample)
+    best_model_perfs['PROTEUS$_{fs}$'], ci['PROTEUS$_{fs}$'], cv_estimates['PROTEUS$_{fs}$'] = \
+        get_effectiveness_of_best_model(protean_ps_dict, True, in_sample)
     baselines_dir = nav_file[FileKeys.navigator_baselines_key]
     for method, data in baselines_dir.items():
         if method == 'random':
@@ -95,19 +101,32 @@ def get_best_models_perf_per_method(nav_file, in_sample):
         if method == 'micencova':
             method = 'ca-lasso'
         method_name = 'PROTEUS$_{' + method + '}$'
-        best_model_perfs[method_name], ci[method_name] = get_effectiveness_of_best_model(data, True, in_sample)
+        best_model_perfs[method_name], ci[method_name], cv_estimates[method_name] = \
+            get_effectiveness_of_best_model(data, True, in_sample)
     for m in ci.keys():
         error[m] = [np.abs(ci[m][0] - best_model_perfs[m]), np.abs(ci[m][1] - best_model_perfs[m])]
         best_model_perfs[m] = [best_model_perfs[m]]
         ci[m] = [ci[m]]
-    return pd.DataFrame(best_model_perfs).transpose(), pd.DataFrame(ci).transpose(), pd.DataFrame(error).transpose()
+    return pd.DataFrame(best_model_perfs).transpose(), pd.DataFrame(ci).transpose(), \
+           pd.DataFrame(error).transpose(), pd.DataFrame(cv_estimates).transpose()
 
 
-def calculate_bias(pred_perfs_dict):
+def bbc_estimate(pred_perfs_dict):
     train_df_total = pd.DataFrame()
     test_df_total = pd.DataFrame()
     for (det, pred_perf) in pred_perfs_dict.items():
         train_df_total = pd.concat([train_df_total, pred_perf['best_models_perf_in_sample']], axis=1)
+        test_df_total = pd.concat([test_df_total, pred_perf['best_models_perf_out_of_sample']], axis=1)
+        assert not any(train_df_total.index != test_df_total.index)
+        assert not any(train_df_total.columns != test_df_total.columns)
+    return train_df_total, test_df_total
+
+
+def cv_estimate(pred_perfs_dict):
+    train_df_total = pd.DataFrame()
+    test_df_total = pd.DataFrame()
+    for (det, pred_perf) in pred_perfs_dict.items():
+        train_df_total = pd.concat([train_df_total, pred_perf['cv_estimates']], axis=1)
         test_df_total = pd.concat([test_df_total, pred_perf['best_models_perf_out_of_sample']], axis=1)
         assert not any(train_df_total.index != test_df_total.index)
         assert not any(train_df_total.columns != test_df_total.columns)
@@ -148,16 +167,21 @@ def average_out_dim(pred_perfs_dict, option):
 
 
 def bias_plot(pred_perfs_dict):
-    train_df, test_df = calculate_bias(pred_perfs_dict)
+    train_df, test_df = bbc_estimate(pred_perfs_dict)
+    train_df_cv_estimates, _ = cv_estimate(pred_perfs_dict)
     lowess = sm.nonparametric.lowess
     lb_error, ub_error = calculate_error(pred_perfs_dict)
     train_vals = np.array([x for x in train_df.values.flatten() if not np.isnan(x)])
+    train_vals_cv_estimate = np.array([x for x in train_df_cv_estimates.values.flatten() if not np.isnan(x)])
     test_vals = np.array([x for x in test_df.values.flatten() if not np.isnan(x)])
-    plt.plot([min(train_vals), max(train_vals)], [min(test_vals), max(test_vals)])
+    plt.plot([min(train_vals), max(train_vals)], [min(test_vals), max(test_vals)], color='k')
     plt.scatter(train_vals, test_vals, color='r', marker='o')
+    plt.scatter(train_vals_cv_estimate, test_vals)
     # plt.fill_between(x, x - lb_error, x + ub_error, alpha=0.2)
-    lowess_arr = lowess(test_vals, train_vals)
-    plt.plot(lowess_arr[:, 0], lowess_arr[:, 1], color='tab:green')
+    lowess_arr_bbc = lowess(test_vals, train_vals)
+    plt.plot(lowess_arr_bbc[:, 0], lowess_arr_bbc[:, 1], color='tab:green')
+    lowess_arr_cv = lowess(test_vals, train_vals_cv_estimate)
+    plt.plot(lowess_arr_cv[:, 0], lowess_arr_cv[:, 1], color='tab:orange')
     plt.xlabel('AUC Train Performance Estimation', fontsize=14)
     plt.ylabel('AUC Test Performance', fontsize=14)
     output_folder = Path('..', 'figures', 'results')
