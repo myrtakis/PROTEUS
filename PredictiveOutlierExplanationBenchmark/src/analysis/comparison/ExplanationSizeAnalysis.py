@@ -29,9 +29,9 @@ expl_size = 10
 noise_level = None
 
 datasets = {
-    'wbc': 'Breast Cancer',
-    'arrhythmia': 'Arrhythmia',
-    'ionosphere': 'Ionosphere'
+    'wbc': {'name': 'Breast Cancer', 'dims': ['30d (0%)', '42d (30%)', '75d (60%)', '300d (90%)']},
+    'arrhythmia': {'name': 'Arrhythmia', 'dims': ['33d (0%)', '47d (30%)', '82d (60%)', '330d (90%)']},
+    'ionosphere': {'name': 'Ionosphere', 'dims': ['257d (0%)', '367d (30%)', '642d (60%)', '2570d (90%)']}
 }
 
 test_confs = [
@@ -46,11 +46,42 @@ real_confs = [
     {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'real'}
 ]
 
+synth_confs =[
+    {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'},
+    {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'},
+    {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
+]
 
 def analyze_explanation_size():
-    fs_methods = 5
-    pred_perfs_dict = {}
     fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 6), sharey=True)
+    real_test_perfs = real_perfs()
+    synth_test_perfs = synth_perfs()
+    perfs_total = synth_test_perfs.update(real_test_perfs)
+    min_perf = 0.2 # min([df.min().min() for df in pred_perfs_dict.values()]) / 3
+    i, j = 0, 0
+    for dname, df in perfs_total.items():
+        if j == 2:
+            j = 0
+            i += 1
+        if dname != 'Synthetic':
+            dname = datasets[dname]['name']
+            df.index = datasets[dname]['dims']
+        df /= 3
+        plot_datasets_perfs(axes[i, j], df, dname, min_perf)
+        j += 1
+    handles, labels = axes[0, 1].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper center', ncol=5, fontsize=12, handletextpad=0.1)
+    plt.subplots_adjust(wspace=.15, hspace=.3, top=.85)
+    #plt.tight_layout()
+    output_folder = Path('..', 'figures', 'results')
+    output_folder.mkdir(parents=True, exist_ok=True)
+    plt.savefig(Path(output_folder, 'real-noise-auc.png'), dpi=300, bbox_inches='tight', pad_inches=0)
+    plt.clf()
+
+
+def real_perfs():
+    pred_perfs_dict = {}
+    fs_methods = 5
     for conf in real_confs:
         print(conf)
         nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
@@ -70,24 +101,74 @@ def analyze_explanation_size():
                 pred_perfs_dict[dname] = perfs_test
             else:
                 pred_perfs_dict[dname] += perfs_test
-    min_perf = 0.2 # min([df.min().min() for df in pred_perfs_dict.values()]) / 3
-    j = 1
-    i = 0
-    for dname, df in pred_perfs_dict.items():
-        if j == 2:
-            j = 0
-            i += 1
-        df /= 3
-        plot_datasets_perfs(axes[i, j], df, datasets[dname], min_perf)
-        j += 1
-    handles, labels = axes[0, 1].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper center', ncol=5, fontsize=12, handletextpad=0.1)
-    plt.subplots_adjust(wspace=.15, hspace=.3, top=.85)
-    #plt.tight_layout()
-    output_folder = Path('..', 'figures', 'results')
-    output_folder.mkdir(parents=True, exist_ok=True)
-    plt.savefig(Path(output_folder, 'real-noise-auc.png'), dpi=300, bbox_inches='tight', pad_inches=0)
-    plt.clf()
+    return pred_perfs_dict
+
+
+def synth_perfs():
+    pred_perfs_dict = OrderedDict()
+    pred_perfs_dict['Synthetic'] = {}
+    for conf in synth_confs:
+        print(conf)
+        pred_perfs_dict['Synthetic'][conf['detector']] = best_models(conf)
+    return pred_perfs_dict
+
+
+def best_models(conf):
+    best_models_perf_in_sample = pd.DataFrame()
+    cv_estimates = pd.DataFrame()
+    ci_in_sample = pd.DataFrame()
+    error_in_sample = pd.DataFrame()
+    best_models_perf_out_of_sample = pd.DataFrame()
+    dataset_names = []
+    nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
+    for dim, nav_file in nav_files_json.items():
+        real_dims = dim - 1 - (conf['type'] == 'synthetic')
+        dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] != 'real')
+        print(str(real_dims) + 'd')
+        rel_fratio = '(' + str(int(round((dim-5)/dim, 2) * 100)) + '%)' if conf['type'] != 'real' else ''
+        dataset_names.append(dname + ' ' + str(real_dims) + 'd ' + rel_fratio)
+        # time_df = pd.concat([time_df, get_time_per_method(nav_file)], axis=1)
+        best_models_perf_in_sample_curr, ci_in_sample_curr, err_in_sample_curr, cv_estimates_curr = \
+            get_best_models_perf_per_method(nav_file, True)
+        best_models_perf_in_sample = pd.concat([best_models_perf_in_sample, best_models_perf_in_sample_curr], axis=1)
+        cv_estimates = pd.concat([cv_estimates, cv_estimates_curr], axis=1)
+        ci_in_sample = pd.concat([ci_in_sample, ci_in_sample_curr], axis=1)
+        error_in_sample = pd.concat([error_in_sample, err_in_sample_curr], axis=1)
+        best_models_perf_out_sample_curr, _, _, _ = get_best_models_perf_per_method(nav_file, False)
+        best_models_perf_out_of_sample = pd.concat([best_models_perf_out_of_sample, best_models_perf_out_sample_curr],
+                                                   axis=1)
+    cv_estimates.columns = dataset_names
+    best_models_perf_in_sample.columns = dataset_names
+    best_models_perf_out_of_sample.columns = dataset_names
+    return {'best_models_perf_in_sample': best_models_perf_in_sample,
+            'best_models_perf_out_of_sample': best_models_perf_out_of_sample,
+            'cv_estimates': cv_estimates,
+            'ci_in_sample': ci_in_sample,
+            'error_in_sample': error_in_sample}
+
+
+def get_best_models_perf_per_method(nav_file, in_sample):
+    cv_estimates = {}
+    best_model_perfs = {}
+    ci = {}
+    error = {}
+    protean_ps_dict = nav_file[FileKeys.navigator_pseudo_samples_key]
+    best_model_perfs['PROTEUS$_{full}$'], ci['PROTEUS$_{full}$'] = get_effectiveness_of_best_model(protean_ps_dict, False, in_sample)
+    best_model_perfs['PROTEUS$_{fs}$'], ci['PROTEUS$_{fs}$'] = get_effectiveness_of_best_model(protean_ps_dict, True, in_sample)
+    baselines_dir = nav_file[FileKeys.navigator_baselines_key]
+    for method, data in baselines_dir.items():
+        if method == 'random':
+            continue
+        if method == 'micencova':
+            method = 'ca-lasso'
+        method_name = 'PROTEUS$_{' + method + '}$'
+        best_model_perfs[method_name], ci[method_name] = get_effectiveness_of_best_model(data, True, in_sample)
+    for m in ci.keys():
+        error[m] = [np.abs(ci[m][0] - best_model_perfs[m]), np.abs(ci[m][1] - best_model_perfs[m])]
+        best_model_perfs[m] = [best_model_perfs[m]]
+        ci[m] = [ci[m]]
+    return pd.DataFrame(best_model_perfs).transpose(), pd.DataFrame(ci).transpose(), \
+           pd.DataFrame(error).transpose(), pd.DataFrame(cv_estimates).transpose()
 
 
 def plot_datasets_perfs(ax, perfs, dataset_title, min_perf):
@@ -102,7 +183,6 @@ def plot_datasets_perfs(ax, perfs, dataset_title, min_perf):
     markers = ["-s", "-o", "-v", "-^", "-*"]
     for m in leg_handles_dict:
         colors.append(leg_handles_dict[m][0])
-    perfs.index = [str(int(float(x) * 100)) + '%' for x in perfs.index]
     perfs.columns = ['PROTEUS$_{' + x + '}$' for x in perfs.columns]
     perfs.plot(ax=ax, legend=None, style=markers, color=colors, markersize=8)
     #ax.locator_params(axis='x', nbins=perfs.shape[0])
@@ -137,18 +217,16 @@ def effectiveness(nav_file, info_dict, method, is_baseline, fs, in_sample):
                 reform_pseudo_samples_dict(ps_dict[method][ps_key], dir)
             else:
                 reform_pseudo_samples_dict(ps_dict[ps_key], dir)
-        if is_baseline:
-            ps_mger = PseudoSamplesMger(ps_dict[method], 'roc_auc', fs)
-        else:
-            ps_mger = PseudoSamplesMger(ps_dict, 'roc_auc', fs)
-        perf, ci = get_effectiveness_of_best_model(ps_mger, in_sample)
+        ps_dict = ps_dict[method] if is_baseline else ps_dict
+        perf, ci = get_effectiveness_of_best_model(ps_dict, fs, in_sample)
         perf_dict[k] = perf
     return pd.DataFrame(perf_dict.values(), index=perf_dict.keys(), columns=[method])
 
 
-def get_effectiveness_of_best_model(ps_mger, in_sample):
+def get_effectiveness_of_best_model(ps_dict, fs, in_sample):
     effectiveness_key = 'effectiveness' if in_sample else 'hold_out_effectiveness'
-    best_model, best_k = ps_mger.get_best_model()
+    method_mger = PseudoSamplesMger(ps_dict, 'roc_auc', fs=fs)
+    best_model, best_k = method_mger.get_best_model()
     conf_intervals = [round(x, 2) for x in best_model['confidence_intervals']]
     return round(best_model[effectiveness_key], 3), conf_intervals
 
