@@ -23,7 +23,7 @@ import numpy as np
 import seaborn as sns
 
 
-pipeline = 'results_predictive'
+pipeline = 'results_predictive_grouping'
 
 expl_size = 10
 noise_level = None
@@ -50,7 +50,7 @@ real_confs = [
 def analyze_explanation_size():
     fs_methods = 5
     pred_perfs_dict = {}
-    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(10, 3), sharey=True)
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 6), sharey=True)
     for conf in real_confs:
         print(conf)
         nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
@@ -70,13 +70,19 @@ def analyze_explanation_size():
                 pred_perfs_dict[dname] = perfs_test
             else:
                 pred_perfs_dict[dname] += perfs_test
-    min_perf = min([df.min().min() for df in pred_perfs_dict.values()]) / 3
-    for i, (dname, df) in enumerate(pred_perfs_dict.items()):
+    min_perf = 0.2 # min([df.min().min() for df in pred_perfs_dict.values()]) / 3
+    j = 1
+    i = 0
+    for dname, df in pred_perfs_dict.items():
+        if j == 2:
+            j = 0
+            i += 1
         df /= 3
-        plot_datasets_perfs(axes[i], df, datasets[dname], min_perf)
-    handles, labels = axes[0].get_legend_handles_labels()
+        plot_datasets_perfs(axes[i, j], df, datasets[dname], min_perf)
+        j += 1
+    handles, labels = axes[0, 1].get_legend_handles_labels()
     fig.legend(handles, labels, loc='upper center', ncol=5, fontsize=12, handletextpad=0.1)
-    plt.subplots_adjust(wspace=.15, hspace=.15, top=.7)
+    plt.subplots_adjust(wspace=.15, hspace=.3, top=.85)
     #plt.tight_layout()
     output_folder = Path('..', 'figures', 'results')
     output_folder.mkdir(parents=True, exist_ok=True)

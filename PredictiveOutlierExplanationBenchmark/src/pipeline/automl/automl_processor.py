@@ -76,10 +76,7 @@ class AutoML:
         else:
             assert dataset.last_original_sample_index() is not None
             assert dataset.get_pseudo_sample_indices_per_outlier() is not None
-            if not automlconsts.GROUPING:
-                return len(dataset.get_outlier_indices())
-            else:
-                return int(min(collections.Counter(dataset.get_Y()[:dataset.last_original_sample_index()]).values()))
+            return int(min(collections.Counter(dataset.get_Y()[:dataset.last_original_sample_index()]).values()))
 
     def __create_folds_in_reps(self, kfolds, dataset, save_option):
         reps_folds_inds = OrderedDict()

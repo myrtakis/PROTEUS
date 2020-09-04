@@ -27,6 +27,8 @@ class PseudoSamplesMger:
         assert len(self.k_configurations) == len(self.pseudo_samples_raw)
 
     def __get_best_model_from_dir(self, ps_dir):
+        # if 'results_predictive' in ps_dir:
+        #     ps_dir = ps_dir.replace('results_predictive', 'results_predictive_grouping')
         best_model_file = Path(ps_dir, FileNames.best_model_fname)
         with open(best_model_file, 'r') as json_file:
             return json.load(json_file)[fs_key(self.fs)][self.metric_id]
