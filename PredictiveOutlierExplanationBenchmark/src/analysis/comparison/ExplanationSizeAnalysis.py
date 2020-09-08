@@ -28,10 +28,12 @@ pipeline = 'results_predictive_grouping'
 expl_size = 10
 noise_level = None
 
+fs_methods = 5
+
 datasets = {
-    'wbc': {'name': 'Breast Cancer', 'dims': ['30d (0%)', '42d (30%)', '75d (60%)', '300d (90%)']},
-    'arrhythmia': {'name': 'Arrhythmia', 'dims': ['33d (0%)', '47d (30%)', '82d (60%)', '330d (90%)']},
-    'ionosphere': {'name': 'Ionosphere', 'dims': ['257d (0%)', '367d (30%)', '642d (60%)', '2570d (90%)']}
+    'wbc': {'name': 'Wisconsin Breast Cancer', 'dims': ['30d (0%)', '42d (30%)', '75d (60%)', '300d (90%)']},
+    'ionosphere': {'name': 'Ionosphere', 'dims': ['33d (0%)', '47d (30%)', '82d (60%)', '330d (90%)']},
+    'arrhythmia': {'name': 'Arrhythmia', 'dims': ['257d (0%)', '367d (30%)', '642d (60%)', '2570d (90%)']}
 }
 
 test_confs = [
@@ -53,10 +55,10 @@ synth_confs =[
 ]
 
 def analyze_explanation_size():
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 6), sharey=True)
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(8, 7), sharey=True)
     real_test_perfs = real_perfs()
     synth_test_perfs = synth_perfs()
-    perfs_total = synth_test_perfs.update(real_test_perfs)
+    perfs_total = {**synth_test_perfs, **real_test_perfs}
     min_perf = 0.2 # min([df.min().min() for df in pred_perfs_dict.values()]) / 3
     i, j = 0, 0
     for dname, df in perfs_total.items():
@@ -64,24 +66,23 @@ def analyze_explanation_size():
             j = 0
             i += 1
         if dname != 'Synthetic':
-            dname = datasets[dname]['name']
             df.index = datasets[dname]['dims']
+            dname = datasets[dname]['name']
         df /= 3
         plot_datasets_perfs(axes[i, j], df, dname, min_perf)
         j += 1
     handles, labels = axes[0, 1].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper center', ncol=5, fontsize=12, handletextpad=0.1)
-    plt.subplots_adjust(wspace=.15, hspace=.3, top=.85)
+    # fig.legend(handles, labels, loc='upper center', ncol=3, fontsize=13)
+    plt.subplots_adjust(wspace=.15, hspace=.5, top=.82)
     #plt.tight_layout()
     output_folder = Path('..', 'figures', 'results')
     output_folder.mkdir(parents=True, exist_ok=True)
-    plt.savefig(Path(output_folder, 'real-noise-auc.png'), dpi=300, bbox_inches='tight', pad_inches=0)
+    plt.savefig(Path(output_folder, 'dim-auc.png'), dpi=300, bbox_inches='tight', pad_inches=0)
     plt.clf()
 
 
 def real_perfs():
     pred_perfs_dict = {}
-    fs_methods = 5
     for conf in real_confs:
         print(conf)
         nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
@@ -105,17 +106,23 @@ def real_perfs():
 
 
 def synth_perfs():
-    pred_perfs_dict = OrderedDict()
-    pred_perfs_dict['Synthetic'] = {}
+    pred_perfs_dict = {}
     for conf in synth_confs:
         print(conf)
-        pred_perfs_dict['Synthetic'][conf['detector']] = best_models(conf)
+        perfs_test = best_models(conf)
+        if perfs_test.shape[1] < fs_methods:
+            loda = pd.DataFrame(np.full(perfs_test.shape[0], 1), index=perfs_test.index, columns=['PROTEUS_${loda}$'])
+            perfs_test = pd.concat([perfs_test, loda], axis=1)
+        if 'Synthetic' not in pred_perfs_dict:
+            pred_perfs_dict['Synthetic'] = perfs_test
+        else:
+            vals = pred_perfs_dict['Synthetic'].values + perfs_test.values
+            pred_perfs_dict['Synthetic'] = pd.DataFrame(vals, index=perfs_test.index, columns=perfs_test.columns)
     return pred_perfs_dict
 
 
 def best_models(conf):
     best_models_perf_in_sample = pd.DataFrame()
-    cv_estimates = pd.DataFrame()
     ci_in_sample = pd.DataFrame()
     error_in_sample = pd.DataFrame()
     best_models_perf_out_of_sample = pd.DataFrame()
@@ -126,25 +133,18 @@ def best_models(conf):
         dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] != 'real')
         print(str(real_dims) + 'd')
         rel_fratio = '(' + str(int(round((dim-5)/dim, 2) * 100)) + '%)' if conf['type'] != 'real' else ''
-        dataset_names.append(dname + ' ' + str(real_dims) + 'd ' + rel_fratio)
+        dataset_names.append(str(real_dims) + 'd ' + rel_fratio)
         # time_df = pd.concat([time_df, get_time_per_method(nav_file)], axis=1)
-        best_models_perf_in_sample_curr, ci_in_sample_curr, err_in_sample_curr, cv_estimates_curr = \
-            get_best_models_perf_per_method(nav_file, True)
+        best_models_perf_in_sample_curr, ci_in_sample_curr, err_in_sample_curr, _ = get_best_models_perf_per_method(nav_file, True)
         best_models_perf_in_sample = pd.concat([best_models_perf_in_sample, best_models_perf_in_sample_curr], axis=1)
-        cv_estimates = pd.concat([cv_estimates, cv_estimates_curr], axis=1)
         ci_in_sample = pd.concat([ci_in_sample, ci_in_sample_curr], axis=1)
         error_in_sample = pd.concat([error_in_sample, err_in_sample_curr], axis=1)
         best_models_perf_out_sample_curr, _, _, _ = get_best_models_perf_per_method(nav_file, False)
         best_models_perf_out_of_sample = pd.concat([best_models_perf_out_of_sample, best_models_perf_out_sample_curr],
                                                    axis=1)
-    cv_estimates.columns = dataset_names
     best_models_perf_in_sample.columns = dataset_names
     best_models_perf_out_of_sample.columns = dataset_names
-    return {'best_models_perf_in_sample': best_models_perf_in_sample,
-            'best_models_perf_out_of_sample': best_models_perf_out_of_sample,
-            'cv_estimates': cv_estimates,
-            'ci_in_sample': ci_in_sample,
-            'error_in_sample': error_in_sample}
+    return best_models_perf_out_of_sample.transpose()
 
 
 def get_best_models_perf_per_method(nav_file, in_sample):
@@ -184,14 +184,15 @@ def plot_datasets_perfs(ax, perfs, dataset_title, min_perf):
     for m in leg_handles_dict:
         colors.append(leg_handles_dict[m][0])
     perfs.columns = ['PROTEUS$_{' + x + '}$' for x in perfs.columns]
-    perfs.plot(ax=ax, legend=None, style=markers, color=colors, markersize=8)
+    perfs.plot(ax=ax, legend=None, style=markers, color=colors, markersize=8, rot=20)
+    ax.set_ylabel('AUC Test', fontsize=12)
     #ax.locator_params(axis='x', nbins=perfs.shape[0])
     #ax.set_ylabel('Test AUC')
     ax.set_title(dataset_title, fontsize=14)
     ax.set_ylim([min_perf, 1.05])
     #ax.set_yticks(np.arange(0.5, 1.05, 0.05))
-    plt.setp(ax.get_xticklabels(), fontsize=13)
-    plt.setp(ax.get_yticklabels(), fontsize=13)
+    plt.setp(ax.get_xticklabels(), fontsize=11)
+    plt.setp(ax.get_yticklabels(), fontsize=11)
     #ax.set_yticks(np.arange(0, 1.2, 0.2))
 
 
@@ -217,9 +218,11 @@ def effectiveness(nav_file, info_dict, method, is_baseline, fs, in_sample):
                 reform_pseudo_samples_dict(ps_dict[method][ps_key], dir)
             else:
                 reform_pseudo_samples_dict(ps_dict[ps_key], dir)
-        ps_dict = ps_dict[method] if is_baseline else ps_dict
-        perf, ci = get_effectiveness_of_best_model(ps_dict, fs, in_sample)
+        ps_dict_tmp = ps_dict[method] if is_baseline else ps_dict
+        perf, ci = get_effectiveness_of_best_model(ps_dict_tmp, fs, in_sample)
         perf_dict[k] = perf
+    if method == 'micencova':
+        method = 'ca-lasso'
     return pd.DataFrame(perf_dict.values(), index=perf_dict.keys(), columns=[method])
 
 

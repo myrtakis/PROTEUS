@@ -25,7 +25,7 @@ class AutoML:
         print('Running explanation', explanation)
         output_dir = ResultsWriter.add_explanation_size_to_path(self.__output_dir, explanation_size)
         explanation = list(map(int, explanation))
-        assert len(explanation) == explanation_size
+        assert len(explanation) <= explanation_size
         fsel = FeatureSelection({'id': 'explanation', 'params': None})
         fsel.set_features(explanation)
         fsel.set_time(.0)

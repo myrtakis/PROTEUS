@@ -1,6 +1,6 @@
 from pathlib import Path
 from utils.helper_functions import read_nav_files, sort_files_by_dim
-from analysis.comparison.comparison_utils import get_dataset_name
+from analysis.comparison.comparison_utils import get_dataset_name, read_proteus_files, read_baseline_files, reform_pseudo_samples_dict
 from utils.pseudo_samples import PseudoSamplesMger
 from utils.shared_names import FileKeys, FileNames
 import pandas as pd
@@ -12,29 +12,88 @@ import glob
 from models.Classifier import Classifier
 
 
-pipeline = 'results_predictive'
+pipeline_grouping = 'results_predictive_grouping'
+pipeline_no_grouping = 'results_predictive'
 
-test_confs = [
-        # {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'test'},
-        {'path': Path('..', pipeline, 'loda'), 'detector': 'iforest', 'type': 'test'}
-    ]
+expl_size=10
+noise_level = None
+
+datasets = {
+    'wbc',
+    'ionosphere',
+    'arrhythmia'
+}
+
 
 synth_confs =[
-    {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'},
-    {'path': Path('..', pipeline, 'lof'), 'detector': 'lof', 'type': 'synthetic'},
-    {'path': Path('..', pipeline, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
+    {'path': Path('..', pipeline_grouping, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'},
+    {'path': Path('..', pipeline_grouping, 'lof'), 'detector': 'lof', 'type': 'synthetic'},
+    {'path': Path('..', pipeline_grouping, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
 ]
 
-confs_to_analyze = test_confs
+real_confs = [
+    {'path': Path('..', pipeline_grouping, 'iforest'), 'detector': 'iforest', 'type': 'real'},
+    {'path': Path('..', pipeline_grouping, 'lof'), 'detector': 'lof', 'type': 'real'},
+    {'path': Path('..', pipeline_grouping, 'loda'), 'detector': 'loda', 'type': 'real'}
+]
+
+
+synth_confs_no_grouping =[
+    {'path': Path('..', pipeline_no_grouping, 'iforest'), 'detector': 'iforest', 'type': 'synthetic'},
+    {'path': Path('..', pipeline_no_grouping, 'lof'), 'detector': 'lof', 'type': 'synthetic'},
+    {'path': Path('..', pipeline_no_grouping, 'loda'), 'detector': 'loda', 'type': 'synthetic'}
+]
 
 
 def calc_estimates_synth_data():
-    for conf in confs_to_analyze:
+    for conf in synth_confs:
         print(conf)
-        best_models(conf)
+        best_models_unstructured(conf)
 
 
-def best_models(conf):
+def calc_estimates_real_data():
+    for conf in real_confs:
+        print(conf)
+        best_models_unstructured(conf)
+
+
+def calc_estimates_synth_data_no_grouping():
+    for conf in synth_confs_no_grouping:
+        print(conf)
+        best_models_unstructured(conf)
+
+
+def best_models_unstructured(conf):
+    nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
+    for dim, nav_file in nav_files_json.items():
+        dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] != 'real')
+        if conf['type'] == 'real' and dname not in datasets:
+            continue
+        info_dict_proteus = read_proteus_files(nav_file, expl_size, noise_level)
+        info_dict_baselines = read_baseline_files(nav_file, expl_size, noise_level)
+        for method, data in info_dict_proteus.items():
+            fs = False if 'full' in method else True
+            update_unstructure(nav_file, method, data, False, fs)
+        for method, data in info_dict_baselines.items():
+            update_unstructure(nav_file, method, data, True, True)
+
+
+def update_unstructure(nav_file, method, info_dict, is_baseline, fs):
+    if is_baseline:
+        ps_dict = nav_file[FileKeys.navigator_baselines_key]
+    else:
+        ps_dict = nav_file[FileKeys.navigator_pseudo_samples_key]
+    for k, v in info_dict.items():
+        for ps_key, dir in v.items():
+            if is_baseline:
+                reform_pseudo_samples_dict(ps_dict[method][ps_key], dir)
+            else:
+                reform_pseudo_samples_dict(ps_dict[ps_key], dir)
+        ps_dict_tmp = ps_dict[method] if is_baseline else ps_dict
+        update_best_model_cv_estimates(method, nav_file, ps_dict_tmp, fs)
+
+
+def best_models_synth(conf):
     nav_files_json = sort_files_by_dim(read_nav_files(conf['path'], conf['type']))
     for dim, nav_file in nav_files_json.items():
         protean_ps_dict = nav_file[FileKeys.navigator_pseudo_samples_key]
@@ -50,12 +109,10 @@ def update_best_model_cv_estimates(method, nav_file, ps_dict, fs):
     best_model, best_k = method_mger.get_best_model()
     best_model_dir = method_mger.get_path_of_best_model()
     fs_key = 'fs' if fs else 'no_fs'
-    if pipeline != 'results_predictive':
-        best_model_dir = best_model_dir.replace('results_predictive', pipeline)
     if fs:
         best_model_updated = get_dict_cv_performance_updated(best_model, best_model_dir)
     else:
-        best_model_updated = compute_cv_performance(nav_file, method_mger.get_path_of_best_model(), best_model)
+        best_model_updated = compute_cv_performance(nav_file, best_model_dir, best_model)
     write_update(best_model_dir, fs_key, best_model_updated)
     print('Cv estimate updated for method', method)
 
@@ -70,14 +127,24 @@ def write_update(best_model_dir, fs_key, best_model_updated):
 
 def compute_cv_performance(nav_file, best_k_path, best_model):
     folds_inds = get_folds_inds(nav_file, best_k_path)
-    dataset_path = next(filter(lambda x: 'hold_out' not in x and x.endswith('.csv'), os.listdir(best_k_path)), None)
-    df = pd.read_csv(Path(best_k_path, dataset_path))
+    dataset_path = find_dataset_path(best_k_path)
+    df = pd.read_csv(dataset_path)
     if 'subspaces' in df.columns:
         df = df.drop(columns=['subspaces'])
     X = df.drop(columns=['is_anomaly'])
     Y = df['is_anomaly']
     best_model['cv_estimate'] = cv_perf_full_selector(X, Y, folds_inds, best_model)
     return best_model
+
+
+def find_dataset_path(curr_dir):
+    files = os.listdir(str(curr_dir))
+    while not any([f.endswith('.csv') for f in files]):
+        curr_dir = Path(curr_dir).parent
+        files = os.listdir(str(curr_dir))
+    for f in files:
+        if f.endswith('.csv') and 'hold_out' not in f:
+            return Path(curr_dir, f)
 
 
 def get_dict_cv_performance_updated(best_model, path):
@@ -154,4 +221,6 @@ def apply_grouping(folds_inds, ps_info_dict):
 
 
 if __name__ == '__main__':
-    calc_estimates_synth_data()
+    # calc_estimates_synth_data()
+    # calc_estimates_real_data()
+    calc_estimates_synth_data_no_grouping()

@@ -19,7 +19,7 @@ import numpy as np
 from pipeline.automl.automl_constants import MAX_FEATURES
 import matplotlib.pyplot as plt
 
-pipeline = 'results_predictive'
+pipeline = 'results_predictive_grouping'
 
 test_confs = [
     {'path': Path('..', pipeline, 'iforest'), 'detector': 'iforest', 'type': 'test'}
@@ -46,7 +46,7 @@ def analyze():
     recall_dict = OrderedDict()
     for conf in confs_to_analyze:
         if fig_name is None:
-            fig_name = 'real_features_perf.png' if conf['type'] == 'real' else 'synthetic_features_perf.png'
+            fig_name = 'real_features_perf.png' if conf['type'] == 'real' else 'synth-features-corr.png'
         nav_files = read_nav_files(conf['path'], conf['type'])
         nav_files = sort_files_by_dim(nav_files)
         feature_perf_prec, feature_perf_recall = analysis_per_nav_file(nav_files, conf)
@@ -76,7 +76,7 @@ def analysis_per_nav_file(nav_files, conf):
         dname = get_dataset_name(nav_file[FileKeys.navigator_original_dataset_path], conf['type'] == 'synthetic')
         print(dname + ' ' + str(real_dims) + '-d')
         noise_ratio_str = '(' + str(int(round((dim-5)/dim,2) * 100)) + '%)'
-        dataset_names.append(dname + ' ' + str(real_dims) + '-d ' + noise_ratio_str)
+        dataset_names.append(str(real_dims) + 'd ' + noise_ratio_str)
         methods_features = get_selected_features_per_method(nav_file)
         rel_features = get_relevant_features(nav_file, conf)
         recall, prec = calculate_feature_metrics(methods_features, rel_features)
@@ -128,8 +128,9 @@ def calculate_feature_metrics(methods_features, rel_features):
 
 
 def plot_dataframes(prec_perfs, recall_perfs, fig_name):
-    fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(10.5, 4.5), sharex=False)
+    fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(8.5, 5), sharex=False)
     leg_handles_dict = {
+        'PROTEUS_{full}': ('tab:blue', '$PROTEUS_{full}$'),
         'PROTEUS_{fs}': ('tab:orange', '$PROTEUS_{fs}$'),
         'PROTEUS_{ca-lasso}': ('tab:green', '$PROTEUS_{ca-lasso}$'),
         'PROTEUS_{shap}': ('tab:red', '$PROTEUS_{shap}$'),
@@ -137,35 +138,38 @@ def plot_dataframes(prec_perfs, recall_perfs, fig_name):
     }
     leg_handles_arr = []
     colors = []
-    markers = ["-s", "-o", "-v", "-^"]
+    markers = ["-s", "-o", "-v", "-^", '-*']
     loda_i = loda_j = 0
     for m in leg_handles_dict:
         leg_handles_arr.append(leg_handles_dict[m][1])
         colors.append(leg_handles_dict[m][0])
     for i, perf_dict in enumerate([prec_perfs, recall_perfs]):
         for j, (det, perf_df) in enumerate(perf_dict.items()):
+            protfull = pd.DataFrame(np.full((1, perf_df.shape[1]), None), index=['PROTEUS_{full}'], columns=perf_df.columns)
             if perf_df.shape[0] < len(leg_handles_dict):
                 tmp_df = pd.DataFrame(np.full((1, perf_df.shape[1]), None), index=['PROTEUS_{loda}'], columns=perf_df.columns)
                 perf_df = pd.concat([perf_df, tmp_df])
+            perf_df = pd.concat([protfull, perf_df])
             det = det.upper()
             if det == 'IFOREST':
-                det = 'iForest'
+                det = 'IF'
             axes[i, j].locator_params(axis='x', nbins=perf_df.shape[1])
             axes[i, j].set_ylim((0, 1.05))
             axes[i, j].set_yticks(np.arange(0, 1.2, 0.2))
             ytitle = 'Precision' if i == 0 else 'Recall'
-            axes[i, j].set_ylabel(ytitle, fontsize=13)
+            axes[i, j].set_ylabel(ytitle, fontsize=10)
             if det == 'LODA':
                 loda_i = i
                 loda_j = j
-            perf_df.transpose().plot(ax=axes[i, j], legend=None, rot=30, style=markers, color=colors)
-            axes[i, j].set_xticklabels(labels=axes[i, j].get_xticklabels(), ha='right')
+            perf_df.transpose().plot(ax=axes[i, j], legend=None, rot=25, style=markers, color=colors)
+            axes[i, j].set_xticklabels(labels=axes[i, j].get_xticklabels(), fontsize=9)
             if i == 0:
-                axes[i, j].set_title(det, fontsize=14, fontweight='bold')
+                axes[i, j].set_title(det, fontsize=10, fontweight='bold')
                 axes[i, j].set_xticklabels([])
+            axes[i, j].tick_params(axis='both', which='major', labelsize=9)
     handles, labels = axes[loda_i, loda_j].get_legend_handles_labels()
-    fig.legend(handles, leg_handles_arr, loc='upper center', ncol=4, fontsize=13)
-    fig.subplots_adjust(wspace=0.5, hspace=0.3, bottom=0.2, top=0.8)
+    fig.legend(handles, leg_handles_arr, loc='upper center', ncol=5, fontsize=10.3, handletextpad=0.1)
+    fig.subplots_adjust(wspace=0.4, hspace=0.3, bottom=0.2, top=0.86)
     plt.autoscale(enable=True, axis='x', tight=True)
     output_folder = Path('..', 'figures', 'results')
     output_folder.mkdir(parents=True, exist_ok=True)

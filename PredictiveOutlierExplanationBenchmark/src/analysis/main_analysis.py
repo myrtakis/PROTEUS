@@ -7,7 +7,7 @@ from  DetectorsAnalysis import DetectorAnalysis
 
 
 if __name__ == '__main__':
-    path = '../results_predictive/loda/protean/random_oversampling/classification/datasets/synthetic'
+    path = '../results_predictive/iforest/protean/random_oversampling/classification/datasets/synthetic'
     # path = '../results_predictive/loda/protean/random_oversampling/classification/datasets/real'
     # path = '../results_normal/random_oversampling/iforest/classification/datasets/synthetic/hics/group_g1'
     # path = '../results_predictive/random_oversampling/iforest/classification/datasets/synthetic/hics/group_g1'
@@ -23,5 +23,5 @@ if __name__ == '__main__':
     # print('Hold out effectiveness')
     # PerfAnalysis(path, metric_id, hold_out_effectiveness=True).analyze(original_data_analysis=False, real_data=True)
 
+    # PerfAnalysis(path, metric_id, hold_out_effectiveness=False).analyze(original_data_analysis=False, real_data=False)
     PerfAnalysis(path, metric_id, hold_out_effectiveness=False).analyze(original_data_analysis=False, real_data=False)
-    # PerfAnalysis(path, metric_id, hold_out_effectiveness=True).analyze(original_data_analysis=False, real_data=False)

@@ -57,7 +57,33 @@ def analyze_oversampling_effect():
             else:
                 test_perfs_dataset[datasets[dname]] = pd.concat([test_perfs_dataset[datasets[dname]],
                                                                  perfs_test['fs'][noise_level]], axis=1)
-    print()
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(10, 3))
+    min_perf = min([df.min().min() for df in test_perfs_dataset.values()])
+    for i, (dname, df) in enumerate(test_perfs_dataset.items()):
+        plot_oversampling_effect(axes[i], df, dname, min_perf)
+    handles, labels = axes[0].get_legend_handles_labels()
+    #fig.legend(handles, labels, loc='upper center', ncol=5, fontsize=12, handletextpad=0.1)
+    # plt.subplots_adjust(wspace=.15, hspace=.15, top=.7)
+    plt.tight_layout()
+    output_folder = Path('..', 'figures', 'results')
+    output_folder.mkdir(parents=True, exist_ok=True)
+    plt.savefig(Path(output_folder, 'real-oversampling_effect.png'), dpi=300, bbox_inches='tight', pad_inches=0)
+    plt.clf()
+
+
+def plot_oversampling_effect(ax, perfs, dataset_title, min_perf):
+    markers = ['-s', '-^', '-*']
+    perfs.index = [str(x) for x in perfs.index]
+    perfs.plot(ax=ax, style=markers, markersize=7)
+    # ax.locator_params(axis='x', nbins=perfs.shape[0])
+    # ax.set_ylabel('Test AUC')
+    ax.set_title(dataset_title, fontsize=14)
+    ax.set_ylim([0.5, 1.05])
+    ax.legend(prop={'size': 12})
+    # ax.set_yticks(np.arange(0.5, 1.05, 0.05))
+    plt.setp(ax.get_xticklabels(), fontsize=13)
+    plt.setp(ax.get_yticklabels(), fontsize=13)
+    # ax.set_yticks(np.arange(0, 1.2, 0.2))
 
 
 def read_proteus_files(nav_file):
