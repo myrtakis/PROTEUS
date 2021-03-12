@@ -1,56 +1,45 @@
 import pandas as pd
 import plotly.graph_objects as go
+import plotly.express as px
 import json
 import numpy as np
+from sklearn import preprocessing
 
 
 def construct_spider_plot(X, Y, anomaly_label, explanation_features, sample_ids_to_plot):
-    # categories = ['processing cost', 'mechanical properties', 'chemical stability',
-    #               'thermal stability', 'device integration']
-
-    # fig = go.Figure()
-
-    # fig.add_trace(go.Scatterpolar(
-    #     r=[1, 5, 2, 2, 3],
-    #     theta=categories,
-    #     fill='toself',
-    #     name='Product A'
-    # ))
-    # fig.add_trace(go.Scatterpolar(
-    #     r=[4, 3, 2.5, 1, 2],
-    #     theta=categories,
-    #     fill='toself',
-    #     name='Product B'
-    # ))
-    #
-    # fig.update_layout(
-    #     polar=dict(
-    #         radialaxis=dict(
-    #             visible=True,
-    #         )),
-    # )
-
+    min_max_scaler = preprocessing.MinMaxScaler()
+    X_scaled = min_max_scaler.fit_transform(X)
+    X = pd.DataFrame(X_scaled, columns=X.columns)
+    medians = X.loc[:, explanation_features].median(axis=0)
     fig = go.Figure()
 
-    fig.add_trace(go.Scatterpolar(
-        r=X.loc[sample_ids_to_plot['anomalies'], explanation_features].values[0],
-        theta=explanation_features,
-        #fill='toself',
-        name='anomaly'
-    ))
+    q25 = X.loc[:, explanation_features].quantile(0.25)
+    q75 = X.loc[:, explanation_features].quantile(0.75)
 
-    fig.add_trace(go.Scatterpolar(
-        r=X.loc[sample_ids_to_plot['normal'], explanation_features].values[0],
-        theta=explanation_features,
-        # fill='toself',
-        name='normal'
-    ))
+    iqr = q75-q25
+
+    for pid in sample_ids_to_plot:
+            name = 'Anomaly id' + str(pid) if Y[pid] == anomaly_label else 'Normal id' + str(pid)
+            dists_from_median = np.absolute(medians.values - X.loc[pid, explanation_features].values)
+            fig.add_trace(go.Scatterpolar(
+                r=dists_from_median,
+                theta=explanation_features,
+                # fill='toself',
+                name=name
+            ))
+
+    # fig.add_trace(go.Scatterpolar(
+    #     r=iqr,
+    #     theta=explanation_features,
+    #     fill='toself',
+    #     name='IQR',
+    #     marker=None
+    # ))
+    fig = px.line_polar(r=iqr, theta=explanation_features, line_close=True)
 
     fig.update_layout(polar=dict(radialaxis=dict(visible=True)))
-
     # fig.show()
-    fig.write_image("testspider.png")
-
+    fig.write_image("testspider.eps")
 
 
 if __name__=='__main__':
@@ -74,7 +63,7 @@ if __name__=='__main__':
     with open(results_path) as f:
         results = json.load(f)
     expl_features = list(X.columns[results['fs']['roc_auc']['feature_selection']['features']])
-
-    construct_spider_plot(X=X, Y=Y, anomaly_label=1, explanation_features=expl_features, sample_ids_to_plot={'anomalies': [anomaly_ids[0]],
-                                                                                                             'normal': [normal_ids[0]]})
-    pass
+    anomalies = [96, 133, 185]
+    normals = [0,1, 122]
+    samples_to_plot = [*anomalies]
+    construct_spider_plot(X=X, Y=Y, anomaly_label=1, explanation_features=expl_features, sample_ids_to_plot=samples_to_plot)
