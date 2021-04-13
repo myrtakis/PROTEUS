@@ -11,6 +11,14 @@ import matplotlib.pyplot as plt
 import json
 
 
+def detector_auc(detector, dataset):
+    with open(get_dataset_path(detector, dataset) + '/' + 'detectors_info.json') as f:
+        det_info = json.load(f)
+        train_auc = det_info[detector]['effectiveness']['roc_auc']
+        test_auc = det_info[detector]['hold_out_effectiveness']['roc_auc']
+        return {'AUC train': train_auc, 'AUC test': test_auc}
+
+
 def get_X_Y(detector, dataset, df_name, expl_features, pseudo_samples):
     df = pd.read_csv(get_base_path(detector, dataset, pseudo_samples) + '/' + df_name)
     X = df.iloc[:, expl_features]
@@ -118,13 +126,14 @@ def quality_assessment(expl_size, detector, dataset, ps_samples):
     Xtest, Ytest = get_X_Y(detector, dataset, 'pseudo_samples_' + str(ps_samples) + '_hold_out_data.csv', expl_features, ps_samples)
     predictions, auc = build_model(Xtrain, Ytrain, Xtest, Ytest, clf_id, clf_params)
     threshold = anomaly_threshold(detector, dataset, expl_features, ps_samples)
-    threshold_val = (sorted(predictions)[threshold] + sorted(predictions)[threshold+1]) / 2
-    fda, fdn = detector_conflicts_ground_truth(get_Ytrue(dataset, detector), Ytest)
+    threshold_val = (sorted(predictions, reverse=True)[threshold] + sorted(predictions, reverse=True)[threshold+1]) / 2
+    Ytrue_test = get_Ytrue(dataset, detector).reset_index(drop=True).astype('int32')
+    fda, fdn = detector_conflicts_ground_truth(Ytrue_test, Ytest)
     tea, ten, fen, fea = get_interesting_points(predictions, Ytest, threshold)
     fda_fen = len(fda.intersection(fen)) / len(fen) if len(fen) > 0 else -1
     fdn_fea = len(fdn.intersection(fea)) / len(fea) if len(fea) > 0 else -1
-    pred_fea_df = build_pred_conflicts_df(predictions, Ytest, detector, dataset, fea)
-    pred_fen_df = build_pred_conflicts_df(predictions, Ytest, detector, dataset, fen)
+    pred_fea_df = build_pred_conflicts_df(predictions, Ytrue_test, detector, dataset, fea)
+    pred_fen_df = build_pred_conflicts_df(predictions, Ytrue_test, detector, dataset, fen)
     return {'fda_fen':fda_fen, 'fdn_fea':fdn_fea, 'fen':fen, 'fea':fea, 'anom_threshold': threshold_val,
             'auc_test':auc_test, 'pred_fea_df': pred_fea_df, 'pred_fen_df': pred_fen_df}
 
@@ -136,25 +145,36 @@ def prepare_df(data_dict):
     return data_df
 
 
-def plot_df(df, title):
+def plot_df(df, ylabel, title):
     markers = ['s', 'o', '*']
     for i, c in enumerate(df.columns):
         plt.plot(df.index, df[c], label=str(c) + ' pseudo samples', marker=markers[i])
     plt.legend()
     plt.xticks(rotation=45)
+    plt.ylabel(ylabel)
     plt.title(title)
+    plt.show()
+
+
+def plot_auc_det(det_auc_df):
+    plt.plot(det_auc_df.index, det_auc_df['AUC train'], label='AUC train', marker='o')
+    plt.plot(det_auc_df.index, det_auc_df['AUC test'], label='AUC test', marker='o')
+    plt.xticks(rotation=45)
+    plt.legend()
+    plt.title('Detectors AUCs')
     plt.show()
 
 
 
 if __name__ == '__main__':
-    expl_size = '6'
+    expl_size = '10'
 
     fda_fen_dict = {}
     fdn_fea_dict = {}
     auc_test_dict = {}
     fen_card_dict = {}
     fea_card_dict = {}
+    det_auc_dict = {}
     anom_thresholds_dict = {}
     pred_fea_df = pd.DataFrame()
     pred_fen_df = pd.DataFrame()
@@ -169,12 +189,14 @@ if __name__ == '__main__':
                 fen_card_dict.setdefault(key, {})
                 fea_card_dict.setdefault(key, {})
                 auc_test_dict.setdefault(key, {})
+                det_auc_dict.setdefault(key, {})
                 results = quality_assessment(expl_size, detector, dataset, ps_samples)
                 fdn_fea_dict[key][ps_samples] = results['fdn_fea']
                 fda_fen_dict[key][ps_samples] = results['fda_fen']
                 auc_test_dict[key][ps_samples] = results['auc_test']
                 fen_card_dict[key][ps_samples] = len(results['fen'])
                 fea_card_dict[key][ps_samples] = len(results['fea'])
+                det_auc_dict[key] = detector_auc(detector, dataset)
                 pred_fea_df = pred_fea_df.append(results['pred_fea_df'], ignore_index=True)
                 pred_fen_df = pred_fen_df.append(results['pred_fen_df'], ignore_index=True)
                 anom_thresholds_dict[key] = results['anom_threshold']
@@ -186,15 +208,15 @@ if __name__ == '__main__':
     fea_card_df = prepare_df(fea_card_dict)
     auc_test_df = prepare_df(auc_test_dict)
 
-    # plot_df(fda_fen_df, 'FDA $\cap$ FEN')
-    # plot_df(fdn_fea_df, 'FDN $\cap$ FEA')
-    # plot_df(fen_card_df, '|FEN|')
-    # plot_df(fea_card_df, '|FEA|')
-    # plot_df(auc_test_df, 'AUC on Test')
+    plot_auc_det(pd.DataFrame(det_auc_dict).T)
 
-    plot_sns(pred_fea_df, anom_thresholds_dict, 'False Explained Anomalies')
-    plot_sns(pred_fen_df, anom_thresholds_dict, 'False Explained Negatives')
+    # plot_df(fda_fen_df, '(FDA $\cap$ FEN) / |FEN|', 'False Positives Discovery')
+    # plot_df(fdn_fea_df, '(FDN $\cap$ FEA) / |FEA|', 'Fasle Negatives Discovery')
+    # plot_df(fen_card_df, '|FEN|', 'Number of Conflicts (cases 10)')
+    # plot_df(fea_card_df, '|FEA|', 'Number of Conflicts (cases 01)')
+    # plot_df(auc_test_df, 'AUC', 'PROTEUS AUC on Test')
 
-    # fda_fen_df = pd.DataFrame(fda_fen_dict).T
-    # fdn_fea_df = pd.DataFrame(fdn_fea_dict).T
+    plot_sns(pred_fea_df, anom_thresholds_dict, 'False Explained Anomalies ps_samples=' + str(ps_samples))
+    plot_sns(pred_fen_df, anom_thresholds_dict, 'False Explained Normals ps_samples=' + str(ps_samples))
+
     print()
