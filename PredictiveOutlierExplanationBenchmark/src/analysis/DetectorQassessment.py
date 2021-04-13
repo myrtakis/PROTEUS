@@ -32,7 +32,7 @@ def get_base_path(detector, dataset, pseudo_samples):
 
 
 def get_dataset_path(detector, dataset):
-    return 'D:/' + 'results_predictive_grouping/' + detector + \
+    return 'results_predictive_grouping/' + detector + \
            '/protean/random_oversampling/classification/datasets/real/' + dataset
 
 
@@ -102,16 +102,17 @@ def plot_sns(conflict_df, anomaly_thresholds_dict, title):
         threshold_score = anomaly_thresholds_dict[text]
         ax.plot([tick - 0.2, tick + 0.2], [threshold_score, threshold_score], color='k')
     plt.title(title)
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=40)
     plt.yscale('log')
     plt.ylabel('log(Predictions)')
     plt.xlabel('Combinations')
+    plt.tight_layout()
     plt.show()
 
 
 def build_pred_conflicts_df(predictions, Ytrue, detector, dataset, conflicted_points):
     dataset_names = {'wbc_006': 'Breast Cancer', 'arrhythmia_015': 'Arrhythmia', 'ionosphere_006': 'Ionosphere'}
-    comb = np.full(len(predictions), dataset_names[dataset] + ' ' + detector)
+    comb = np.full(len(predictions), dataset_names[dataset] + '\n' + detector)
     pred_df = pd.DataFrame(np.array([predictions, Ytrue, comb]).T, columns=['pred', 'true', 'comb'])
     pred_df = pred_df.astype({'pred': 'float16'})
     pred_df = pred_df.astype({'true': 'int8'})
@@ -150,7 +151,7 @@ def plot_df(df, ylabel, title):
     for i, c in enumerate(df.columns):
         plt.plot(df.index, df[c], label=str(c) + ' pseudo samples', marker=markers[i])
     plt.legend()
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=35)
     plt.ylabel(ylabel)
     plt.title(title)
     plt.show()
@@ -159,11 +160,46 @@ def plot_df(df, ylabel, title):
 def plot_auc_det(det_auc_df):
     plt.plot(det_auc_df.index, det_auc_df['AUC train'], label='AUC train', marker='o')
     plt.plot(det_auc_df.index, det_auc_df['AUC test'], label='AUC test', marker='o')
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=35)
     plt.legend()
     plt.title('Detectors AUCs')
     plt.show()
 
+
+def plot_info_of_best_aucs(auc_test_df, fda_fen_df, fdn_fea_df):
+    best_ps_df = auc_test_df.idxmax(axis='columns')
+    best_ps_fda_fen = {}
+    best_ps_fdn_fea = {}
+    best_auc_vals = {}
+    for i in best_ps_df.index:
+        best_ps_fdn_fea[i] = fdn_fea_df.loc[i, best_ps_df.loc[i]]
+        best_ps_fda_fen[i] = fda_fen_df.loc[i, best_ps_df.loc[i]]
+        best_auc_vals[i] = auc_test_df.loc[i, best_ps_df.loc[i]]
+    plt.plot(list(best_ps_fdn_fea.keys()), list(best_ps_fdn_fea.values()), label='False Negatives Discovery', marker='o')
+    plt.plot(list(best_ps_fda_fen.keys()), list(best_ps_fda_fen.values()), label='False Positives Discovery', marker='o')
+    plt.xticks(rotation=35)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+    plt.clf()
+
+    plt.plot(list(best_auc_vals.keys()), list(best_auc_vals.values()), marker='o')
+    plt.title('Best PROTEUS AUCs on Test')
+    plt.xticks(rotation=35)
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_best_score_distr(auc_test_df, pred_fea_dict, pred_fen_dict,  anom_thresholds_dict):
+    best_ps_df = auc_test_df.idxmax(axis='columns')
+    best_pred_fea= pd.DataFrame()
+    best_pred_fen = pd.DataFrame()
+    for i in best_ps_df.index:
+        best_ps = best_ps_df.loc[i]
+        best_pred_fea = best_pred_fea.append(pred_fea_dict[best_ps][pred_fea_dict[best_ps]['comb'] == i], ignore_index=True)
+        best_pred_fen = best_pred_fen.append(pred_fen_dict[best_ps][pred_fen_dict[best_ps]['comb'] == i], ignore_index=True)
+    plot_sns(best_pred_fea, anom_thresholds_dict, 'False Explained Anomalies ps_samples=' + str(ps_samples))
+    plot_sns(best_pred_fen, anom_thresholds_dict, 'False Explained Normals ps_samples=' + str(ps_samples))
 
 
 if __name__ == '__main__':
@@ -176,20 +212,23 @@ if __name__ == '__main__':
     fea_card_dict = {}
     det_auc_dict = {}
     anom_thresholds_dict = {}
-    pred_fea_df = pd.DataFrame()
-    pred_fen_df = pd.DataFrame()
+    pred_fea_dict = {}
+    pred_fen_dict = {}
     dataset_names = {'wbc_006': 'Breast Cancer', 'arrhythmia_015': 'Arrhythmia', 'ionosphere_006': 'Ionosphere'}
-    for ps_samples in [10]:
+    for ps_samples in [0,3,10]:
         for dataset in ['wbc_006', 'arrhythmia_015', 'ionosphere_006']:
             for detector in ['iforest', 'lof', 'loda']:
                 #print(dataset, detector, ps_samples)
                 key = dataset_names[dataset] + ' ' + detector
+                key = key[:key.rindex(' ')] + '\n' + key[key.rindex(' ') + 1:]
                 fda_fen_dict.setdefault(key, {})
                 fdn_fea_dict.setdefault(key, {})
                 fen_card_dict.setdefault(key, {})
                 fea_card_dict.setdefault(key, {})
                 auc_test_dict.setdefault(key, {})
                 det_auc_dict.setdefault(key, {})
+                pred_fea_dict.setdefault(ps_samples, pd.DataFrame())
+                pred_fen_dict.setdefault(ps_samples, pd.DataFrame())
                 results = quality_assessment(expl_size, detector, dataset, ps_samples)
                 fdn_fea_dict[key][ps_samples] = results['fdn_fea']
                 fda_fen_dict[key][ps_samples] = results['fda_fen']
@@ -197,8 +236,8 @@ if __name__ == '__main__':
                 fen_card_dict[key][ps_samples] = len(results['fen'])
                 fea_card_dict[key][ps_samples] = len(results['fea'])
                 det_auc_dict[key] = detector_auc(detector, dataset)
-                pred_fea_df = pred_fea_df.append(results['pred_fea_df'], ignore_index=True)
-                pred_fen_df = pred_fen_df.append(results['pred_fen_df'], ignore_index=True)
+                pred_fea_dict[ps_samples] = pred_fea_dict[ps_samples].append(results['pred_fea_df'], ignore_index=True)
+                pred_fen_dict[ps_samples] = pred_fen_dict[ps_samples].append(results['pred_fen_df'], ignore_index=True)
                 anom_thresholds_dict[key] = results['anom_threshold']
                 # fdn_fea_dict[dataset][detector] = fdn_fea
                 # fda_fen_dict[dataset][detector] = fda_fen
@@ -208,7 +247,10 @@ if __name__ == '__main__':
     fea_card_df = prepare_df(fea_card_dict)
     auc_test_df = prepare_df(auc_test_dict)
 
-    plot_auc_det(pd.DataFrame(det_auc_dict).T)
+    # plot_auc_det(pd.DataFrame(det_auc_dict).T)
+
+    # plot_info_of_best_aucs(auc_test_df, fda_fen_df, fdn_fea_df)
+    plot_best_score_distr(auc_test_df, pred_fea_dict, pred_fen_dict, anom_thresholds_dict)
 
     # plot_df(fda_fen_df, '(FDA $\cap$ FEN) / |FEN|', 'False Positives Discovery')
     # plot_df(fdn_fea_df, '(FDN $\cap$ FEA) / |FEA|', 'Fasle Negatives Discovery')
@@ -216,7 +258,6 @@ if __name__ == '__main__':
     # plot_df(fea_card_df, '|FEA|', 'Number of Conflicts (cases 01)')
     # plot_df(auc_test_df, 'AUC', 'PROTEUS AUC on Test')
 
-    plot_sns(pred_fea_df, anom_thresholds_dict, 'False Explained Anomalies ps_samples=' + str(ps_samples))
-    plot_sns(pred_fen_df, anom_thresholds_dict, 'False Explained Normals ps_samples=' + str(ps_samples))
+
 
     print()
