@@ -9,7 +9,8 @@ class FeatureSelection:
         'explanation': None,
         'ses': SES,
         'lasso': LASSO,
-        'fbed': FBED
+        'fbed': FBED,
+        'omp': OMP
     }
 
     FEATURES_KEY = 'features'
