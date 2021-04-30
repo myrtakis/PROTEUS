@@ -1,4 +1,6 @@
 ## License
 
 This work is primarily licensed under Apache 2.0. 
-The MXM R package used for the feature selection algorithms is licensed under the GPLv2.
+
+##Warning
+SES and FBED algorithms from MXM R package are removed from the current version of repository, because they are licensed under the GPLv2.
