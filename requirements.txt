@@ -1,5 +1,5 @@
 adjustText~=0.7.3.1
-certifi==2019.11.28
+certifi==2022.12.7
 cycler==0.10.0
 Jinja2==2.10.3
 joblib==0.14.1
