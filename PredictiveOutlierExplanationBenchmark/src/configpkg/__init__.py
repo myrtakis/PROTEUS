@@ -1,6 +1,0 @@
-from configpkg.ConfigMger import ConfigMger
-from configpkg.SettingsConfig import SettingsConfig
-from configpkg.DatasetConfig import DatasetConfig
-from configpkg.DetectorsConfig import DetectorConfig
-from configpkg.FeatureSelectionConfig import FeatureSelectionConfig
-from configpkg.ClassifiersConfig import ClassifiersConfig
