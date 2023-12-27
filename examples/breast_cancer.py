@@ -12,7 +12,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 
-from sklearn.linear_model import Lasso
 from sklearn.linear_model import OrthogonalMatchingPursuit
 
 
@@ -66,8 +65,6 @@ if __name__ == '__main__':
     is_anomaly[anom_ids] = 1
 
     # Proteus parmeters
-    test_size = 0.2
-    partitions = 5
     explanation_size = 5
 
     # Init classification models
@@ -104,13 +101,21 @@ if __name__ == '__main__':
         classifiers=[*lr_models, *svm_models, *rf_models],
         feature_selectors=omp_fsels,
         perf_metric_func=sklearn.metrics.roc_auc_score,
-        partitions=partitions,
+        partitions=5,
         explanation_size=explanation_size,
         oversampler=oversampler
     )
 
     proteus = ProteusExplainer(automl=automl)
 
-    proteus.explain(X, is_anomaly, scores)
-
     # Run proteus
+
+    proteus.fit_explainer(X, is_anomaly, scores)
+
+    # visualize
+
+    anomalies = anom_ids[:2]
+    print('Plotting Anomalies')
+    proteus.visualize(X, anomalies)
+
+

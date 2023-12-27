@@ -73,12 +73,13 @@ class ProteusAutoML(BaseAutoML):
         best_fsel.fit(X, y)
         sel_features = best_fsel.feature_coefs(X, dim=self.explanation_size)
         best_clf.fit(X.iloc[:, sel_features], y)
-        self.best_clf = best_clf
-        self.selected_features = sel_features
         self.scaler = StandardScaler().fit(X)
         # apply Bootstrap Bias Correction
         bbc = BBC(y, predictions_mat, self.perf_metric_func)
         conservative_performance, _ = bbc.correct_bias()
+        self.best_model = best_clf
+        self.explanation = sel_features
+        self.performance = conservative_performance
         return best_clf, sel_features, conservative_performance
 
     def predict_new_data(self, X: pd.DataFrame):
@@ -86,6 +87,7 @@ class ProteusAutoML(BaseAutoML):
         return self.best_clf.predict(X)
 
     def __cv(self, X, y, anomaly_scores, classifiers, feature_selectors, perf_met):
+        print('Selecting the best model')
         learning_methods = list(product(classifiers, feature_selectors))
         num_samples = X.shape[0]
         performances = np.zeros(len(learning_methods))

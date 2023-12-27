@@ -25,7 +25,7 @@ def draw_iqr(ax, angles):
     ax.fill(angles, np.concatenate((q25, [q25[0]])), alpha=1, color='white')
 
 
-def construct_spider_plot(X, sample_ids_to_plot):
+def spider_plot(X, sample_ids_to_plot):
     min_max_scaler = MinMaxScaler()
     X_scaled = min_max_scaler.fit_transform(X)
     X = pd.DataFrame(X_scaled, columns=X.columns)
